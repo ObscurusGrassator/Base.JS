@@ -1,0 +1,8 @@
+#template_example {
+	margin: auto;
+	width: max-content;
+	height: max-content;
+}
+.TestItalic {
+	font-style: italic;
+}

@@ -1,0 +1,10 @@
+iframe {
+	display: block;
+	margin: auto;
+	width: 500px;
+	height: 150px;
+}
+body > div div, pre {
+	text-align: left;
+	margin-left: 20px;
+}

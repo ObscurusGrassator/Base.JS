@@ -1,0 +1,239 @@
+// @ts-nocheck
+var util = require('util');
+var fs = require('fs');
+var pathLib = require("path");
+
+const config = require('shared/services/jsconfig.base.js').update('utils.console', {
+	"utils": {
+		"console": {
+			"backupFilePath": "console.log",
+			"debugFileRegExp": "/err/i",
+			"enableFileRegExp": "/.*/"
+		}
+	}
+}).value.utils.console;
+
+console.origStdoutWrite = console.origStdoutWrite || (typeof process !== 'undefined' && process.stdout.write);
+console.origStderrWrite = console.origStderrWrite || (typeof process !== 'undefined' && process.stderr.write);
+
+const colors = {
+	reset: 		"\x1b[0m",
+	bold: 		"\x1b[1m",
+	
+	black: 		"\x1b[30m",
+	red: 		"\x1b[31m",
+	green: 		"\x1b[32m",
+	yellow: 	"\x1b[33m",
+	blue: 		"\x1b[34m",
+	magenta: 	"\x1b[35m",
+	cyan: 		"\x1b[36m",
+	white: 		"\x1b[37m",
+
+	black2: 	"\x1b[40m",
+	red2: 		"\x1b[41m",
+	green2: 	"\x1b[42m",
+	yellow2: 	"\x1b[43m",
+	blue2: 		"\x1b[44m",
+	magenta2: 	"\x1b[45m",
+	cyan2: 		"\x1b[46m",
+	white2: 	"\x1b[47m",
+};
+console.colors = colors;
+const colorArray = Object.values(colors);
+
+const replacer = {
+	info: console.colors.bold + console.colors.blue + 'INF:' + console.colors.reset + console.colors.blue,
+	debug: console.colors.bold + console.colors.green + 'DEB:' + console.colors.reset + console.colors.green,
+	warn: typeof require !== 'undefined'
+		? console.colors.bold + console.colors.yellow + 'WRN:' + console.colors.reset + console.colors.yellow
+		: console.colors.bold + console.colors.black + 'WRN:' + console.colors.reset + console.colors.black,
+	error: console.colors.bold + console.colors.red + 'ERR:' + console.colors.reset + console.colors.red,
+	errorMessage: console.colors.bold + console.colors.red + 'ERR:' + console.colors.reset + console.colors.red,
+};
+console.replacer = replacer;
+
+console.userErrorFunction = (message) => new Error(message);
+
+const setStream = (opt) => {
+	console.logStream = (!opt.backupFilePath && console.logStream)
+		|| (console.backupFilePath && fs.createWriteStream(console.backupFilePath, {flags: 'a', encoding: 'utf8'}));
+
+	let write = (args) => {
+		let d = new Date();
+		args[0] = console.colors.reset + console.colors.yellow2
+					// + (new Date()).toLocaleString('en-GB')
+					+ `${('0'+d.getUTCDate()).substr(-2)}.${('0'+d.getUTCMonth()).substr(-2)} `
+					+ `${('0'+d.getUTCHours()).substr(-2)}:${('0'+d.getUTCMinutes()).substr(-2)}`
+					+ console.colors.reset + ' ' + args[0];
+		console.logStream.write.apply(console.logStream, args);
+	};
+
+	if (console.backupFilePath) {
+		process.stdout.write = (...args) => {
+			console.origStdoutWrite.apply(process.stdout, args);
+			write(args);
+		};
+		process.stderr.write = (...args) => {
+			console.origStderrWrite.apply(process.stderr, args);
+			write(args);
+		};
+	}
+}
+
+const getMessage = (methodKey, tmp, ...inputs) => {
+	let paths = [];
+	if ((methodKey == 'debug' && console.debugFileRegExp != /.*/) || console.enableFileRegExp != /.*/) {
+		(new Error()).stack.toString().replace(
+			/\n.+?(\/.+?):[0-9]+:[0-9]+/g,
+			(all, path) => {
+				if (pathLib) path = path.replace(new RegExp(pathLib.resolve('') + '\\/', 'g'), '');
+				paths.push(path);
+				return all;
+			}
+		);
+	}
+
+	if (console.enableFileRegExp !== /.*/ && !console.enableFileRegExp.test(paths.join()))
+		return;
+
+	if (methodKey == 'debug' && !console.debugFileRegExp.test(paths.join()))
+		return;
+
+	if (methodKey == 'error') {
+		let wrapped = false;
+
+		for (let i in inputs) {
+			if (inputs[i] instanceof Error) {
+				inputs[i] = console.userErrorFunction(inputs[i]);
+				wrapped = true;
+			}
+		}
+		if (!wrapped) inputs.push('\n' + console.userErrorFunction('   on Console.log line:'));
+	}
+
+	inputs = inputs.map((obj) => {
+		if (typeof obj === 'object' && util) return util.inspect(obj, false, 10, true);
+		else return obj
+	});
+
+	inputs.unshift(console.replacer[methodKey]);
+	inputs.push(console.colors.reset);
+
+	let outputs = [];
+
+	for (let i in inputs) {
+		if (outputs.length > 0
+				&& (typeof inputs[i] == 'string' || typeof inputs[i] == 'number')
+				&& (typeof inputs[i-1] == 'string' || typeof inputs[i-1] == 'number')) {
+			if (colorArray.indexOf(inputs[i]) === -1) outputs[outputs.length-1] += ' ';
+			outputs[outputs.length-1] += inputs[i];
+		} else outputs.push(inputs[i]);
+	}
+
+	if (typeof require !== 'undefined' && process.stdout.clearLine && process.stdout.cursorTo) {
+		process.stdout.clearLine(); process.stdout.cursorTo(1);
+	}
+
+	if (tmp) {
+		if (typeof require !== 'undefined' && process.stdout.clearLine && process.stdout.cursorTo) {
+			process.stdout.write(outputs.join(' '));
+		} else {
+			// do súboru takéto logy písať nebudem
+			// console[i].apply(console, msg.apply(console, outputs));
+		}
+	} else {
+		console[methodKey + 'Orig'].apply(console, outputs);
+	}
+};
+
+let firstConfiguretion = true;
+/**
+ * @typedef {Object} OptionsDefault
+ * @property {null | String} [backupFilePath = null] File for backup logs.
+ *           Default from jsconfig.json:utils-console-backupFilePath.
+ * @property {function(...any): Error | String}
+ *           [userErrorFunction = (message) => new Error(message)]
+ *           Error modification function. Default is (message) => new Error(message) .
+ * @property {null | RegExp} [debugFileRegExp = /err/i]
+ *           Disable or specify console.debug for files.
+ *           Default from jsconfig.json:utils-console-debugFileRegExp.
+ * @property {Boolean | RegExp} [enableFileRegExp = /.*\/]
+ *           Disable/enable/specify all console logs.
+ *           Default from jsconfig.json:utils-console-enableFileRegExp.
+ */
+
+/**
+ * Console configuration
+ * 
+ * @param {OptionsDefault} options
+ * @returns {Console & ConsolePlus & OptionsDefault}
+ */
+function configure(options = {}) {
+	if (firstConfiguretion) {
+		let debugFile = config.debugFileRegExp.match(/^\/(.*?)\/([gimy]*)$/);
+		let enableFile = config.enableFileRegExp.match(/^\/(.*?)\/([gimy]*)$/);
+
+		console.optionsDefault = {
+			backupFilePath: config.backupFilePath,
+			userErrorFunction: (message) => (new Error(message)).stack,
+			debugFileRegExp: new RegExp(debugFile[1], debugFile[2]) || /.*/i,
+			enableFileRegExp: new RegExp(enableFile[1], enableFile[2]) || /.*/,
+		};
+
+		firstConfiguretion = false;
+	}
+
+	console.optionsDefault = {
+		...console.optionsDefault,
+		...options
+	};
+
+	console.backupFilePath = console.optionsDefault.backupFilePath;
+	console.userErrorFunction = console.optionsDefault.userErrorFunction;
+	console.debugFileRegExp = console.optionsDefault.debugFileRegExp;
+	console.enableFileRegExp = console.optionsDefault.enableFileRegExp;
+
+	if (Object.keys(options).length > 0 && fs) {
+		setStream(options);
+	}
+
+	for (let i in console.replacer) {
+		console[i + 'Orig'] = console[i + 'Orig'] || console[i] || console.logOrig || console.log;
+		if (typeof require == 'undefined') console['debugOrig'] = console.logOrig || console.log;
+		console[i] = (...inputs) => { getMessage.apply(console, [i, false].concat(inputs)); };
+		console[i + 'Tmp'] = (...inputs) => { getMessage.apply(console, [i, true].concat(inputs)); };
+	}
+
+	return console;
+}
+console.configure = configure;
+
+if (typeof require !== 'undefined') console.configure();
+else window.afterLoadRequires.unshift(console.configure);
+
+class ConsolePlus {
+	/** @type {(buffer: string | Uint8Array, cb?: (err?: Error) => void) => boolean} */
+	get origStdoutWrite() { return console.origStdoutWrite; };
+	/** @type {(buffer: string | Uint8Array, cb?: (err?: Error) => void) => boolean} */
+	get origStderrWrite() { return console.origStderrWrite; };
+
+	/** @type {colors} */
+	get colors() { return console.colors; };
+	/** @type {replacer} */
+	get replacer() { return console.replacer; };
+
+	infoTmp(...params) {};
+	debugTmp(...params) {};
+	warnTmp(...params) {};
+	errorTmp(...params) {};
+	errorMessage(...params) {};
+	errorMessageTmp(...params) {};
+
+	/** @type {OptionsDefault} */
+	get optionsDefault() { return console.optionsDefault; };
+	get configure() { return configure; };
+};
+
+/** @type {Console & ConsolePlus & OptionsDefault} */
+const c = console;
+module.exports = c;
