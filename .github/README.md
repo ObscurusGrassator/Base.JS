@@ -109,7 +109,7 @@ shared/
    urlParser.base.js       // extended new URL()
 ```
 
-[Screenshots of code](http://obsgrass.com/public/Base.JS_screenshots)  
+[Screenshots of code](http://obsgrass.com/public/Base.JS_screenshots)   
 
 Contact: obscurus.grassator@gmail.com  
 [MIT License - Copyright (c) 2019 Obscurus Grassator](./license.txt)  
