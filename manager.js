@@ -85,6 +85,7 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 	object = merge(object, {
 		"scripts": {
 			"start": "NODE_PATH=. node manager.js",
+			"bg": "NODE_PATH=. nohup node manager.js &",
 			"indexing": "NODE_PATH=. node -e \"require('server/utils/indexCreate.base.js')()\""
 		},
 		"dependencies": {

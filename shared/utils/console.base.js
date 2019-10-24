@@ -112,8 +112,8 @@ const getMessage = (methodKey, tmp, ...inputs) => {
 	}
 
 	inputs = inputs.map((obj) => {
-		if (typeof obj === 'object' && util) return util.inspect(obj, false, 10, true);
-		else return obj
+		if (typeof obj !== 'object' || !util) return obj
+		else return console.colors.reset + util.inspect(obj, false, 10, true);
 	});
 
 	inputs.unshift(console.replacer[methodKey]);
