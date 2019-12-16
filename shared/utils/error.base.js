@@ -7,6 +7,8 @@ const config = require('shared/services/jsconfig.base.js').update('utils._error'
 				"/.*? \\(.*?\\/utils\\/error\\.base\\.js.+?(\\n|$)/ig",
 				"/.*? \\(internal\\/process\\/.+?(\\n|$)/ig",
 				"/.*? \\(internal\\/modules\\/.+?(\\n|$)/ig",
+				"/.*? \\(index 0\\)(\\n|$)/ig",
+				"/.*? \\(\\<anonymous\\>\\)(\\n|$)/ig",
 				"/.*?at internal\\/main\\/run_main_module\\.js.+?(\\n|$)/ig"
 			]
 		}

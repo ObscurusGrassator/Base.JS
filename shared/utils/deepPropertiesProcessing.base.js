@@ -1,10 +1,11 @@
 /**
  * Deep object properties processing.
  * 
- * @param {Object} obj
+ * @template {Object} T
+ * @param {T} obj
  * @param {function(any, string|number): boolean} ifFunction ifFunction(objectPart, key)
  * @param {function(any, string|number): void} thenFunction thenFunction(objectPart, key)
- * @returns {Object} Modify obj
+ * @returns {T} Modified obj
  */
 function deepObjectPropertiesProcessing(obj, ifFunction, thenFunction) {
 	Object.keys(obj).forEach(key => {

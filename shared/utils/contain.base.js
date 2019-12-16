@@ -53,6 +53,11 @@ function contain(object, mustHave, options = optionsDefault, path = '', bugs = {
 					if (!opt.throwAfterUncontain) return false;
 				}
 			}
+			else if (typeof object != 'object' || !object[m]) {
+				bug = true;
+				bugs.bugs.push({path: path, object: object, mustContain: mustHave});
+				if (!opt.throwAfterUncontain) return false;
+			}
 			else if (!contain(object[m], mustHave[m], opt, path + (path ? '.' : '') + m, bugs)) {
 				bug = true;
 				// bugs.push spúšťa contain v ife
@@ -62,7 +67,7 @@ function contain(object, mustHave, options = optionsDefault, path = '', bugs = {
 		if (!bug) return true;
 	}
 
-	if (!bug) bugs.bugs.push({path: path, object: object, mustByEqualTo: mustHave});
+	if (!bug) bugs.bugs.push({path: path, value: object, mustByEqualTo: mustHave});
 
 	if (opt.throwAfterUncontain && path === '') {
 		/** @type {String | false} */

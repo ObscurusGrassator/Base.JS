@@ -1,12 +1,12 @@
 const error = require('shared/utils/error.base.js');
 
 /**
- * Run function with callbac as promise.
+ * Run function with callbac and return callback result as promise.
  * 
  * @example
  *    Original:  fs.readFile(filePath, 'utf8', callback(error, result) => {});
  *    Promisify: await promisify(fs.readFile, filePath, 'utf8');
- * @param {function} func 
+ * @param {function} func Function with callbac in last parameter
  * @param  {...any} params 
  */
 function promisify(func, ...params) {

@@ -91,6 +91,22 @@ const getMessage = (methodKey, tmp, ...inputs) => {
 				return all;
 			}
 		);
+
+		// test file in error stack is removed from RegExp check
+		// samotný test je umiestnený v súbore, ktorého existencia v stacku by nemala mať vpliv na RegExp
+		if (paths[paths.length-1].substring(-15) == 'testing.base.js') {
+			for (let i = paths.length-1, test = ''; i >= 0; i--) {
+				if (paths[i].substring(-15) == 'testing.base.js') {
+					continue;
+				}
+				if (!test) {
+					test = paths[i].substring(paths[i].lastIndexOf('/')+1);
+				}
+				if (paths[i].substring(-1 * test.length) == test) {
+					paths.splice(i, 1);
+				} else break;
+			}
+		}
 	}
 
 	if (console.enableFileRegExp !== /.*/ && !console.enableFileRegExp.test(paths.join()))
@@ -146,7 +162,7 @@ const getMessage = (methodKey, tmp, ...inputs) => {
 	}
 };
 
-let firstConfiguretion = true;
+console.firstConfiguretion = true;
 /**
  * @typedef {Object} OptionsDefault
  * @property {null | String} [backupFilePath = null] File for backup logs.
@@ -169,7 +185,7 @@ let firstConfiguretion = true;
  * @returns {Console & ConsolePlus & OptionsDefault}
  */
 function configure(options = {}) {
-	if (firstConfiguretion) {
+	if (console.firstConfiguretion) {
 		let debugFile = config.debugFileRegExp.match(/^\/(.*?)\/([gimy]*)$/);
 		let enableFile = config.enableFileRegExp.match(/^\/(.*?)\/([gimy]*)$/);
 
@@ -180,7 +196,7 @@ function configure(options = {}) {
 			enableFileRegExp: new RegExp(enableFile[1], enableFile[2]) || /.*/,
 		};
 
-		firstConfiguretion = false;
+		console.firstConfiguretion = false;
 	}
 
 	console.optionsDefault = {

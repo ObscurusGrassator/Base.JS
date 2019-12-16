@@ -18,7 +18,7 @@ function substring(start, stop) {
 
 	if (start2 > stop2) return '';
 
-	return this.substringOld(start2, stop);
+	return this.substringOld(start2, stop2);
 }
 
 // @ts-ignore
