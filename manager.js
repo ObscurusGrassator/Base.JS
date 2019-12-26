@@ -104,7 +104,7 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 		console.info('Base.JS installing new packages:');
 		child_process.execSync("npm install", {stdio: [process.stdin, process.stdout, process.stderr]});
 		console.info(`\n INF: Help> Configuration file: ${__dirname}/jsconfig.json`);
-		console.info(`\n INF: Help> Command for server restart: ${jsconfigObj.manager.shortcuts.serverRestart.replace('\n', '')}`);
+		console.info(` INF: Help> Command for server restart: ${jsconfigObj.manager.shortcuts.serverRestart.replace('\n', '')}`);
 	}
 
 
