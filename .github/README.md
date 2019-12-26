@@ -95,19 +95,19 @@ shared/
 
 ### shared/utils/
 ```
-   console.base.js         // configure: color, log file
-   error.base.js           // better error message
+   console.base.js            // configure: color, log file
+   error.base.js              // better error message
 
-   get.base.js             // (lodash) safely getting of object property
-   set.base.js             // (lodash) safely setting of object property
-   merge.base.js           // (lodash) objects merge
-   defaults.base.js        // (lodash) objects merge
-   substring.base.js       // (PHP) implementing negative value 
-   contain.base.js         // check if object A conains object B
+   get.base.js                // (lodash) safely getting of object property
+   set.base.js                // (lodash) safely setting of object property
+   merge.base.js              // (lodash) objects merge
+   defaults.base.js           // (lodash) objects merge
+   substring.base.js          // (PHP) implementing negative value 
+   contain.base.js            // check if object A conains object B
 
-   jsonStringify.base.js   // prettyer JSON.stringifi
-   promisify.base.js       // transform function with callback to promise
-   urlParser.base.js       // extended new URL()
+   jsonStringify.base.js      // prettyer JSON.stringifi
+   promisify.base.js          // transform function with callback to promise
+   urlParser.base.js          // extended new URL()
 ```
 
 [Code screenshots here](http://obsgrass.com/public/Base.JS_screenshots)  

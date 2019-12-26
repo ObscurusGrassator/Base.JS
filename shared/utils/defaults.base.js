@@ -1,8 +1,8 @@
 /**
  * Rewritig first object properties with second object properties.
  * 
- * @param {Object} object Input/output object
- * @param {Object} defObject Object with default properties
+ * @param {{[key: string]: any}} object Input/output object
+ * @param {{[key: string]: any}} defObject Object with default properties
  * 
  * @example defaults({a: {b: 12}}, {a: {b: 13, c: 1}}) // {a: {b: 12, c: 1}}
  */

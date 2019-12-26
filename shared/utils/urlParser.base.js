@@ -1,10 +1,10 @@
 /**
  * URL object extension
  * @param {String} [url] Exampla: "http://example.com", "/path/page.html"
- * @return {URL & {parts: String[], queries: Object.<String, String>}}
+ * @return {URL & {parts: String[], queries: {[key: string]: String}}}
  */
 function urlParser(url) {
-	/** @type {URL & {parts: String[], queries: Object.<String, String>}} */
+	/** @type {URL & {parts: String[], queries: {[key: string]: String}}} */
 	let result;
 
 	if (!url) return result;

@@ -1,8 +1,11 @@
 const error = require('shared/utils/error.base.js');
 
 /**
+ * Implemented like Lodash.set()
  * 
- * @param {Object} object Example: '{a: {b: [{c: 123}]}}'
+ * It is recommended to use more user-friendly and type-safely Storage.of() .
+ * 
+ * @param {Array | {[key: string]: any}} object Example: '{a: {b: [{c: 123}]}}'
  * @param {String | Array} path  Example: 'a.b.0.c'
  * @param {any} value
  */

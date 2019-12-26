@@ -10,7 +10,7 @@ const urlParser = require('shared/utils/urlParser.base.js');
  * @param {String} [path = 'index.html']
  * @param {String} [defaultPath = 'notFounds.html']
  * 
- * @returns {Promise<{path: String, variables: Object.<String, String>}>}
+ * @returns {Promise<{path: String, variables: {[key: string]: string}}>}
  * 
  * @example getRealTemplatePath('/article/12345');
  *   // return: {path: '/article/<id>/index.html', variables: {id: '12345'}}

@@ -16,15 +16,23 @@ class Testing {
 	 * @throws Throws an exception if the test fails.
 	 */
 	static add(funct) {
-		tests.push(funct);
+		let paths = [];
+		(new Error()).stack.toString().replace(/\n.+?(\/.+?):[0-9]+:[0-9]+/g, (all, path) => {
+			if (pathLib) path = path.replace(new RegExp(pathLib.resolve('') + '\\/', 'g'), '');
+			paths.push(path);
+			return all;
+		});
+
+		tests.push({funct, paths});
 	}
 
 	/**
 	 * Start all tests
 	 * 
 	 * @returns {Promise<Number>} Number of faileds
+	 * @param {RegExp} [rexExp] File RegExp of specific tests.
 	 */
-	static async testAll() {
+	static async testAll(rexExp) {
 		let proms = [];
 		let max = tests.length;
 		let counter = 0;
@@ -34,7 +42,9 @@ class Testing {
 		await util.promisify(setTimeout, null, 100); // dirty fix of cyclic dependence 
 
 		for (let i in tests) {
-			proms.push(tests[i]()
+			if (rexExp && !rexExp.test(tests[i].paths.join())) continue;
+
+			proms.push(tests[i].funct()
 				.then((data) => {
 					counter++;
 					let tmp = Math.round((counter/max)*100);
@@ -46,22 +56,36 @@ class Testing {
 				})
 				.catch((err) => {
 					failed++;
-					let path = '';
-					if (err instanceof Error) {
-						err.stack.toString().replace(/\(([^\)]+)\)/gi, (all, e) => {
-							if (!path && e.indexOf('/error.base.js') === -1
-									&& e.indexOf('/testing.base.js') === -1) {
-								path = '/' + e.substr(pathLib.resolve('').length);
-							}
-							return all;
-						});
-					}
-					console.errorMessage('TEST FAILED', path, console.colors.reset, err);
+
+					// let errorString = '';
+					// if (typeof err == 'string') errorString = err;
+					// if (err instanceof Error) errorString = err.stack.toString();
+
+					// let errorMessage = '';
+					// if (typeof err == 'string') errorMessage = err;
+					// if (err instanceof Error) errorMessage = err.name + ' ' + err.message;
+
+					// let path = '';
+					// errorString.replace(/at [^\(]+\(([^\)]+)\)/gi, (all, e) => {
+					// 	if (!path && e.indexOf('/error.base.js') === -1
+					// 			&& e.indexOf('/testing.base.js') === -1) {
+					// 		if (err instanceof Error) path = '/' + e.substr(pathLib.resolve('').length);
+					// 		else path = '/' + e;
+					// 	}
+					// 	return all;
+					// });
+					// console.errorMessage('TEST FAILED', path, '\n', console.colors.reset, errorMessage);
+					// console.debug(util.error(err));
+
+					let msg = err;
+					if (err instanceof Error) msg = util.error(err);
+					console.errorMessage('TEST FAILED', console.colors.reset, msg);
+
 					return Promise.resolve();
 				})
 			);
 		}
-		await Promise.all(proms);
+		await Promise.all(proms).catch((err) => { throw util.error(err); });
 
 		if (!failed) console.info(max, 'tests in progress...', console.colors.green, console.colors.bold, 'DONE');
 		else console.info(max, 'tests in progress...', console.colors.red, 'FAILED:', failed);

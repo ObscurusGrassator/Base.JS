@@ -19,19 +19,19 @@ const config = require('shared/services/jsconfig.base.js').update('services.stor
 }).value.services.storage;
 
 const data = {};
+let dataEdit = data;
 let path = [];
 
 /** @type {ProxyHandler} */
 const handler = {
 	apply: (obj, thisArg, argumentsList) => {
-		let orig = util.get(data, path.slice(0, path.length-1));
+		let orig = util.get(dataEdit, path.slice(0, path.length-1));
 		orig[path[path.length-1]].apply(orig, argumentsList);
 		saveSpecial(path[0]);
 		return orig;
 	},
 	get: (obj, prop) => {
-		if (obj._BaseJS_root) {
-			path = [];
+		if (obj._BaseJS_default) {
 			if (prop == 'cookie') {
 				data.cookie = getCookies();
 				if (data.cookie) {
@@ -62,38 +62,33 @@ const handler = {
 				}
 			}
 		}
-		if (prop == '_BaseJS_isProxy') return true;
-		let value = util.get(data, path);
+
+		let value = util.get(dataEdit, path);
 		if (prop == '_BaseJS_value') return value;
 		path.push(prop);
 
 		if (!value && ['push', 'pop', 'shift', 'unshift'].indexOf(prop.toString()) > -1) {
-			util.set(data, path.slice(0, path.length-1), []);
+			util.set(dataEdit, path.slice(0, path.length-1), []);
 			return new Proxy([][prop], handler);
-		} else if (value && typeof value[prop] == 'function') {
+		}
+		else if (value && typeof value[prop] == 'function') {
 			return new Proxy(value[prop], handler); // tu vstupuje do proxy funkcia, nie objekt
-		} else if (!obj[prop]) {
-			obj[prop] = (value && value[prop] && JSON.parse(JSON.stringify(value[prop]))) || {};
-			obj[prop] = new Proxy(obj[prop], handler);
-		} else if (!obj[prop]._BaseJS_isProxy) {
-			// Primitive values must also access to proxy value '_BaseJS_value'
-			obj[prop] = new Proxy(typeof obj[prop] == 'object' ? obj[prop] : {}, handler);
+		}
+		else if (!obj[prop]) {
+			obj[prop] = new Proxy({}, handler);
 		}
 
 		return obj[prop];
 	},
 	set: (obj, prop, val) => {
-		if (obj._BaseJS_root) path = [];
 		path.push(prop);
-		util.set(data, path, val);
-		obj[prop] = val;
+		util.set(dataEdit, path, val);
 		saveSpecial(path[0]);
 		return true;
 	},
 	deleteProperty: (obj, prop) => {
-		if (obj._BaseJS_root) path = [];
-		if (util.get(data, path)) {
-			delete util.get(data, path)[prop];
+		if (util.get(dataEdit, path)) {
+			delete util.get(dataEdit, path)[prop];
 			delete obj[prop];
 			saveSpecial(path[0] || prop);
 		}
@@ -101,7 +96,7 @@ const handler = {
 	}
 };
 
-const proxy = new Proxy({_BaseJS_root: true}, handler);
+const proxyData = new Proxy({_BaseJS_default: true}, handler);
 
 function saveSpecial(special) {
 	if (special == 'cookie') {
@@ -154,37 +149,56 @@ class Storage {
 	 * 
 	 * Special storage properties: storage.cookie, storage.session, storage.local
 	 * 
-	 // @ts-ignore
 	 * @param {function(StorageTypeClient): any} selectFunction
 	 * @returns {any}
 	 * 
 	 * @example client(storage => storage.a.b.c);
-	 * @example client(storage => storage.a.b.c = 'test');
-	 * @example client(storage => storage.a.b.c.push('test'));
-	 * @example client(storage => delete storage.a.b.c);
+	 * @example client(storage => storage.a.b.d = 'test');
+	 * @example client(storage => storage.a.b.e.push('test'));
+	 * @example client(storage => delete storage.a.b.f);
 	 */
 	static client(selectFunction) {
 		return Storage.edit(selectFunction);
 	}
+
 	/**
 	 * Safe edit property.
 	 * 
 	 * Special storage properties: storage.cookie
 	 * 
-	 // @ts-ignore
 	 * @param {function(StorageTypeServer): any} selectFunction
 	 * @returns {any}
 	 * 
 	 * @example server(storage => storage.a.b.c);
-	 * @example server(storage => storage.a.b.c = 'test');
-	 * @example server(storage => storage.a.b.c.push('test'));
-	 * @example server(storage => delete storage.a.b.c);
+	 * @example server(storage => storage.a.b.d = 'test');
+	 * @example server(storage => storage.a.b.e.push('test'));
+	 * @example server(storage => delete storage.a.b.f);
 	 */
 	static server(selectFunction) {
 		return Storage.edit(selectFunction);
 	}
-	static edit(selectFunction) {
-		let result = selectFunction(proxy);
+
+	/**
+	 * Safe edit property of user object or array.
+	 * 
+	 * @template T
+	 * @param {T} userObject
+	 * @param {function(T): any} selectFunction
+	 * @returns {any}
+	 * 
+	 * @example server({a: {b: {c: 'x'}}}, storage => storage.a.b.c);
+	 * @example server({a: {b: {c: 'x'}}}, storage => storage.a.b.d = 'test');
+	 * @example server({a: {b: {c: 'x'}}}, storage => storage.a.b.e.push('test'));
+	 * @example server({a: {b: {c: 'x'}}}, storage => delete storage.a.b.f);
+	 */
+	static of(userObject, selectFunction) {
+		return Storage.edit(selectFunction, userObject);
+	}
+
+	static edit(selectFunction, userObject) {
+		dataEdit = userObject || data;
+		path = [];
+		let result = selectFunction(userObject ? new Proxy({}, handler) : proxyData);
 		if (typeof result == 'boolean') return result;
 		else return result._BaseJS_value;
 	}
