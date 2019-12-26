@@ -100,7 +100,7 @@ concoleWarnError(console0);
 			showNewCommits.join('\n'),
 			'\n  ', hashOld, '-->', hashNew,
 			console.colors.blue, '\n   Command for update:', console.colors.reset,
-			console.colors.green, console.colors.bold, 'git --git-dir=.gitBase.JS pull',
+			console.colors.green, console.colors.bold, 'npm update',
 		);
 	});
 
@@ -200,5 +200,4 @@ concoleWarnError(console0);
 	}
 
 	console.info('Help>', s.console.colors.cyan, 'npm start', s.service.storage.server((s) => s.server.help).map((help) => help.prop).join(' '));
-	console.info('Help>', s.console.colors.cyan, 'npm run indexing');
 })().catch((err) => { console.error(err); });

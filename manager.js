@@ -86,7 +86,8 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 		"scripts": {
 			"start": "NODE_PATH=. node manager.js",
 			"bg": "NODE_PATH=. nohup node manager.js &",
-			"indexing": "NODE_PATH=. node -e \"require('server/utils/indexCreate.base.js')()\""
+			"indexing": "NODE_PATH=. node -e \"require('server/utils/indexCreate.base.js')()\"",
+			"update": "git --git-dir=.gitBase.JS pull & npm install"
 		},
 		"dependencies": {
 			"iconv-lite": "^0.4.24",
@@ -102,6 +103,7 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 
 		console.info('Base.JS installing new packages:');
 		child_process.execSync("npm install", {stdio: [process.stdin, process.stdout, process.stderr]});
+		console.info(`\n Help> Configuration file: ${__dirname}/jsconfig.json`);
 	}
 
 
