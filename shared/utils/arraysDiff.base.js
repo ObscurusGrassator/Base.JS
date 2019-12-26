@@ -1,11 +1,14 @@
 const get = require('shared/utils/get.base.js');
 
 /**
+ * Difference and intersection of two input array.
  * 
  * @template T
+ * 
  * @param {T[]} A
  * @param {T[]} B
  * @param {function} [comparation = (a, b) => a === b]
+ * 
  * @returns {{difference: T[], intersection: T[]}}
  * 
  * @example arraysDiff([2, 3], [3, 4]); // {difference: [2, 4], intersection: [3]}

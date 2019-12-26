@@ -91,6 +91,7 @@ async function readFile(filePath, content, id, css = [], js = []) {
  * @param {String} [template = 'index'] Parent html template for building
  * @param {String[]} [css = []] Private property - Do not set
  * @param {String[]} [js = []] Private property - Do not set
+ * 
  * @returns {Promise<String>} Builded HTML string
  */
 async function htmlGenerator(content = {}, template = 'index', css = [], js = []) {

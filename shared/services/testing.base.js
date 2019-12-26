@@ -13,7 +13,6 @@ class Testing {
 	/**
 	 * Add async testing function to stack
 	 * @param {function():Promise} funct Async function with tested content.
-	 * @throws Throws an exception if the test fails.
 	 */
 	static add(funct) {
 		let paths = [];
@@ -29,8 +28,10 @@ class Testing {
 	/**
 	 * Start all tests
 	 * 
-	 * @returns {Promise<Number>} Number of faileds
 	 * @param {RegExp} [rexExp] File RegExp of specific tests.
+	 * 
+	 * @returns {Promise<Number>} Number of faileds
+	 * @throws Throws an exception if the test fails.
 	 */
 	static async testAll(rexExp) {
 		let proms = [];
@@ -92,16 +93,6 @@ class Testing {
 
 		return failed;
 	}
-}
-
-function filterProperty(obj, key) {
-	delete obj[key];
-	if (typeof obj == 'object' && obj[i] != null) {
-		for (var i in obj) {
-			filterProperty(obj[i], key);
-		}
-	}
-	return obj;
 }
 
 module.exports = Testing;

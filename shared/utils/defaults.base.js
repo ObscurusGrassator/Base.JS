@@ -1,8 +1,13 @@
 /**
  * Rewritig first object properties with second object properties.
  * 
- * @param {{[key: string]: any}} object Input/output object
- * @param {{[key: string]: any}} defObject Object with default properties
+ * @template {Array | {[key: string]: any}} T1
+ * @template {Array | {[key: string]: any}} T2
+ * 
+ * @param {T1} object Input/output object
+ * @param {T2} defObject Object with default properties
+ * 
+ * @return {T1 & T2}
  * 
  * @example defaults({a: {b: 12}}, {a: {b: 13, c: 1}}) // {a: {b: 12, c: 1}}
  */

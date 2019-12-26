@@ -1,6 +1,6 @@
 /**
  * URL object extension
- * @param {String} [url] Exampla: "http://example.com", "/path/page.html"
+ * @param {String} [url] Examples: "http://example.com", "/path/page.html"
  * @return {URL & {parts: String[], queries: {[key: string]: String}}}
  */
 function urlParser(url) {

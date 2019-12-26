@@ -182,8 +182,10 @@ class Storage {
 	 * Safe edit property of user object or array.
 	 * 
 	 * @template T
+	 * 
 	 * @param {T} userObject
 	 * @param {function(T): any} selectFunction
+	 * 
 	 * @returns {any}
 	 * 
 	 * @example server({a: {b: {c: 'x'}}}, storage => storage.a.b.c);

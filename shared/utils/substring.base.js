@@ -1,13 +1,15 @@
 /**
  * Overwrite String method "substring" to like to PHP version.
  * 
+ * @param {Number} start
+ * @param {Number} stop
+ * 
+ * @returns {String}
+ * 
  * @example "abc".substring(1) // return: "bc"
  * @example "abc".substring(-1) // return: "c"
  * @example "abc".substring(1, 2) // return: "b"
  * @example "abc".substring(1, -1) // return: "b"
- * 
- * @param {Number} start
- * @param {Number} stop
  */
 function substring(start, stop) {
 	let start2 = start;
