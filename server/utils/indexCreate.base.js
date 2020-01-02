@@ -42,6 +42,7 @@ const config = require('shared/services/jsconfig.base.js').update('utils._create
  * @param {String} [objectPathsSource]
  *    if this not defined, is used require function is used for file path,
  *    else this client array with file paths properties
+ * 
  * @returns {Promise<String>}
  */
 async function indexCreate(destinationPath = null, dirPathsSource = [], type = 'utils', objectPathsSource = null) {

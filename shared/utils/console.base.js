@@ -96,9 +96,9 @@ const getMessage = (methodKey, tmp, ...inputs) => {
 		// samotný test je umiestnený v súbore, ktorého existencia v stacku by nemala mať vpliv na RegExp
 		if (paths[paths.length-1].substring(-15) == 'testing.base.js') {
 			for (let i = paths.length-1, test = ''; i >= 0; i--) {
-				if (paths[i].substring(-15) == 'testing.base.js') {
-					continue;
-				}
+				if (paths[i].substring(-15) == 'testing.base.js') continue;
+				if (paths[i].substring(-22) == 'process/task_queues.js') continue;
+
 				if (!test) {
 					test = paths[i].substring(paths[i].lastIndexOf('/')+1);
 				}

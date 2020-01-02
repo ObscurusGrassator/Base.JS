@@ -11,6 +11,7 @@ const error = require('shared/utils/error.base.js');
  * @param {String} dirPath 
  * @param {RegExp} [regExp = /.+/] Regular expression test for returned file path
  * @param {Boolean} [libOrService = false] If true, function not return files into service folders
+ * 
  * @returns {Promise<String[]>}
  */
 function getFilePaths(dirPath, regExp = /.+/, libOrService = false, dirPathOrig = null) {

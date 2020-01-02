@@ -86,7 +86,8 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 		"scripts": {
 			"start": "NODE_PATH=. node manager.js",
 			"bg": "NODE_PATH=. nohup node manager.js &",
-			"indexing": "NODE_PATH=. node -e \"require('server/utils/indexCreate.base.js')()\""
+			"indexing": "NODE_PATH=. node -e \"require('server/utils/indexCreate.base.js')()\"",
+			"update": "git --git-dir=.gitBase.JS pull & npm install"
 		},
 		"dependencies": {
 			"iconv-lite": "^0.4.24",
@@ -102,6 +103,8 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 
 		console.info('Base.JS installing new packages:');
 		child_process.execSync("npm install", {stdio: [process.stdin, process.stdout, process.stderr]});
+		console.info(`\n INF: Help> Configuration file: ${__dirname}/jsconfig.json`);
+		console.info(` INF: Help> Command for server restart: ${jsconfigObj.manager.shortcuts.serverRestart.replace('\n', '')}`);
 	}
 
 
@@ -147,7 +150,8 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 				console.info(' ' + console.colors.red2, console.colors.reset + console.colors.bold + console.colors.red,
 					'SERVER RESTART FAILDED...', (new Date()).getTime() - time, '> 5000');
 
-				if (jsconfigObj.utils.email && jsconfigObj.utils.email.sendEmailAfter.fatalError) {
+				if (jsconfigObj.utils['email'] && jsconfigObj.utils['email'].sendEmailAfter
+						&& jsconfigObj.utils['email'].sendEmailAfter.fatalError) {
 					require('server/utils/email.base.js')('SERVER RESTART FAILDED')
 					.catch((err) => { console.error(err); });
 				}

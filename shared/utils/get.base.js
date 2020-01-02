@@ -1,6 +1,9 @@
 /**
+ * Implemented like Lodash.get()
  * 
- * @param {Object} object Example: '{a: {b: [{c: 123}]}}'
+ * It is recommended to use more user-friendly and type-safely Storage.of() .
+ * 
+ * @param {Array | {[key: string]: any}} object Example: '{a: {b: [{c: 123}]}}'
  * @param {String | Array} path  Example: 'a.b.0.c'
  * @param {any} defaultValue Default values when path not exists in object
  */

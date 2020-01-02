@@ -28,9 +28,11 @@ const other = {
 };
 
 /**
+ * Send email
  * 
  * @param {String} message 
- * @param {Object} [configuration = {}] Default configuration is in jsconfig.json/util.email
+ * @param {{[key: string]: any}} [configuration = {}] Default configuration is in jsconfig.json/util.email
+ * 
  * @returns {Promise<Object>}
  */
 async function email(message, configuration = {}) {

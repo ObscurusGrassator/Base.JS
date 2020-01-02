@@ -24,20 +24,28 @@ window.addEventListener('load', () => {
 		util.contain(
 			service.storage.client(storage => storage._example_._example.array[0]),
 			{a: 'aaa'},
-			{throwAfterUncontain: true}
+			{throwAfterUncontain: 'Storage property get failed'}
 		);
 		// or
 		util.contain(
 			service.storage.client(storage => storage),
 			{_example_: {_example: {array: [{a: 'aaa'}]}}},
-			{throwAfterUncontain: true}
+			{throwAfterUncontain: 'Storage property get failed'}
 		);
 
 		service.storage.client(storage => storage._example_._example.array.push({a: 'xxx'}));
 		util.contain(
 			service.storage.client(storage => storage),
 			{_example_: {_example: {array: [{a: 'xxx'}]}}},
-			{throwAfterUncontain: true}
+			{throwAfterUncontain: 'Storage property push failed'}
+		);
+
+		const userObject = {a: {b: {}}};
+		service.storage.of(userObject, storage => storage.a.b.x.push({y: 'yyy'}));
+		util.contain(
+			userObject,
+			{a: {b: {x: [{y: 'yyy'}]}}},
+			{throwAfterUncontain: 'Storage.of failed'}
 		);
 
 		service.storage.client(storage => delete storage._example_._example);
@@ -49,21 +57,21 @@ window.addEventListener('load', () => {
 		util.contain(
 			service.storage.client(storage => storage.cookie),
 			{_exampleCookieStorage: {a: 'bbb', c: 'ddd'}},
-			{throwAfterUncontain: true}
+			{throwAfterUncontain: 'Storage cookie failed'}
 		);
 
 		service.storage.client(storage => storage.session._exampleSessionStorage.a = 'ccc');
 		util.contain(
 			service.storage.client(storage => storage.session),
 			{_exampleSessionStorage: {a: 'ccc'}},
-			{throwAfterUncontain: true}
+			{throwAfterUncontain: 'Storage session failed'}
 		);
 
 		service.storage.client(storage => storage.local._exampleLocalStorage.a = 'ddd');
 		util.contain(
 			service.storage.client(storage => storage.local),
 			{_exampleLocalStorage: {a: 'ddd'}},
-			{throwAfterUncontain: true}
+			{throwAfterUncontain: 'Storage localStorage failed'}
 		);
 	});
 }, false);

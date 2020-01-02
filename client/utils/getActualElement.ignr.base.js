@@ -1,7 +1,10 @@
 /**
  * Get actual template element. This function is called by framework.
- * @example const thisElement = require('client/utils/getActualElement.ignr.base.js');;
+ * 
+ * @example const thisElement = require('client/utils/getActualElement.ignr.base.js');
+ * 
  * @param {String} id This parameter is generated of framework.
+ * 
  * @returns {Promise<HTMLElement>}
  */
 function getActualElement(id) {

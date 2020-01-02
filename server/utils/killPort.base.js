@@ -5,7 +5,7 @@ const error = require('shared/utils/error.base.js');
  * Kill all process on port.
  * 
  * @param {Number} port
- * @param {'udp' | 'tcp'} method
+ * @param {'udp' | 'tcp'} [method = 'tcp']
  */
 async function killPort(port, method = 'tcp') {
 	let killing, result;

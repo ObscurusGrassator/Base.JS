@@ -1,8 +1,13 @@
 /**
  * Merging first object with second object properties, if they not exists in first object.
  * 
- * @param {Object} object Input/output object
- * @param {Object} reqObject Object with required properties
+ * @template {Array | {[key: string]: any}} T1
+ * @template {Array | {[key: string]: any}} T2
+ * 
+ * @param {T1} object Input/output object
+ * @param {T2} reqObject Object with required properties
+ * 
+ * @return {T1 & T2}
  * 
  * @example merge({a: {b: 13, c: 1}}, {a: {b: 12}}) // {a: {b: 12, c: 1}}
  */

@@ -87,10 +87,11 @@ async function readFile(filePath, content, id, css = [], js = []) {
  * To content param is automatic added 'config' property. It contains
  *   jsconfig properties content whose names does not begin with character '_'.
  * 
- * @param {Object} [content = {}] Json content readable in client JavaScript.
+ * @param {{[key: string]: any}} [content = {}] Json content readable in client JavaScript.
  * @param {String} [template = 'index'] Parent html template for building
  * @param {String[]} [css = []] Private property - Do not set
  * @param {String[]} [js = []] Private property - Do not set
+ * 
  * @returns {Promise<String>} Builded HTML string
  */
 async function htmlGenerator(content = {}, template = 'index', css = [], js = []) {

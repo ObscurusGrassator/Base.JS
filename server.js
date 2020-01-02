@@ -5,17 +5,35 @@ Error.stackTraceLimit = Infinity;
 
 const pathLib = require('path');
 
-module.constructor.prototype.require = function (path = '') {
-	if (path.substr(0, 7) == 'client/') { // IDE 'requires' helpers are skipped.
-		try {
-			var file = new Error('').stack
-			.match(new RegExp('\\(' + pathLib.resolve('') + '([\\s\\S]+)'))[1]
-			.match(new RegExp('\\(' + pathLib.resolve('') + '([^\\)]+)\\)'))[1];
-		} catch (err) {}
-		console.debug(`WARNING: Path require('${path}') in ${file} should not load in server side. This require is skyped.`);
-		return undefined;
-	} else return this.constructor._load(path, this);
+const concoleWarnError = (console) => {
+	module.constructor.prototype.require = function (path = '') {
+		if (path.substr(0, 7) == 'client/') { // IDE 'requires' helpers are skipped.
+			try {
+				var file = new Error('').stack
+				.match(new RegExp('\\(' + pathLib.resolve('') + '([\\s\\S]+)'))[1]
+				.match(new RegExp('\\(' + pathLib.resolve('') + '([^\\)]+)\\)'))[1];
+			} catch (err) {}
+			console.debug(`WARNING: Path require('${path}') in ${file} should not load in server side. This require is skyped.`);
+			return undefined;
+		} else return this.constructor._load(path, this);
+	};
+
+	process.on('uncaughtException', (err) => {
+		console.error('Uncaught exception:', err.stack || err);
+		if (s.config.utils.email.sendEmailAfter.error) {
+			s.util.email('' + s.error(err))
+			.catch((err) => { console.error(err); });
+		}
+	});
+	process.on('unhandledRejection', (/** @type {Error} */ err, promise) => {
+		console.error('Unhandled Rejection:', err.stack || err)
+		if (s.config.utils.email.sendEmailAfter.error) {
+			s.util.email('' + s.error(err))
+			.catch((err) => { console.error(err); });
+		}
+	});
 };
+concoleWarnError(console);
 
 process.stdin.resume();
 process.stdin.setEncoding('utf8');
@@ -32,36 +50,26 @@ process.stdin.on('data', async (data) => {
 });
 
 const s = require('server/_index.js');
-const app = require(s.config.startFile);
 
-process.on('uncaughtException', (err) => {
-	console.error('Uncaught exception:', err.stack || err);
-	if (s.config.utils.email.sendEmailAfter.error) {
-		s.util.email('' + s.error(err))
-		.catch((err) => { console.error(err); });
+const console0 = s.util.console.configure({userErrorFunction: s.util.error});
+let debugFileRegExp;
+s.service.storage.server(
+	(s) => s.server.help.push({prop: 'debug=/app\\.js/i', desc: 'show debug console.log for'}));
+for (let i in process.argv) {
+	if (process.argv[i].substr(0, 6) === 'debug=') {
+		let match = process.argv[i].match(/=\/?([^\/]+)\/?(.*)$/);
+		debugFileRegExp = new RegExp(match[1], match[2]);
 	}
-});
-process.on('unhandledRejection', (/** @type {Error} */ err, promise) => {
-	console.error('Unhandled Rejection:', err.stack || err)
-	if (s.config.utils.email.sendEmailAfter.error) {
-		s.util.email('' + s.error(err))
-		.catch((err) => { console.error(err); });
-	}
-});
+}
+debugFileRegExp && console0.configure({debugFileRegExp: debugFileRegExp});
+
+concoleWarnError(console0);
 /************************/
 
 
 (async () => {
-	const console = s.util.console.configure({userErrorFunction: s.util.error});
-	let debugFileRegExp;
-	s.service.storage.server(
-		(s) => s.server.help.push({prop: 'debug=/app\\.js/i', desc: 'show debug console.log for'}));
-	for (let i in process.argv) {
-		if (process.argv[i].substr(0, 6) === 'debug=') {
-			debugFileRegExp = new RegExp(process.argv[i].match(/=\/?(.+?)\/?[ig]{0,2}$/)[1]);
-		}
-	}
-	debugFileRegExp && console.configure({debugFileRegExp: debugFileRegExp});
+	const console = console0;
+	const app = require(s.config.startFile);
 
 	s.modul["shell-exec"](`
 		git --git-dir=.gitBase.JS rev-parse HEAD;
@@ -92,7 +100,7 @@ process.on('unhandledRejection', (/** @type {Error} */ err, promise) => {
 			showNewCommits.join('\n'),
 			'\n  ', hashOld, '-->', hashNew,
 			console.colors.blue, '\n   Command for update:', console.colors.reset,
-			console.colors.green, console.colors.bold, 'git --git-dir=.gitBase.JS pull',
+			console.colors.green, console.colors.bold, 'npm update',
 		);
 	});
 
@@ -182,10 +190,14 @@ process.on('unhandledRejection', (/** @type {Error} */ err, promise) => {
 	}
 
 	s.service.storage.server((s) => s.server.help.push({prop: 'testing', desc: 'start tests'}));
+	s.service.storage.server((s) => s.server.help.push({prop: 'testing=/fileWithTest/', desc: 'start specific tests'}));
 	for (let i in process.argv) {
 		if (process.argv[i] === 'testing') s.service.testing.testAll(); // await
+		else if (process.argv[i].substr(0, 8) === 'testing=') {
+			let match = process.argv[i].match(/=\/?([^\/]+)\/?(.*)$/);
+			s.service.testing.testAll(new RegExp(match[1], match[2]));
+		}
 	}
 
 	console.info('Help>', s.console.colors.cyan, 'npm start', s.service.storage.server((s) => s.server.help).map((help) => help.prop).join(' '));
-	console.info('Help>', s.console.colors.cyan, 'npm run indexing');
 })().catch((err) => { console.error(err); });

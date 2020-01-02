@@ -40,8 +40,10 @@ const handler = {
 
 const proxy = {_BaseJS_root: true};
 /**
- * Easy communication of components through events. 
+ * Easy communication of components through events.
+ * 
  * @type {EventType}
+ * 
  * @example
  *   let listen = event.userPath.eventName.listen(
  *      (event, properties) => { ... properties.example ... }
