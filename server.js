@@ -84,20 +84,30 @@ concoleWarnError(console0);
 
 		for (let i in newCommits) {
 			if (!newCommits[i]) continue;
-			let match = newCommits[i].match(/^([0-9a-fA-F]+) (([^:]+):)?(.+)$/);
+			let match = newCommits[i].match(/^([0-9a-fA-F]+) (new|upd|fix|del|dep)?( |: )?(.+)$/i);
+			if (!match) continue;
 			if (!hashNew) hashNew = match[1];
 
-			if (match[3] && match[3].toLowerCase() == 'new') {
-				showNewCommits.push('    ' + console.colors.green + console.colors.bold + 'NEW:' + console.colors.reset + match[4]);
+			if (match[2] && match[2].toLowerCase() == 'new') {
+				showNewCommits.push('     ' + console.colors.green + console.colors.bold + 'NEW: ' + console.colors.reset + match[4]);
 			}
-			if (match[3] && match[3].toLowerCase() == 'fix') {
-				showNewCommits.push('    ' + console.colors.red   + console.colors.bold + 'FIX:' + console.colors.reset + match[4]);
+			if (match[2] && match[2].toLowerCase() == 'upd') {
+				showNewCommits.push('     ' + console.colors.green + console.colors.bold + 'UPD: ' + console.colors.reset + match[4]);
+			}
+			if (match[2] && match[2].toLowerCase() == 'fix') {
+				showNewCommits.push('     ' + console.colors.red   + console.colors.bold + 'FIX: ' + console.colors.reset + match[4]);
+			}
+			if (match[2] && match[2].toLowerCase() == 'del') {
+				showNewCommits.push('     ' + console.colors.red   + console.colors.bold + 'DEL: ' + console.colors.reset + match[4]);
+			}
+			if (match[2] && match[2].toLowerCase() == 'dep') {
+				showNewCommits.push('     ' + console.colors.red   + console.colors.bold + 'DEP: ' + console.colors.reset + match[4]);
 			}
 		}
 
 		if (showNewCommits.length) console.info(
 			'New version Base.JS framework contains:\n',
-			showNewCommits.join('\n'),
+			showNewCommits.join('\n').substr(1),
 			'\n  ', hashOld, '-->', hashNew,
 			console.colors.blue, '\n   Command for update:', console.colors.reset,
 			console.colors.green, console.colors.bold, 'npm update',
