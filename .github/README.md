@@ -7,7 +7,7 @@ The first run generates/updates a configuration file `jsconfig.json`, which allo
   
 **ALERT:** Framework does not and will not support outdated browsers.
   
-# Download and Installation
+# Download, Installation and First start
 ```
 git clone https://github.com/ObscurusGrassator/Base.JS.git you_project_name
 cd you_project_name
