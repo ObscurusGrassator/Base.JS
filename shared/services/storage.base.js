@@ -1,5 +1,3 @@
-const StorageTypeClient = require('client/types/storage');
-const StorageTypeServer = require('server/types/storage');
 const util = require('shared/utils');
 const error = require('shared/utils/error.base.js');
 
@@ -35,7 +33,7 @@ const handler = {
 			if (prop == 'cookie') {
 				data.cookie = getCookies();
 				if (data.cookie) {
-					// obj.cookie = JSON.parse(JSON.stringify(data.cookie));
+					// obj.cookie = util.objectClone(data.cookie);
 				} else {
 					delete data.cookie;
 					delete obj.cookie;
@@ -45,7 +43,7 @@ const handler = {
 				data.session = sessionStorage.getItem('storage');
 				if (data.session) {
 					data.session = JSON.parse(data.session);
-					// obj.session = JSON.parse(JSON.stringify(data.session));
+					// obj.session = util.objectClone(data.session);
 				} else {
 					delete data.session;
 					delete obj.session;
@@ -55,7 +53,7 @@ const handler = {
 				data.local = localStorage.getItem('storage');
 				if (data.local) {
 					data.local = JSON.parse(data.local);
-					// obj.local = JSON.parse(JSON.stringify(data.local));
+					// obj.local = util.objectClone(data.local);
 				} else {
 					delete data.local;
 					delete obj.local;
@@ -149,8 +147,7 @@ class Storage {
 	 * 
 	 * Special storage properties: storage.cookie, storage.session, storage.local
 	 * 
-	 * @param {function(StorageTypeClient): any} selectFunction
-	 * @returns {any}
+	 * @param {function(import('client/types/storage').Type): any} selectFunction
 	 * 
 	 * @example client(storage => storage.a.b.c);
 	 * @example client(storage => storage.a.b.d = 'test');
@@ -166,8 +163,7 @@ class Storage {
 	 * 
 	 * Special storage properties: storage.cookie
 	 * 
-	 * @param {function(StorageTypeServer): any} selectFunction
-	 * @returns {any}
+	 * @param {function(import('server/types/storage').Type): any} selectFunction
 	 * 
 	 * @example server(storage => storage.a.b.c);
 	 * @example server(storage => storage.a.b.d = 'test');
@@ -185,8 +181,6 @@ class Storage {
 	 * 
 	 * @param {T} userObject
 	 * @param {function(T): any} selectFunction
-	 * 
-	 * @returns {any}
 	 * 
 	 * @example server({a: {b: {c: 'x'}}}, storage => storage.a.b.c);
 	 * @example server({a: {b: {c: 'x'}}}, storage => storage.a.b.d = 'test');

@@ -1,7 +1,9 @@
 const pathLib = typeof require !== 'undefined' ? require('path') : {resolve: () => ''};
 
-const util = require('shared/utils');
-const console = require('shared/utils/console.base.js');
+// @ts-ignore
+var util = typeof window !== 'undefined' && window.requires['shared/utils'];
+// @ts-ignore
+var console = typeof window !== 'undefined' && window.requires['shared/utils/console.base.js'];
 
 let tests = [];
 let failed = 0;
@@ -34,6 +36,10 @@ class Testing {
 	 * @throws Throws an exception if the test fails.
 	 */
 	static async testAll(rexExp) {
+		// For testing before inicializing shared/utils
+		if (typeof require !== 'undefined') util = require('shared/utils');;
+		if (typeof require !== 'undefined') console = require('shared/utils/console.base.js');;
+
 		let proms = [];
 		let max = tests.length;
 		let counter = 0;
@@ -58,29 +64,12 @@ class Testing {
 				.catch((err) => {
 					failed++;
 
-					// let errorString = '';
-					// if (typeof err == 'string') errorString = err;
-					// if (err instanceof Error) errorString = err.stack.toString();
-
-					// let errorMessage = '';
-					// if (typeof err == 'string') errorMessage = err;
-					// if (err instanceof Error) errorMessage = err.name + ' ' + err.message;
-
-					// let path = '';
-					// errorString.replace(/at [^\(]+\(([^\)]+)\)/gi, (all, e) => {
-					// 	if (!path && e.indexOf('/error.base.js') === -1
-					// 			&& e.indexOf('/testing.base.js') === -1) {
-					// 		if (err instanceof Error) path = '/' + e.substr(pathLib.resolve('').length);
-					// 		else path = '/' + e;
-					// 	}
-					// 	return all;
-					// });
-					// console.errorMessage('TEST FAILED', path, '\n', console.colors.reset, errorMessage);
-					// console.debug(util.error(err));
-
-					let msg = err;
-					if (err instanceof Error) msg = util.error(err);
-					console.errorMessage('TEST FAILED', console.colors.reset, msg);
+					console.errorMessage(
+						'TEST FAILED',
+						console.colors.reset,
+						err instanceof Error ? util.error(err) : err,
+						// new Error('File location:')
+					);
 
 					return Promise.resolve();
 				})
