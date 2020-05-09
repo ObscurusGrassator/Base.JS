@@ -1,15 +1,17 @@
 const pathLib = typeof require !== 'undefined' ? require('path') : {resolve: () => ''};
 
+/** @type {'keep' | 'random'} */ const orderInArray = 'random';
 const optionsDefault = {
 	equalsValues: [[undefined, false]],
-	throwAfterUncontain: false
+	throwAfterUncontain: false,
+	orderInArray: orderInArray
 };
 
-/** @typedef {import('../types/general.base.js').Deep<{_keepOrder?: Boolean}>} Deep_keepOrder */
+/** @typedef {import('../types/general.base.js').Deep<{}, "_keepOrder">} Deep_keepOrder */
 
 /**
  * Test if object contain all 'mustHave' properties.
- * If mustHave part object in array contain property "_keepOrder", array order is controlled.
+ * If "mustHave" input object contain array with "_keepOrder" ("_randomOrder") object property on last position, this array order is (is't) controlled.
  * 
  * @template {Array | {[key: string]: any}} T
  * @param {T} object
@@ -17,12 +19,13 @@ const optionsDefault = {
  * @param {Object} options
  * @param {any[][]} [options.equalsValues = [[undefined, false]] ] Defaul undefined === false
  * @param {String | Boolean} [options.throwAfterUncontain = false] If set message string, is throw: [options.throwAfterUncontain, path, bugs[]]
+ * @param {'keep' | 'random'} [options.orderInArray = 'random'] Default comparison in all arrays.
  * 
  * @example contain({a: {x: 2}, b: {y: 3}}, {b: {y: 3}}); // true
  * @example contain({a: {x: 2}, b: {y: 3}}, {b: {x: 2}}); // false
  * @example contain({a: {array: [{x: 5}, {y: 6}]}}, {a: {array: [{y: 6}]}}); // true
- * @example contain({a: {array: [{x: 5}, {y: 6}]}}, {a: {array: [{y: 6, _keepOrder: true}]}}); // false
- * @example contain({a: {array: [{x: 5}, {y: 6}]}}, {a: {array: [{x: 5, _keepOrder: true}]}}); // true
+ * @example contain({a: {array: [{x: 5}, {y: 6}]}}, {a: {array: [{y: 6}, {_keepOrder: true}]}}); // false
+ * @example contain({a: {array: [{x: 5}, {y: 6}]}}, {a: {array: [{x: 5}, {_keepOrder: true}]}}); // true
  * @example contain({}, {b: false}); // true
  * 
  * @returns {Boolean}
@@ -45,8 +48,11 @@ function contain(object, mustHave, options = optionsDefault) {
 
 		if (typeof mustHave == 'object') {
 			for (let m in mustHave) {
-				if (m == '_keepOrder') continue;
-				else if (Array.isArray(mustHave) && !mustHave[m]._keepOrder) {
+				if (Array.isArray(mustHave) && mustHave.length-1 === +m
+					&& ['_keepOrder', '_randomOrder'].indexOf(mustHave[m]) > -1) continue;
+				else if (Array.isArray(mustHave) && (
+						(options.orderInArray == 'random' && mustHave[mustHave.length-1] !== '_keepOrder') ||
+						(options.orderInArray == 'keep' && mustHave[mustHave.length-1] === '_randomOrder') )) {
 					let eq = false;
 					for (let o in object) {
 						if (loop(object[o], mustHave[m], opt, path, {bugs: []})) eq = true; // tento contain nemá pushovať bug
@@ -93,6 +99,21 @@ function contain(object, mustHave, options = optionsDefault) {
 	};
 	return loop(object, mustHave, options);
 }
-// contain({a: 2, b: 'e'}, {})
+// contain({a: 2, obj: {b: 'c'}, arr: ['a', 'b']}, {a: 'w', arr: ['a', "_keepOrder"], dd: 21})
 
 module.exports = contain;
+
+
+
+// /**
+//  * @template {{[key: string]: any}} T
+//  * @typedef {T | {[k: string]: Deep } | Deep[] | {[k: string]: any} | any[]} Deep
+//  */
+// /**
+//  * @template {Array | {[key: string]: any}} T
+//  * @param {T} object
+//  * @param {T | Deep<{x: number}>} mustHave
+//  */
+// function aaa(object, mustHave) {}
+
+// aaa({a: 2, b: 'e'}, {});
