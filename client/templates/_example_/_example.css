@@ -1,4 +1,5 @@
-#template_example {
+#template_example,
+#template_example table {
 	margin: auto;
 	width: max-content;
 	height: max-content;

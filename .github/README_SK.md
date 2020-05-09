@@ -7,7 +7,7 @@ Po prvom spustení sa vygeneruje/upravý konfiguračný súbor 'jsconfig.json', 
   
 **ALERT:** Framework nepodporuje a ani nebude podporovať zastaralé browsre!
   
-# Download and Installation
+# Download, Installation and First start
 ```
 git clone https://github.com/ObscurusGrassator/Base.JS.git you_project_name
 cd you_project_name
@@ -31,14 +31,15 @@ Only remove full folder
 # Client loading order
 
 Ako prvé sa inicializujú funkcie a triedy z priečinkov:
-	1. shared/utils/error.base.js
-	2. shared/services/testing.base.js
-	3. client/libs/**/*.js
-	4. shared/utils/**/*.js
-	5. client/utils/**/*.js
-	6. shared/services/**/*.js
-	7. client/services/**/*.js
-	8. client/src/**/*.js
+1. shared/utils/error.base.js
+2. shared/services/testing.base.js
+3. client/libs/**/*.js
+4. shared/utils/**/*.js
+5. client/utils/**/*.js
+6. shared/services/**/*.js
+7. client/services/**/*.js
+8. client/src/**/*.js
+
 Následne sa zavolajú funkcie ovrapované `window.afterLoadRequires.unshift(() => { ... });`.  
 A napokon sa spustiť celá busines logika v `window.addEventListener('load', () => { ... });`.  
   
@@ -121,7 +122,27 @@ shared/
    objectClone.base.js        // (experimental) deep object cloning
 ```
 
-[Screenshots of code](http://obsgrass.com/public/Base.JS_screenshots)   
+# Try it online:
 
-Contact: obscurus.grassator@gmail.com  
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/login/?returnTo=https://gitpod.io/%23snapshot/410bff42-fba7-426c-a0dd-2dc4cdca01d3)
+
+After open empty project you can set [Download, Installation and First start](#download-installation-and-first-start) command to terminal. 
+
+### You can login to testing GitHub account:
+
+```
+Login:    GitpodTest
+Password: Gitpod123
+```
+
+### Look for example at:
+- client/src/_example.js
+- client/templates/_example_/_example.html
+- app_example.js
+
+[The code screenshots are here](http://obsgrass.com/public/Base.JS_screenshots)   
+
+
+**Contact: obscurus.grassator@gmail.com**  
+
 [MIT License - Copyright (c) 2019 Obscurus Grassator](./license.txt)  

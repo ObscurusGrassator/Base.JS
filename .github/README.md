@@ -31,14 +31,15 @@ Simply delete the whole directory
 # Client loading order
 
 First are initialized, functions and classes in directories:
-	1. shared/utils/error.base.js
-	2. shared/services/testing.base.js
-	3. client/libs/**/*.js
-	4. shared/utils/**/*.js
-	5. client/utils/**/*.js
-	6. shared/services/**/*.js
-	7. client/services/**/*.js
-	8. client/src/**/*.js
+1. shared/utils/error.base.js
+2. shared/services/testing.base.js
+3. client/libs/**/*.js
+4. shared/utils/**/*.js
+5. client/utils/**/*.js
+6. shared/services/**/*.js
+7. client/services/**/*.js
+8. client/src/**/*.js
+
 Next, functions wrapped in `window.afterLoadRequires.unshift(() => { ... });` are called.
 At last, the business logic in `window.addEventListener('load', () => { ... });` is run.  
   
@@ -121,10 +122,27 @@ shared/
    objectClone.base.js        // (experimental) deep object cloning
 ```
 
-[Code screenshots here](http://obsgrass.com/public/Base.JS_screenshots)  
+# Try it online:
 
-The image was modeled in [Bricksmith 3.0](http://bricksmith.sourceforge.net)  
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/login/?returnTo=https://gitpod.io/%23snapshot/410bff42-fba7-426c-a0dd-2dc4cdca01d3)
 
-Contact: obscurus.grassator@gmail.com  
+After open empty project you can set [Download, Installation and First start](#download-installation-and-first-start) command to terminal. 
 
-[MIT License](https://choosealicense.com/licenses/mit/) - [Copyright (c) 2019 Obscurus Grassator](./license.txt)  
+### You can login to testing GitHub account:
+
+```
+Login:    GitpodTest
+Password: Gitpod123
+```
+
+### Look for example at:
+- client/src/_example.js
+- client/templates/_example_/_example.html
+- app_example.js
+
+[The code screenshots are here](http://obsgrass.com/public/Base.JS_screenshots)   
+
+
+**Contact: obscurus.grassator@gmail.com**  
+
+[MIT License - Copyright (c) 2019 Obscurus Grassator](./license.txt)  
