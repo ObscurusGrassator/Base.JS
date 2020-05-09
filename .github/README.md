@@ -9,7 +9,7 @@ The first run generates/updates a configuration file `jsconfig.json`, which allo
   
 # Download and Installation
 ```
-git clone git@github.com:ObscurusGrassator/Base.JS.git you_project_name
+git clone https://github.com/ObscurusGrassator/Base.JS.git you_project_name
 cd you_project_name
 NODE_PATH=. node manager.js
 ```

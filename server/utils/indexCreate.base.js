@@ -164,7 +164,7 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 		let result = '';
 
 		if (type == 'jsDocs') {
-			result += `/**\n * @typedef {${group.root.replace('require', 'import')}.Type & {\n`;
+			result += `/**\n * @typedef {${group.root ? group.root.replace('require', 'import') + '.Type & ' : ''}{\n`;
 			// result += 'new (class ' + className;
 			// if (group.root) result += ' extends ' + group.root;
 		} else {

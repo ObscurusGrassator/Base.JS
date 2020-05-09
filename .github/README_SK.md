@@ -9,7 +9,7 @@ Po prvom spustení sa vygeneruje/upravý konfiguračný súbor 'jsconfig.json', 
   
 # Download and Installation
 ```
-git clone git@github.com:ObscurusGrassator/Base.JS.git you_project_name
+git clone https://github.com/ObscurusGrassator/Base.JS.git you_project_name
 cd you_project_name
 NODE_PATH=. node manager.js
 ```
