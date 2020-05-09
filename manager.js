@@ -119,6 +119,8 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 			+ '};\n'
 		);
 	}
+
+	if (!fs.existsSync('client/css/')) fs.mkdirSync('client/css/');
 /**************************************************************************/
 
 
