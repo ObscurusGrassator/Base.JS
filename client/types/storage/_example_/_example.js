@@ -1,9 +1,7 @@
-module.exports = class StorageType {
-	/** @type {{x: Number, y: Number}} */
-	position;
-
-	/** @type {[{a: String}]} */
-	array;
-
-	result = require("client/utils/_example_/_example.js");
-};
+/**
+ * @typedef {Object} Type
+ * @property {{x: Number, y: Number}} position
+ * @property {[{a: String}]} array
+ * @property {import('client/utils/_example_/_example.js')} result
+ */
+export {}

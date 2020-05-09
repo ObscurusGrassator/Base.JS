@@ -1,4 +1,5 @@
-module.exports = class StorageType {
-	/** @type {Object} */
-	_exampleSessionStorage;
-};
+/**
+ * @typedef {Object} Type
+ * @property {Object} _exampleSessionStorage
+ */
+export {}
