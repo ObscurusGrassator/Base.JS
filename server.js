@@ -49,14 +49,14 @@ process.stdin.on('data', async (data) => {
 	}
 });
 
-const s = require('server/_index.js');
+const s = require('server/src/_index.js');
 
 const console0 = s.util.console.configure({userErrorFunction: s.util.error});
 let debugFileRegExp;
 s.service.storage.server(
-	(s) => s.server.help.push({prop: 'debug=/app\\.js/i', desc: 'show debug console.log for'}));
+	(s) => s.server.help.push({prop: 'debuging=/app\\.js/i', desc: 'show debug console.log for'}));
 for (let i in process.argv) {
-	if (process.argv[i].substr(0, 6) === 'debug=') {
+	if (process.argv[i].substr(0, 9) === 'debuging=') {
 		let match = process.argv[i].match(/=\/?([^\/]+)\/?(.*)$/);
 		debugFileRegExp = new RegExp(match[1], match[2]);
 	}
@@ -84,24 +84,18 @@ concoleWarnError(console0);
 
 		for (let i in newCommits) {
 			if (!newCommits[i]) continue;
-			let match = newCommits[i].match(/^([0-9a-fA-F]+) (new|upd|fix|del|dep)?( |: )?(.+)$/i);
-			if (!match) continue;
+			let match = newCommits[i].match(/^([0-9a-fA-F]+) (new|upd|fix|del|dep|dpr)?( |: )?(.+)$/i);
+			if (!match || !match[2]) continue;
 			if (!hashNew) hashNew = match[1];
 
-			if (match[2] && match[2].toLowerCase() == 'new') {
-				showNewCommits.push('     ' + console.colors.green + console.colors.bold + 'NEW: ' + console.colors.reset + match[4]);
+			if (['new', 'upd'].indexOf(match[2].toLowerCase()) > -1) {
+				showNewCommits.push('     ' + console.colors.green + console.colors.bold + match[2].toUpperCase() + ': ' + console.colors.reset + match[4]);
 			}
-			if (match[2] && match[2].toLowerCase() == 'upd') {
-				showNewCommits.push('     ' + console.colors.green + console.colors.bold + 'UPD: ' + console.colors.reset + match[4]);
+			if (['fix', 'del'].indexOf(match[2].toLowerCase()) > -1) {
+				showNewCommits.push('     ' + console.colors.red   + console.colors.bold + match[2].toUpperCase() + ': ' + console.colors.reset + match[4]);
 			}
-			if (match[2] && match[2].toLowerCase() == 'fix') {
-				showNewCommits.push('     ' + console.colors.red   + console.colors.bold + 'FIX: ' + console.colors.reset + match[4]);
-			}
-			if (match[2] && match[2].toLowerCase() == 'del') {
-				showNewCommits.push('     ' + console.colors.red   + console.colors.bold + 'DEL: ' + console.colors.reset + match[4]);
-			}
-			if (match[2] && match[2].toLowerCase() == 'dep') {
-				showNewCommits.push('     ' + console.colors.red   + console.colors.bold + 'DEP: ' + console.colors.reset + match[4]);
+			if (['dep', 'dpr'].indexOf(match[2].toLowerCase()) > -1) {
+				showNewCommits.push('     ' + console.colors.blue  + console.colors.bold + match[2].toUpperCase() + ': ' + console.colors.reset + match[4]);
 			}
 		}
 
@@ -130,11 +124,13 @@ concoleWarnError(console0);
 			let file = input.parts[input.parts.length-1];
 			let fileSufix = file.substr(file.lastIndexOf('.') + 1);
 
-			if (s.config.server.publicHTTPsuffixes.indexOf(fileSufix) > -1) {
-				var img = s.modul.fs.readFileSync(input.parts.join('/'));
-				res.setHeader('Content-Type', s.modul.mime.getType(fileSufix));
-				res.end(img, 'binary');
-				return;
+			for (let suffix of s.config.server.publicHTTPsuffixes) {
+				if (file.substring((-1 * suffix.length) -1) == '.' + suffix) {
+					var img = s.modul.fs.readFileSync(input.parts.join('/'));
+					res.setHeader('Content-Type', s.modul.mime.getType(fileSufix));
+					res.end(img, 'binary');
+					return;
+				}
 			}
 
 			s.service.storage.server((storage) => storage.server.response = res);
@@ -153,50 +149,48 @@ concoleWarnError(console0);
 
 	s.service.storage.server((s) => s.server.help.push({prop: 'refresh', desc: 'refresh web page (mac only)'}));
 	s.service.storage.server((s) => s.server.help.push({prop: 'toBrowser', desc: 'go to browser web page (mac only)'}));
-	for (let i in process.argv) {
-		if (process.argv[i] === 'refresh' || process.argv[i] === 'toBrowser') {
-			await s.modul["run-applescript"](`
-				set urll to "${s.config.server.protocol}://${s.config.server.hostname}${s.config.server.port ? ':'+s.config.server.port : ''}"
-				on is_running(appName)
-					tell application "System Events" to (name of processes) contains appName
-				end is_running
-				set chromeRunning to is_running("Google Chrome")
+	if (process.argv.includes('refresh') || process.argv.includes('toBrowser')) {
+		await s.modul["run-applescript"](`
+			set urll to "${s.config.server.protocol}://${s.config.server.hostname}${s.config.server.port ? ':'+s.config.server.port : ''}"
+			on is_running(appName)
+				tell application "System Events" to (name of processes) contains appName
+			end is_running
+			set chromeRunning to is_running("Google Chrome")
 
-				if chromeRunning then
-					tell application "Google Chrome"
-						set i to 0
-						set j to 0
-						repeat with w in (windows)
-							set j to j + 1
-							repeat with t in (tabs of w)
-								set i to i + 1
-								if URL of t starts with urll then
-									set (active tab index of window j) to i
-									# set active tab index of w to i
-									# set index of w to 1
-									${process.argv[i] === 'toBrowser' ? 'activate' : ''}
-									${process.argv[i] === 'refresh' ?
-										`tell application "Google Chrome" to tell the active tab of its first window
-											reload
-										end tell` : ''
-									}
-									return
-								end if
-							end repeat
+			if chromeRunning then
+				tell application "Google Chrome"
+					set i to 0
+					set j to 0
+					repeat with w in (windows)
+						set j to j + 1
+						repeat with t in (tabs of w)
+							set i to i + 1
+							if URL of t starts with urll then
+								set (active tab index of window j) to i
+								# set active tab index of w to i
+								# set index of w to 1
+								${process.argv.includes('toBrowser') ? 'activate' : ''}
+								${process.argv.includes('refresh') ?
+									`tell application "Google Chrome" to tell the active tab of its first window
+										reload
+									end tell` : ''
+								}
+								return
+							end if
 						end repeat
-						tell application "Google Chrome"
-							activate
-							open location urll
-						end tell
-					end tell
-				else
+					end repeat
 					tell application "Google Chrome"
 						activate
 						open location urll
 					end tell
-				end if
-			`);
-		}
+				end tell
+			else
+				tell application "Google Chrome"
+					activate
+					open location urll
+				end tell
+			end if
+		`);
 	}
 
 	s.service.storage.server((s) => s.server.help.push({prop: 'testing', desc: 'start tests'}));

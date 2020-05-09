@@ -109,13 +109,13 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 
 
 
-	let fileName = 'client/types/contentType.js';
+	let fileName = 'client/contentType.js';
 	if (!fs.existsSync(fileName)) {
-		if (!fs.existsSync('client/types/')) fs.mkdirSync('client/types/');
 		fs.writeFileSync(fileName, 
 			'module.exports = {\n'
-			+ space + '"contentExample": "",\n'
-			+ space + '"pathVariables": "",\n'
+			+ space + "config: require('shared/services/.jsconfig.gen.ignr.js'),\n"
+			+ space + "contentExample: '',\n"
+			+ space + "pathVariables: '',\n"
 			+ '};\n'
 		);
 	}
