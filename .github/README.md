@@ -136,8 +136,8 @@ Password: Gitpod123
 ```
 
 ### Look for example at:
-- client/src/_example.js
-- client/templates/_example_/_example.html
+- client/src/\_example.js
+- client/templates/\_example\_/\_example.html
 - app_example.js
 
 [The code screenshots are here](http://obsgrass.com/public/Base.JS_screenshots)   
