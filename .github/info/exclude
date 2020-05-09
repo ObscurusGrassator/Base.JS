@@ -17,6 +17,7 @@
 !client/utils/
 !client/libs/
 !client/src/
+!client/src/_index.js
 !client/templates/
 !client/templates/index_example.css
 !client/templates/index_example.html
@@ -30,10 +31,10 @@
 !client/types/storage/session.js
 
 !server/
-!server/_index.js
 !server/services/
 !server/utils/
 !server/src/
+!server/src/_index.js
 !server/types/
 !server/types/storage/
 !server/types/storage/root.js

@@ -30,7 +30,15 @@ Only remove full folder
   
 # Client loading order
 
-Ako prvé sa inicializujú funkcie a triedy z priečinkov: utils, services a src.  
+Ako prvé sa inicializujú funkcie a triedy z priečinkov:
+	1. shared/utils/error.base.js
+	2. shared/services/testing.base.js
+	3. client/libs/**/*.js
+	4. shared/utils/**/*.js
+	5. client/utils/**/*.js
+	6. shared/services/**/*.js
+	7. client/services/**/*.js
+	8. client/src/**/*.js
 Následne sa zavolajú funkcie ovrapované `window.afterLoadRequires.unshift(() => { ... });`.  
 A napokon sa spustiť celá busines logika v `window.addEventListener('load', () => { ... });`.  
   
@@ -66,15 +74,15 @@ client/
       events/        // types definition for effective work with events
       storage/       // types definition for effective work with
                      //   saveing/sharing variables/objects
-      contentType.js // types definition for effective work with
                      //   content send from server for client
    src/
+      _index.js      // fast require() - libs, contain utils and services
    libs/             // downloaded libraries. e.g.: jquery, lodash
    templates/        // one sandbox .html tmplate must have equal file name as
                      //   possible .js a .css extended files
    css/              // global styles
+   contentType.js    // types definition for effective work with
 server/
-   _index.js
    services/
    utils/
       getFilePaths.base.js          // deep file list of folder
@@ -85,6 +93,7 @@ server/
       storage/          // types definition for effective work with
                         //   saveing/sharing variables/objects
    src/
+      _index.js         // fast require() contain utils and services
 shared/
    services/
       jsconfig.base.js  // default updating and JS access to project configuration
@@ -104,10 +113,12 @@ shared/
    defaults.base.js           // (lodash) objects merge
    substring.base.js          // (PHP) implementing negative value 
    contain.base.js            // check if object A conains object B
+   arraysDiff.base.js         // get difference and intersection of two input array
 
    jsonStringify.base.js      // prettyer JSON.stringifi
    promisify.base.js          // transform function with callback to promise
    urlParser.base.js          // extended new URL()
+   objectClone.base.js        // (experimental) deep object cloning
 ```
 
 [Screenshots of code](http://obsgrass.com/public/Base.JS_screenshots)   
