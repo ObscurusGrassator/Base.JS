@@ -18,10 +18,10 @@
 	Event example values: <span ID="template_example_event_value"></span>
 	<br>
 	<div onbase="({ setAttr: {'hidden': true}, if: !content.pathVariables.user_variable })">
-		Generation table: <table>
+		Generated table: <table>
 			<tr onbase="({ forIn: this.array, key: 'a' })">
 				<td onbase="({ forIn: this.array, key: 'b' })">
-					<span onbase="({ setHtml: this.array.a + this.array.b * 10 })">
+					<span onbase="({ setHtml: +this.array[a] + +this.array[b] * 10 })">
 				</td>
 			</tr>
 		</table>
