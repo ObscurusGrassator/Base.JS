@@ -4,16 +4,23 @@
 	Static server content: <!-- ${ write: content.contentExample } -->
 	<br>
 	Manual dynamic server contentA:
-		<span base="{setHtml: this.templateJsVariable}"></span>
+		<span onbase="({ setHtml: this.templateJsVariable })"></span>
 	<br>
 	Manual dynamic server contentB:
-		<span base="{setHtml: content.pathVariables.user_variable || '...', if: true}"></span>
-		<span base="{setHtml: content.pathVariables.user_variable || '...', if: false}"></span>
+		<span onbase="({ setHtml: content.pathVariables.user_variable || '...', if: true })"></span>
+		<span onbase="({ setHtml: content.pathVariables.user_variable || '...', if: false })"></span>
 	<br>
 	Manual dynamic server contentC:
-		<span base="{setAttr: {title: 'Title'}, addClass: ['TestA', 'TestItalic'], removeClass: 'TestA'}">TextWithClassAndTitleProperty</span>
+		<span onbase="({ setAttr: {title: 'Title'}, setClass: {TestItalic: true} })">TextWithClassAndTitleProperty</span>
 	<br>
 	This element ID: <span ID="template_example_element_id"></span>
 	<br>
 	Event example values: <span ID="template_example_event_value"></span>
+	<br>
+	Generation table:
+	<table onbase="({ setAttr: 'hidden', if: !content.pathVariables.user_variable })">
+		<tr onbase="({ forIn: [1, 2, 3, 4, 5], key: 'a' })">
+			<td onbase="({ forIn: [10, 20, 30, 40, 50], key: 'b', setHtml: a + b })"></td>
+		</tr>
+	</table>
 </div>
