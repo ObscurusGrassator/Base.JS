@@ -21,7 +21,7 @@ npm start
   
 # Update
 ```
-git --git-dir=.gitBase.JS pull
+npm update
 ```
 
 # Uninstallation
