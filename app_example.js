@@ -1,13 +1,14 @@
-const s = require('server/_index.js');
+const s = require('server/src/_index.js');
 const srcExample = require('server/src/_example.js');
 
 module.exports = {
 	callBeforeServerStarting: async (req, res) => {
 	},
+
 	callPerResponce: async (req, res) => {
 		res.setHeader('Content-Type', 'text/html');
 
-		s.service.storage.server((s) => s.cookie._exampleCookieStorage.v = 'serverValue');
+		s.storage.server(s => s.cookie._exampleCookieStorage.v = 'serverValue');
 
 		if (req.url == '/') req.url = 'index_example.html';
 
@@ -17,6 +18,7 @@ module.exports = {
 
 		res.end(await s.util.htmlGenerator.create(
 			{
+				config: s.config,
 				contentExample: 'ThisIsServerContent',
 				pathVariables: realPath.variables
 			},

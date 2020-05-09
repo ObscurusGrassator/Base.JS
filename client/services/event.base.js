@@ -1,4 +1,3 @@
-const EventType = require('client/types/events');
 const error = require('shared/utils/error.base.js');
 
 let path = [];
@@ -42,7 +41,7 @@ const proxy = {_BaseJS_root: true};
 /**
  * Easy communication of components through events.
  * 
- * @type {EventType}
+ * @type {import('client/types/events').Type}
  * 
  * @example
  *   let listen = event.userPath.eventName.listen(
