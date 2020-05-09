@@ -22,7 +22,7 @@ const config = require('shared/services/jsconfig.base.js').update('utils._create
 				"server/services/": ["server/services/", "shared/services/"],
 				"shared/services/": ["shared/services/"]
 			},
-			"classes": {
+			"jsDocs": {
 				"client/types/events/": ["client/types/events/"],
 				"client/types/storage/": ["client/types/storage/"],
 				"server/types/storage/": ["server/types/storage/"]
@@ -38,7 +38,7 @@ const config = require('shared/services/jsconfig.base.js').update('utils._create
  *    Folder for create '.index.js' file.
  *    If is not set, function indexing all in jsconfig.json/util._createIndex
  * @param {String[]} [dirPathsSource = []] Indexing files of these folders
- * @param {'utils' | 'services' | 'classes'} [type = 'utils'] 'services' not indexing files into service folders
+ * @param {'utils' | 'services' | 'jsDocs'} [type = 'utils'] 'services' not indexing files into service folders
  * @param {String} [objectPathsSource]
  *    if this not defined, is used require function is used for file path,
  *    else this client array with file paths properties
@@ -53,12 +53,12 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 			};`;
 
 			if (!fs.existsSync('client/libs/')) fs.mkdirSync('client/libs/');
-			if (!fs.existsSync('client/types/contentType.js')) {
-				await promisify(fs.writeFile, 'client/types/contentType.js', contentType);
+			if (!fs.existsSync('client/contentType.js')) {
+				await promisify(fs.writeFile, 'client/contentType.js', contentType);
 			}
 
-			if (await fs.readFileSync('client/types/contentType.js', 'utf8') == contentType) {
-				console.info('In "client/types/contentType.js" file you can specify object type sended from server to client.');
+			if (await fs.readFileSync('client/contentType.js', 'utf8') == contentType) {
+				console.info('In "client/contentType.js" file you can specify object type sended from server to client.');
 			}
 
 			let proms = [];
@@ -127,6 +127,7 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 						}
 
 						if (/\.ignr\./.test(file)) continue;
+						if (file.substr(file.length - 14) == '/src/_index.js') continue;
 
 						let functionName = file.match(/(^|\/)([a-zA-Z_\-]+)[^\/]*.js$/i)[2].replace(/[_\-]$/, '');
 						let path = (file + '...').substring(dirPathsSource[i].length).split('/');
@@ -140,7 +141,7 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 							path.pop();
 						}
 
-						if (type == 'classes' && functionName == 'root') {
+						if (type == 'jsDocs' && functionName == 'root') {
 							path.push('root');
 							if (objectPathsSource) set(group, path, `${objectPathsSource}['${file}']`);
 							else                   set(group, path, `require('${file}')`);
@@ -162,13 +163,15 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 		
 		let result = '';
 
-		if (type == 'classes') {
-			result += 'new (class ' + className;
-			// result += 'class ' + className;
-			if (group.root) result += ' extends ' + group.root;
+		if (type == 'jsDocs') {
+			result += `/**\n * @typedef {${group.root.replace('require', 'import')}.Type & {\n`;
+			// result += 'new (class ' + className;
+			// if (group.root) result += ' extends ' + group.root;
+		} else {
+			result += 'module.exports = {\n';
 		}
 
-		result += ' {\n';
+		// result += ' {\n';
 
 		/**********************************
 		 * Creating of index file content *
@@ -176,31 +179,32 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 			let loop = (group, t = '\t') => {
 				let result = '';
 				for (let i in group) {
-					let prefix = type == 'classes' ? `set '${i}'(x) {}; get ` : '';
-					// let prefix = type == 'classes' ? `static ` : '';
-					let center = type == 'classes' ? '() { return new (' : ': ';
-					// let center = type == 'classes' ? ' = ' : ': ';
-					let suffix = type == 'classes' ? ')(); };' : ',';
-					// let suffix = type == 'classes' ? ';' : ',';
-					let ext = type == 'classes' ? `class ${className} extends ${group[i].root} ` : '';
+					// let prefix = type == 'jsDocs' ? `set '${i}'(x) {}; get ` : '';
+					let prefix = type == 'jsDocs' ? ` * ` : '';
+					// let center = type == 'jsDocs' ? '() { return new (' : ': ';
+					let center = type == 'jsDocs' ? a => a.replace('require', 'import').replace(/\)/, ').Type') : a => a;
+					// let suffix = type == 'jsDocs' ? ')(); };' : ',';
+					// let ext = type == 'jsDocs' ? `class ${className} extends ${group[i].root} ` : '';
+					let ext = type == 'jsDocs' && group[i].root ? group[i].root + ' & ' : '';
 
 					if (i == 'root') {}
 					else if (i == 'array') {
 						for (let r of group[i]) {
 							let name = r.match(/'([^']*)'::\s*(.+)$/);
-							let prefix = type == 'classes' ? `set '${name[1]}'(x) {}; get ` : '';
-							// let prefix = type == 'classes' ? `static ` : '';
-							result += `${t}${prefix}'${name[1]}'${center}${name[2]}${suffix}\n`;
+							// let prefix = type == 'jsDocs' ? `set '${name[1]}'(x) {}; get ` : '';
+							// result += `${t}${prefix}'${name[1]}'${center}${name[2]}${suffix}\n`;
+							result += `${prefix}${t}'${name[1]}': ${center(name[2])},\n`;
 						}
 					}
-					else result += `${t}${prefix}'${i}'${center}${ext}{\n${loop(group[i], t+'\t')}${t}}${suffix}\n`;
+					// else result += `${t}${prefix}'${i}'${center}${ext}{\n${loop(group[i], t+'\t')}${t}}${suffix}\n`;
+					else result += `${prefix}${t}'${i}': ${center(ext)}{\n${loop(group[i], t+'\t')}${prefix}${t}},\n`;
 				}
 				return result;
 			};
 
 			result += loop(group);
-			result += type == 'classes' ? '})();' : '};';
-			// result += '};';
+			// result += type == 'jsDocs' ? '})();' : '};';
+			result += type == 'jsDocs' ? ' * }} Type\n */\nexport {}' : '};';
 		/*********************************/
 
 		if (destinationPath) {
@@ -213,7 +217,7 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 				if (!fs.existsSync(path)) fs.mkdirSync(path);
 			}
 
-			await promisify(fs.writeFile, destinationPath, 'module.exports = ' + result);
+			await promisify(fs.writeFile, destinationPath, result);
 		}
 		
 		return result;
