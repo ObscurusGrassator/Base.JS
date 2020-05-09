@@ -17,10 +17,13 @@
 	<br>
 	Event example values: <span ID="template_example_event_value"></span>
 	<br>
-	Generation table:
-	<table onbase="({ setAttr: 'hidden', if: !content.pathVariables.user_variable })">
-		<tr onbase="({ forIn: [1, 2, 3, 4, 5], key: 'a' })">
-			<td onbase="({ forIn: [10, 20, 30, 40, 50], key: 'b', setHtml: a + b })"></td>
-		</tr>
-	</table>
+	<div onbase="({ setAttr: {'hidden': true}, if: !content.pathVariables.user_variable })">
+		Generation table: <table>
+			<tr onbase="({ forIn: this.array, key: 'a' })">
+				<td onbase="({ forIn: this.array, key: 'b' })">
+					<span onbase="({ setHtml: this.array.a + this.array.b * 10 })">
+				</td>
+			</tr>
+		</table>
+	</div>
 </div>

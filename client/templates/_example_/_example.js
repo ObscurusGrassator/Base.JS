@@ -2,6 +2,7 @@ const thisElement = require('client/utils/getActualElement.ignr.base.js');
 const s = require('client/src/_index.js');
 
 this.templateJsVariable = 'ThisIsTemplateJsVariable';
+this.array = [1, 2, 3, 4, 5];
 
 window.addEventListener('load', async () => {
 	let elementId = (await thisElement).id;

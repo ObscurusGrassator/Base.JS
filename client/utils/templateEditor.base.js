@@ -142,18 +142,20 @@ function templateEditor(selector = '') {
 			try { var obj = baseEval.call(this, element.getAttribute('onbase')); } catch (err) { return; }
 
 			for (let i in obj) {
-				if (commands.find(c => c.test(i)) && obj[i] && (obj.if === undefined || obj.if)) {
-					if (Array.isArray(obj[i])) { obj[i] = obj[i].filter(o => o); }
+				if (commands.find(c => c.test(i))) {
+					if (obj[i] && (obj.if === undefined || obj.if)) {
+						if (Array.isArray(obj[i])) { obj[i] = obj[i].filter(o => o); }
 
-					if (i == 'setHtml') element.innerHTML = obj[i];
-					if (i == 'setAttr') {
-						for (let a in obj[i]) {
-							element.setAttribute(a, obj[i][a]);
+						if (i == 'setHtml') element.innerHTML = obj[i];
+						if (i == 'setAttr') {
+							for (let a in obj[i]) {
+								element.setAttribute(a, obj[i][a]);
+							}
 						}
-					}
-					if (i == 'setClass') {
-						for (let a in obj[i]) {
-							element.classList[obj[i][a] ? 'add' : 'remove'](a);
+						if (i == 'setClass') {
+							for (let a in obj[i]) {
+								element.classList[obj[i][a] ? 'add' : 'remove'](a);
+							}
 						}
 					}
 				} else {
