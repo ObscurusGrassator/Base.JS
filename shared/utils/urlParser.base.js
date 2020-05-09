@@ -1,10 +1,10 @@
 /**
  * URL object extension
  * @param {String} [url] Examples: "http://example.com", "/path/page.html"
- * @return {URL & {parts: String[], queries: {[key: string]: String}}}
+ * @return UrlParserReturn
  */
 function urlParser(url) {
-	/** @type {URL & {parts: String[], queries: {[key: string]: String}}} */
+	/** @type {UrlParserReturn} */
 	let result;
 
 	if (!url) return result;
@@ -31,5 +31,7 @@ function urlParser(url) {
 
 	return result;
 };
+
+/** @typedef {URL & {parts: String[], queries: {[key: string]: String}}} UrlParserReturn */
 
 module.exports = urlParser;

@@ -1,7 +1,7 @@
 // Cannot be used due to cyclic dependence: require('server/index.js')
 const console = require('shared/utils/console.base.js');
 const error = require('shared/utils/error.base.js');
-const content = require('client/types/contentType.js');
+const content = require('client/contentType.js');
 const config = require('shared/services/jsconfig.base.js')
 	.update('utils.example', { // default values
 		"utils": {

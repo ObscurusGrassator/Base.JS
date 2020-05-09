@@ -1,12 +1,21 @@
-/** @template {{[key: string]: any}} T @typedef {T | {[k: string]:       T } |        T[] | {[k: string]: any} | any[]} Deep1 */
-/** @template {{[key: string]: any}} T @typedef {T | {[k: string]: Deep1<T>} | Deep1<T>[] | {[k: string]: any} | any[]} Deep2 */
-/** @template {{[key: string]: any}} T @typedef {T | {[k: string]: Deep2<T>} | Deep2<T>[] | {[k: string]: any} | any[]} Deep3 */
-/** @template {{[key: string]: any}} T @typedef {T | {[k: string]: Deep3<T>} | Deep3<T>[] | {[k: string]: any} | any[]} Deep4 */
-/** @template {{[key: string]: any}} T @typedef {T | {[k: string]: Deep4<T>} | Deep4<T>[] | {[k: string]: any} | any[]} Deep5 */
-/** @template {{[key: string]: any}} T @typedef {T | {[k: string]: Deep5<T>} | Deep5<T>[] | {[k: string]: any} | any[]} Deep6 */
-/** @template {{[key: string]: any}} T @typedef {T | {[k: string]: Deep6<T>} | Deep6<T>[] | {[k: string]: any} | any[]} Deep7 */
-/** @template {{[key: string]: any}} T @typedef {T | {[k: string]: Deep7<T>} | Deep7<T>[] | {[k: string]: any} | any[]} Deep8 */
-/** @template {{[key: string]: any}} T @typedef {T | {[k: string]: Deep8<T>} | Deep8<T>[] | {[k: string]: any} | any[]} Deep9 */
-/** @template {{[key: string]: any}} T @typedef {T | {[k: string]: Deep9<T>} | Deep9<T>[] | {[k: string]: any} | any[]} Deep */
+/** @template O @template A @typedef {O | {[k: string]:       O    } | Array<              A> | {[k: string]: any} | any[]} Deep0 */
+/** @template O @template A @typedef {O | {[k: string]: Deep0<O, A>} | Array<Deep0<O, A> | A> | {[k: string]: any} | any[]} Deep1 */
+/** @template O @template A @typedef {O | {[k: string]: Deep1<O, A>} | Array<Deep1<O, A> | A> | {[k: string]: any} | any[]} Deep2 */
+/** @template O @template A @typedef {O | {[k: string]: Deep2<O, A>} | Array<Deep2<O, A> | A> | {[k: string]: any} | any[]} Deep3 */
+/** @template O @template A @typedef {O | {[k: string]: Deep3<O, A>} | Array<Deep3<O, A> | A> | {[k: string]: any} | any[]} Deep4 */
+/** @template O @template A @typedef {O | {[k: string]: Deep4<O, A>} | Array<Deep4<O, A> | A> | {[k: string]: any} | any[]} Deep5 */
+/** @template O @template A @typedef {O | {[k: string]: Deep5<O, A>} | Array<Deep5<O, A> | A> | {[k: string]: any} | any[]} Deep6 */
+/** @template O @template A @typedef {O | {[k: string]: Deep6<O, A>} | Array<Deep6<O, A> | A> | {[k: string]: any} | any[]} Deep7 */
+/** @template O @template A @typedef {O | {[k: string]: Deep7<O, A>} | Array<Deep7<O, A> | A> | {[k: string]: any} | any[]} Deep8 */
+/** @template O @template A @typedef {O | {[k: string]: Deep8<O, A>} | Array<Deep8<O, A> | A> | {[k: string]: any} | any[]} Deep9 */
+/**
+ * @template O Object property
+ * @template A Array property
+ * @typedef {Deep9<O, A>} Deep
+ * @example
+ *   _@_typedef {import('general.base.js').Deep<{newProperty: string}, "newArrayItem">} DeepExtension
+ *   function:
+ *   _@_param {SpecificType | DeepExtension} extension Deep extension of SpecificType
+ */
 
 export {}

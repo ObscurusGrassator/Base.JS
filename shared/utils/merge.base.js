@@ -1,3 +1,5 @@
+const objectClone = require('shared/utils/objectClone.base.js');
+
 /**
  * Merging first object with second object properties, if they not exists in first object.
  * 
@@ -12,8 +14,8 @@
  * @example merge({a: {b: 13, c: 1}}, {a: {b: 12}}) // {a: {b: 12, c: 1}}
  */
 function merge(object, reqObject) {
-	object = JSON.parse(JSON.stringify(object));
-	reqObject = JSON.parse(JSON.stringify(reqObject));
+	object = objectClone(object);
+	reqObject = objectClone(reqObject);
 
 	let loop = (object, reqObject) => {
 		if (object && typeof object === 'object' && reqObject) {

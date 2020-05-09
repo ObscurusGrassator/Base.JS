@@ -1,3 +1,5 @@
+const objectClone = require('shared/utils/objectClone.base.js');
+
 /**
  * Rewritig first object properties with second object properties.
  * 
@@ -12,8 +14,8 @@
  * @example defaults({a: {b: 12}}, {a: {b: 13, c: 1}}) // {a: {b: 12, c: 1}}
  */
 function defaults(object, defObject) {
-	object = JSON.parse(JSON.stringify(object));
-	defObject = JSON.parse(JSON.stringify(defObject));
+	object = objectClone(object);
+	defObject = objectClone(defObject);
 
 	let loop = (object, defObject) => {
 		if (object && typeof object === 'object' && defObject) {
