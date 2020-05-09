@@ -1,1 +1,2 @@
-module.exports = require('client/types/storage/cookie.base.js');
+/** @typedef {import('client/types/storage/cookie.base.js').Type} Type */
+export {}

@@ -14,52 +14,74 @@ const error = require('shared/utils/error.base.js');
  * 
  * @returns {Promise<String[]>}
  */
-function getFilePaths(dirPath, regExp = /.+/, libOrService = false, dirPathOrig = null) {
-	dirPathOrig = dirPathOrig || dirPath;
-	return new Promise((resolve, reject) => {
-		let results = [];
-		fs.readdir(dirPath, async (err, list) => {
-			if (err) return reject(err);
-			let proms = [];
+function getFilePaths(dirPath, regExp = /.+/, libOrService = false) {
+	if (dirPath[0] === '.') {
+		dirPath = path.join(new Error().stack
+			.match(/^ +at .*$/gm)[1]
+			.match(/ \((.*?\/)[^:\/]+:[0-9]+:[0-9]+\)/)[1]
+			// .substr(path.resolve('').length + 1)
+		, dirPath); //.replace(/^\.\//, '/');
+	}
+	/**
+	 * @param {String} dirPath
+	 * @param {RegExp} [regExp = /.+/]
+	 * @param {Boolean} [libOrService = false]
+	 *
+	 * @returns {Promise<String[]>}
+	 */
+	let deep = (dirPath, regExp, libOrService, dirPathOrig = null) => {
+		dirPathOrig = dirPathOrig || dirPath;
+		return new Promise((resolve, reject) => {
+			let results = [];
+			fs.readdir(dirPath, async (err, list) => {
+				if (err) return reject(err);
+				let proms = [];
 
-			if (libOrService) {
-				// duplication of logic of indexCreate.base.js
-				for (let file of list) {
-					file = path.resolve(dirPath, file);
-					let dirName = dirPath.match(/(^|\/)([a-zA-Z_\-]+)[\.0-9]*\/?$/);
-					let fileName = file.match(/(^|\/)([a-zA-Z_\-]+)[\.0-9]*\.js$/);
+				if (libOrService) {
+					// duplication of logic of indexCreate.base.js
+					for (let file of list) {
+						file = path.resolve(dirPath, file);
+						let dirName = dirPath.match(/(^|\/)([a-zA-Z_\-]+)[\.0-9]*\/?$/);
+						let fileName = file.match(/(^|\/)([a-zA-Z_\-]+)[\.0-9]*\.js$/);
 
-					if (dirName && fileName && dirPathOrig != dirPath && (fileName[2] == 'index'
-							|| dirName[2].replace(/[_\-]$/, '') == fileName[2].replace(/[_\-]$/, ''))) {
-						proms.push(Promise.resolve([file]));
+						if (dirName && fileName && dirPathOrig != dirPath && (fileName[2] == 'index'
+								|| dirName[2].replace(/[_\-]$/, '') == fileName[2].replace(/[_\-]$/, ''))) {
+							proms.push(Promise.resolve([file]));
+						}
 					}
 				}
-			}
 
-			if (!proms.length) {
-				for (let file of list) {
-					file = path.resolve(dirPath, file);
-					const stat = await promisify(fs.stat, file);
+				if (!proms.length) {
+					for (let file of list) {
+						file = path.resolve(dirPath, file);
+						const stat = await promisify(fs.stat, file);
 
-					if (stat && stat.isDirectory()) {
-						proms.push(getFilePaths(file, regExp, libOrService, dirPathOrig));
-					} else if (regExp.test(file)) {
-						proms.push(Promise.resolve([file]));
+						if (stat && stat.isDirectory()) {
+							proms.push(deep(file, regExp, libOrService, dirPathOrig));
+						} else if (regExp.test(file)) {
+							proms.push(Promise.resolve([file]));
+						}
 					}
 				}
-			}
 
-			return resolve( Promise.all(proms).then(dirs => {
-				for (let files of dirs) {
-					for (let file of files) {
-						file = file.replace(new RegExp(path.resolve('') + '\\/', 'g'), '');
-						results.push(file);
+				return resolve( Promise.all(proms).then(dirs => {
+					for (let files of dirs) {
+						for (let file of files) {
+							file = file.replace(new RegExp(path.resolve('') + '\\/', 'g'), '');
+							results.push(file);
+						}
 					}
-				}
-				return results;
-			}).catch((err) => { return Promise.reject(error(err)); }) );
-		});
-	}).catch((err) => { return Promise.reject(error(err)); });
+					return results;
+				}).catch((err) => { return Promise.reject(error(err)); }) );
+			});
+		}).catch((err) => { return Promise.reject(error(err)); });
+	};
+	return deep(dirPath, regExp, libOrService);
 };
+
+require('shared/services/testing.base.js').add(async () => {
+	if (!(await getFilePaths('../')).includes('server/utils/getFilePaths.base.js')) throw 'getFilePaths("") test failed';
+	if ((await getFilePaths('../', /_not_exist_name_nscfanlysn/)).length !== 0) throw 'getFilePaths("", RegExp) test failed';
+});
 
 module.exports = getFilePaths;

@@ -1,6 +1,5 @@
-module.exports = class StorageType {
-	/**
-	 * @type {String[]}
-	 */
-	example = [];
-};
+/**
+ * @typedef {Object} Type
+ * @property {String[]} example
+ */
+export {}
