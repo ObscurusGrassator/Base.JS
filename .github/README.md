@@ -126,7 +126,7 @@ shared/
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/login/?returnTo=https://gitpod.io/%23snapshot/410bff42-fba7-426c-a0dd-2dc4cdca01d3)
 
-After open empty project you can set [Download, Installation and First start](#download-installation-and-first-start) command to terminal. 
+After open empty project you can set [Download, Installation and First start](#download-installation-and-first-start) commands to terminal.
 
 ### You can login to testing GitHub account:
 
