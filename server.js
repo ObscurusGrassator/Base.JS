@@ -54,7 +54,7 @@ const s = require('server/src/_index.js');
 const console0 = s.util.console.configure({userErrorFunction: s.util.error});
 let debugFileRegExp;
 s.service.storage.server(
-	(s) => s.server.help.push({prop: 'debuging=/app\\.js/i', desc: 'show debug console.log for'}));
+	(s) => s.server.help.push({prop: 'debuging=/app\\.js/i', desc: 'show console.debug for'}));
 for (let i in process.argv) {
 	if (process.argv[i].substr(0, 9) === 'debuging=') {
 		let match = process.argv[i].match(/=\/?([^\/]+)\/?(.*)$/);
@@ -70,6 +70,12 @@ concoleWarnError(console0);
 (async () => {
 	const console = console0;
 	const app = require(s.config.startFile);
+
+	if (!s.modul.fs.existsSync('.gitBase.JS') && s.modul.fs.existsSync('.git')) {
+		s.modul.fs.renameSync('.git', '.gitBase.JS');
+		s.modul.fs.writeFileSync('.gitBase.JS/info/exclude', s.modul.fs.readFileSync('.github/info/exclude'));
+	}
+	s.modul["shell-exec"]('alias gitb="git --git-dir=.gitBase.JS"');
 
 	s.modul["shell-exec"](`
 		git --git-dir=.gitBase.JS rev-parse HEAD;
@@ -110,11 +116,6 @@ concoleWarnError(console0);
 
 	await s.util.killPort(s.config.server.port);
 
-	s.modul["shell-exec"]('alias gitb="git --git-dir=.gitBase.JS"');
-	if (!s.modul.fs.existsSync('.gitBase.JS') && s.modul.fs.existsSync('.git')) {
-		s.modul.fs.renameSync('.git', '.gitBase.JS');
-	}
-
 	await app.callBeforeServerStarting();
 
 	s.modul.http.createServer(async (req, res) => {
@@ -133,8 +134,8 @@ concoleWarnError(console0);
 				}
 			}
 
-			s.service.storage.server((storage) => storage.server.response = res);
-			s.service.storage.server((storage) => storage.server.request = req);
+			s.service.storage.server(storage => storage.server.response = res);
+			s.service.storage.server(storage => storage.server.request = req);
 
 			await app.callPerResponce(req, res);
 		} catch(err) {
