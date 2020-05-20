@@ -5,18 +5,14 @@
  * 
  * @param {String} id This parameter is generated of framework.
  * 
- * @returns {Promise<HTMLElement>}
+ * @returns {HTMLElement}
  */
 function getActualElement(id) {
-	return new Promise((res, rej) => {
-		document.addEventListener("DOMContentLoaded", () => {
-			return res(document.getElementById(id).parentElement);
-		});
-	});
+	return id !== '_BaseJS_ComponentId_' ? document.getElementById(id).parentElement : document.body;
 };
 
 // This variable is using on client side after server processing
-/** @type {Promise<HTMLElement>} */
+/** @type {HTMLElement} */
 // @ts-ignore
 const clientActualElement = getActualElement;
 

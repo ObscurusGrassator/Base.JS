@@ -1,29 +1,42 @@
 <div ID="template_example">
 	Hello word!
 	<br>
-	Static server content: <!-- ${ write: content.contentExample } -->
+	Static server content --> <!-- ${ write: content.contentExample } -->
 	<br>
-	Manual dynamic server contentA:
+	Dynamic template content from server data -->
+		<span onbase="({ setHtml: content.contentExample, if: true })"></span>
+		<span onbase="({ setHtml: content.contentExample, if: false })"></span>
+	<br>
+	Dynamic template content from JavaScript -->
 		<span onbase="({ setHtml: this.templateJsVariable })"></span>
 	<br>
-	Manual dynamic server contentB:
-		<span onbase="({ setHtml: content.pathVariables.user_variable || '...', if: true })"></span>
-		<span onbase="({ setHtml: content.pathVariables.user_variable || '...', if: false })"></span>
-	<br>
-	Manual dynamic server contentC:
+	Dynamic template DOM attributes modification -->
 		<span onbase="({ setAttr: {title: 'Title'}, setClass: {TestItalic: true} })">TextWithClassAndTitleProperty</span>
 	<br>
-	This element ID: <span ID="template_example_element_id"></span>
+	This element ID --> <span ID="template_example_element_id"></span>
 	<br>
-	Event example values: <span ID="template_example_event_value"></span>
+	Parent JavaScript variable -->
+		<span onbase="({ setHtml: this.parent.indexJsVariable })"></span>
 	<br>
-	<div onbase="({ setAttr: {'hidden': true}, if: !content.pathVariables.user_variable })">
-		Generated table: <table>
-			<tr onbase="({ forIn: this.array, key: 'a' })">
-				<td onbase="({ forIn: this.array, key: 'b' })">
-					<span onbase="({ setHtml: +this.array[a] + +this.array[b] * 10 })">
-				</td>
-			</tr>
-		</table>
-	</div>
+	Template input variable -->
+		<span onbase="({ setHtml: this.input.indexTemplateVariable })"></span>
+	<br>
+	Event example values --> <span ID="template_example_event_value"></span>
+	<br>
+	<br>
+	Generated table in template: <table>
+		<tr onbase="({ forIn: this.array, key: 'a' })">
+			<td onbase="({ forIn: this.array, key: 'b' })">
+				<b onbase="({ setHtml: +this.array[a] + +this.array[b] * 10 })"></b>
+				- <span onbase="({ template: '_example_/sub-component_example.html' })"></span>
+			</td>
+		</tr>
+	</table>
+	<br>
+	Generated recursive tree in template: <ul>
+		<li onbase="({
+			forIn: this.groups, key: 'i',
+			template: '_example_/recursive-component_example.html', input: {show: i}
+		})"></li>
+	</ul>
 </div>

@@ -4,6 +4,9 @@
 	width: max-content;
 	height: max-content;
 }
+#template_example table td {
+	border: #AAA 1px solid;
+}
 .TestItalic {
 	font-style: italic;
 }

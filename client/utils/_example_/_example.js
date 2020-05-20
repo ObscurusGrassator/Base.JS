@@ -1,6 +1,5 @@
 const util = require('client/utils');
 const service = require('client/services');
-const content = require('client/contentType.js');
 
 /**
  * Utility väčšinou exportujú konkrétnu funkciu alebo objekt niekoľkých funkcií

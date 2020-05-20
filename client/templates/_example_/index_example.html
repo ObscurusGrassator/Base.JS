@@ -19,18 +19,12 @@
 	</head>
 	<body>
 
-		<div ID="template_example_example"><!-- ${ template: "_example_/_example.html" } --></div>
+		<div ID="template_example_example"
+			onbase="{{ ({ template: '_example_/_example.html', input: {indexTemplateVariable: 'indexTemplateVariableValue'} }) }}"></div>
 
 		<br>
-		<div>Variables in path (util: getRealTemplatePath) - iframe example src="/_example_/ThisIsHttpPathVariable98765":</div>
+		<center>Variables in path (util: getRealTemplatePath) - iframe example src="/_example_/ThisIsHttpPathVariable98765":</center>
 		<iframe src="/_example_/ThisIsHttpPathVariable98765"></iframe>
-
-		<br>
-		<div>
-			<div>Application's tests can by run with command:</div>
-			<div><pre>npm start testing</pre></div>
-			<div>His results you can see in console.</div>
-		</div>
 
 	</body>
 </html>

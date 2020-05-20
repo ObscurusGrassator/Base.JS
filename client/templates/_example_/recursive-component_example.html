@@ -1,0 +1,24 @@
+<span onbase="({
+	setHtml: (this.users[this.input.show] && this.users[this.input.show].name)
+		|| this.groups[this.input.show].name + ':',
+})"></span>
+<ul onbase="({ if: !this.users[this.input.show] })">
+	<li onbase="({
+		forIn: this.groups[this.input.show].users, key: 'i',
+		template: '_example_/recursive-component_example.html',
+		input: {show: this.groups[this.input.show].users[i]}
+	})"></li>
+</ul>
+
+<script>
+	const thisElement = require('client/utils/getActualElement.ignr.base.js');
+	const s = require('client/src/_index.js');
+
+	/** @type {{show: String}} */
+	this.input; // contain context from parent: onbase="{{template: ..., input: ...}}"
+	/** @type {any} */
+	this.parent; // contain parent this
+
+	this.groups = this.parent.groups;
+	this.users = this.parent.users;
+</script>
