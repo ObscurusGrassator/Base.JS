@@ -1,5 +1,4 @@
-![alt text](./BaseJS.png)
-**Framework Base.JS** tvorí jednoduchý základ Vášho projektu. Je jednoduchý, rýchli, účelný a plne modulárny. Každého oslovili iné technológie, preto sa do budúcna neplánuje veľmi obsiahla komplexita. Špecialne funkcionalita sa nainštaluje ako npm balík alebo sa ako súbor skopíruje do jedného z adresárov libs|services|utils. Vďaka predvytvorenej základnej štruktúre projektu so skriptom pre automatické vytváranie indexov sa môžete naplno venovať už len dizajnu a byznis logike vášho projektu (src/). Cez klientske komponenty je možné rozbiť stránku na malé reciklovateľné, samostatné kúsky, ktoré medzi sebou defaultne komunikujú cez eventy.  
+**Framework Base.JS** tvorí jednoduchý základ Vášho projektu. Je rýchli, účelný a plne modulárny. Je veľmi jednoduchý a intuitívny, preto nevyžaduje takmer žiadne štúdium. Templejty sa renderujú volaním funkcie. Každého oslovili iné technológie, preto sa do budúcna neplánuje veľmi obsiahla komplexita. Špecialne funkcionalita sa nainštaluje ako npm balík alebo sa ako súbor skopíruje do jedného z adresárov libs|services|utils. Vďaka predvytvorenej základnej štruktúre projektu so skriptom pre automatické vytváranie indexov sa môžete naplno venovať už len dizajnu a byznis logike vášho projektu (src/). Cez klientske komponenty je možné rozbiť stránku na malé reciklovateľné, samostatné kúsky, ktoré medzi sebou defaultne komunikujú cez eventy.  
   
 Na strane vášho IDE editora sa aj klientska časť tvári ako Node.js aplikácia, vďaka čomu máte prístup k jeho plnej nápovede. Všetky funkcie frameworku sú pre túto nápovedu zdokumentované a umožňujú nepovinné definície typov. Každý priečinok obsahuje funkčný pomocný '_example.js' súbor.  
   
@@ -17,6 +16,17 @@ NODE_PATH=. node manager.js
 # Start
 ```
 npm start
+
+# Application's tests can by run with:
+npm start testing
+npm start testing=/fileWithTests/i
+
+# Show console.debug
+npm start debuging
+npm start debuging=/fileWithTests/i
+
+# (MacOS only) Refresh web page and go to browser web page:
+npm start refresh toBrowser
 ```
   
 # Update
@@ -30,7 +40,7 @@ Only remove full folder
   
 # Client loading order
 
-Ako prvé sa inicializujú funkcie a triedy z priečinkov:
+Poradie inicializácie funkcii a tried z priečinkov:
 1. shared/utils/error.base.js
 2. shared/services/testing.base.js
 3. client/libs/**/*.js
@@ -39,9 +49,6 @@ Ako prvé sa inicializujú funkcie a triedy z priečinkov:
 6. shared/services/**/*.js
 7. client/services/**/*.js
 8. client/src/**/*.js
-
-Následne sa zavolajú funkcie ovrapované `window.afterLoadRequires.unshift(() => { ... });`.  
-A napokon sa spustiť celá busines logika v `window.addEventListener('load', () => { ... });`.  
   
 **WARNING:** Kód na klientovy využívajúci funkcie z utils/services/src by mal byť ovrapowaný spustiteľnou funkciou alebo cez `window.afterLoadRequires.unshift(() => { ... });`, aby sa nezavolal skôr, ako sa načítajú funkcie, ktoré využíva.  
 V prípade shared funkcií môžete použiť napríklad:
@@ -50,7 +57,28 @@ let wrapper = () => { ... };
 // @ts-ignore
 if (typeof require === 'undefined') window.afterLoadRequires.unshift(wrapper); else wrapper();
 ```
-  
+
+# Template modificator
+const templateEditor = require(\'client/utils/templateEditor.base.js\');
+templateEditor(/* 'css selector', DomElement */);
+
+### Supported properties in examples
+ *   <... onbase="{ **if**: canThisHidden }" ...> ... </...>
+ *   <... onbase="{ **forIn**: arrayOrObject, **key**: \'key\' }" ...> ... </...>
+ *   <... onbase="{ **template**: \'_example_/sub-component_example.html\',
+            **input**: this.variableInTemplateJS }" ...> ... </...>
+ *   <... onbase="{ **setHtml**: content.contentExample || 123 }" ...> ... </...>
+ *   <... onbase="{ **setHtml**: this.variableInTemplateJS }" ...> ... </...>
+ *   <... onbase="{ **setAttr**: {src: content.contentExample} }" ...> ... </...>
+ *   <... onbase="{ **setClass**: {content.className: \'test\' == content.contentExample} }" ...> ... </...>
+ *   <... onbase="{ **js**: thisElement => console.log(\'loaded\', thisElement.id) }" ...> ... </...>
+
+### Order to evaluate property 'onbase'
+1. if
+2. forIn, key
+3. others
+
+
 # File structure
 
 Súbory frameworku majú suffix `.base`.  
@@ -70,7 +98,7 @@ client/
    utils/
       browserTestCompatibility.base.js  // page is not shown for old/incompatible browsers
       getActualElement.ignr.base.js     // get parent DOM element in/of actual template
-      templateEditor.base.js            // manual generation dynamic contents
+      templateEditor.base.js            // manual generation dynamic HTML contents
    types/
       events/        // types definition for effective work with events
       storage/       // types definition for effective work with
@@ -129,7 +157,6 @@ shared/
 After open empty project you can set [Download, Installation and First start](#download-installation-and-first-start) commands to terminal.
 
 ### You can login to testing GitHub account:
-
 ```
 Login:    GitpodTest
 Password: Gitpod123
@@ -139,10 +166,13 @@ Password: Gitpod123
 - client/src/\_example.js
 - client/templates/\_example\_/\_example.html
 - app_example.js
+- jsconfig.json
 
 [The code screenshots are here](http://obsgrass.com/public/Base.JS_screenshots)   
 
 
 **Contact: obscurus.grassator@gmail.com**  
 
-[MIT License - Copyright (c) 2019 Obscurus Grassator](./license.txt)  
+[MIT License - Copyright (c) 2019 Obscurus Grassator](./LICENSE)  
+
+![alt text](./BaseJS.png)

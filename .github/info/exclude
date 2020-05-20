@@ -19,9 +19,6 @@
 !client/src/
 !client/src/_index.js
 !client/templates/
-!client/templates/index_example.css
-!client/templates/index_example.html
-!client/templates/index_example.js
 !client/css/
 !client/types/
 !client/types/events/
@@ -53,8 +50,8 @@
 !*.gen.js
 !**/*.base.js
 !**/*.gen.js
-!**/_example_/
-!**/_example_/**/*
+!**/*_example_/
+!**/*_example_/**/*
 !**/*_example.*
 
 !.github/

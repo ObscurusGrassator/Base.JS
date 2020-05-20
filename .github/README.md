@@ -1,5 +1,4 @@
-![alt text](./BaseJS.png)
-**Framework Base.JS** is a simple base for your project. It's simple, fast, focused and fully modular. As everybody has a different needs, we do not plan to include a lot of specialized features in the framework itself. Custom features can be installed as npm packages or added as a file into one of the libs, services or utils directories. Thanks to the included project bootstrap and a script for automatically creating index files, you're free to focus on the business logic and design side of your project (src/). With the client components, you can break up your site into a bunch of small recyclable, separate pieces, which communicate using events by default.
+**Framework Base.JS** is a simple base for your project. It's fast, focused and fully modular. It is very simple and intuitive, so it requires almost no study. As everybody has a different needs, we do not plan to include a lot of specialized features in the framework itself. Custom features can be installed as npm packages or added as a file into one of the libs, services or utils directories. Thanks to the included project bootstrap and a script for automatically creating index files, you're free to focus on the business logic and design side of your project (src/). With the client components, you can break up your site into a bunch of small recyclable, separate pieces, which communicate using events by default.
   
 The client side looks like a Node.js application, which allows for any IDE autocomplete functionality. All framework functions are fully documented and allow for an optional type definitions. Every directory contains an `_example.js` file with working sample code.
   
@@ -17,6 +16,17 @@ NODE_PATH=. node manager.js
 # Start
 ```
 npm start
+
+# Application's tests can by run with:
+npm start testing
+npm start testing=/fileWithTests/i
+
+# Show console.debug
+npm start debuging
+npm start debuging=/fileWithTests/i
+
+# (MacOS only) Refresh web page and go to browser web page:
+npm start refresh toBrowser
 ```
   
 # Update
@@ -30,7 +40,7 @@ Simply delete the whole directory
   
 # Client loading order
 
-First are initialized, functions and classes in directories:
+Initialization order of functions and classes in directories:
 1. shared/utils/error.base.js
 2. shared/services/testing.base.js
 3. client/libs/**/*.js
@@ -40,9 +50,6 @@ First are initialized, functions and classes in directories:
 7. client/services/**/*.js
 8. client/src/**/*.js
 
-Next, functions wrapped in `window.afterLoadRequires.unshift(() => { ... });` are called.
-At last, the business logic in `window.addEventListener('load', () => { ... });` is run.  
-  
 **WARNING:** Client code in utils/services/src should be wrapped in a function or via `window.afterLoadRequires.unshift(() => { ... });` so it is run only when all dependencies are loaded.
 For example in the case of shared functions:
 ```
@@ -50,7 +57,28 @@ let wrapper = () => { ... };
 // @ts-ignore
 if (typeof require === 'undefined') window.afterLoadRequires.unshift(wrapper); else wrapper();
 ```
-  
+
+# Template modificator
+const templateEditor = require(\'client/utils/templateEditor.base.js\');
+templateEditor(/* 'css selector', DomElement */);
+
+### Supported properties in examples
+ *   <... onbase="{ **if**: canThisHidden }" ...> ... </...>
+ *   <... onbase="{ **forIn**: arrayOrObject, **key**: \'key\' }" ...> ... </...>
+ *   <... onbase="{ **template**: \'_example_/sub-component_example.html\',
+            **input**: this.variableInTemplateJS }" ...> ... </...>
+ *   <... onbase="{ **setHtml**: content.contentExample || 123 }" ...> ... </...>
+ *   <... onbase="{ **setHtml**: this.variableInTemplateJS }" ...> ... </...>
+ *   <... onbase="{ **setAttr**: {src: content.contentExample} }" ...> ... </...>
+ *   <... onbase="{ **setClass**: {content.className: \'test\' == content.contentExample} }" ...> ... </...>
+ *   <... onbase="{ **js**: thisElement => console.log(\'loaded\', thisElement.id) }" ...> ... </...>
+
+### Order to evaluate property 'onbase'
+1. if
+2. forIn, key
+3. others
+
+
 # File structure
 
 All framework files have a `.base` suffix.
@@ -70,7 +98,7 @@ client/
    utils/
       browserTestCompatibility.base.js // page is not shown for old/incompatible browsers
       getActualElement.ignr.base.js    // get parent DOM element in/of actual template
-      templateEditor.base.js           // manual generation dynamic contents
+      templateEditor.base.js           // manual generation dynamic HTML contents
    types/
       events/              // types definition for effective work with events
       storage/             // types definition for effective work with
@@ -129,7 +157,6 @@ shared/
 After open empty project you can set [Download, Installation and First start](#download-installation-and-first-start) commands to terminal.
 
 ### You can login to testing GitHub account:
-
 ```
 Login:    GitpodTest
 Password: Gitpod123
@@ -139,10 +166,13 @@ Password: Gitpod123
 - client/src/\_example.js
 - client/templates/\_example\_/\_example.html
 - app_example.js
+- jsconfig.json
 
 [The code screenshots are here](http://obsgrass.com/public/Base.JS_screenshots)   
 
 
 **Contact: obscurus.grassator@gmail.com**  
 
-[MIT License - Copyright (c) 2019 Obscurus Grassator](./license.txt)  
+[MIT License - Copyright (c) 2019 Obscurus Grassator](./LICENSE)  
+
+![alt text](./BaseJS.png)
