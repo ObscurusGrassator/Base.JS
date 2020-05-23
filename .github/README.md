@@ -1,11 +1,12 @@
-**Framework Base.JS** is a simple base for your project. It's fast, focused and fully modular. It is very simple and intuitive, so it requires almost no study. As everybody has a different needs, we do not plan to include a lot of specialized features in the framework itself. Custom features can be installed as npm packages or added as a file into one of the libs, services or utils directories. Thanks to the included project bootstrap and a script for automatically creating index files, you're free to focus on the business logic and design side of your project (src/). With the client components, you can break up your site into a bunch of small recyclable, separate pieces, which communicate using events by default.
+**Framework `Base.JS v0.9.0`** is a simple base for your project. It's fast, focused and fully modular. It is very simple and intuitive, so it requires almost no study. As everybody has a different needs, we do not plan to include a lot of specialized features in the framework itself. Custom features can be installed as npm packages or added as a file into one of the `libs/`, `services/` or `utils/` directories. Thanks to the included project bootstrap and a script for automatically creating index files, you're free to focus on the business logic and design side of your project (`src/`). With the client components, you can break up your site into a bunch of small recyclable, separate pieces, which communicate using events by default.  
   
-The client side looks like a Node.js application, which allows for any IDE autocomplete functionality. All framework functions are fully documented and allow for an optional type definitions. Every directory contains an `_example.js` file with working sample code.
+The client side looks like a Node.js application, which allows for any IDE autocomplete functionality. All framework functions are fully documented and allow for an optional type definitions. Every directory contains an `_example.js` file with working sample code.  
+
+The first run generates/updates a configuration file `jsconfig.json`, which allows you to configure the framework behavior and its `services/utils` functions. The `package.json` file is also updated with required dependencies and the `npm run start` and `npm run indexing` scripts.  
   
-The first run generates/updates a configuration file `jsconfig.json`, which allows you to configure the framework behavior and its services/utils functions. The `package.json` file is also updated with required dependencies and the `start` and `indexing` scripts.  
-  
-**ALERT:** Framework does not and will not support outdated browsers.
-  
+**ALERT:** Framework does not and will not support outdated browsers.  
+**ALERT:** Framework now does not have reactive template editor. Template rendering is started manualy.  
+
 # Download, Installation and First start
 ```
 git clone https://github.com/ObscurusGrassator/Base.JS.git you_project_name
@@ -50,17 +51,20 @@ Initialization order of functions and classes in directories:
 7. client/services/**/*.js
 8. client/src/**/*.js
 
-**WARNING:** Client code in utils/services/src should be wrapped in a function or via `window.afterLoadRequires.unshift(() => { ... });` so it is run only when all dependencies are loaded.
+**WARNING:** Client code in `utils/services/src` should be wrapped in a function or via `window.afterLoadRequires.unshift(() => { ... });` so it is run only when all dependencies are loaded (`require()`).  
 For example in the case of shared functions:
 ```
 let wrapper = () => { ... };
-// @ts-ignore
+// @ts-ignore // wrapped, if call in browser
 if (typeof require === 'undefined') window.afterLoadRequires.unshift(wrapper); else wrapper();
 ```
 
 # Template modificator
+Framework now does not have reactive template editor. Template rendering is started manualy:
+```
 const templateEditor = require(\'client/utils/templateEditor.base.js\');
 templateEditor(/* 'css selector', DomElement */);
+```
 
 ### Supported properties in examples
  *   <... onbase="{ **if**: canThisHidden }" ...> ... </...>

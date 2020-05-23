@@ -1,11 +1,12 @@
-**Framework Base.JS** tvorí jednoduchý základ Vášho projektu. Je rýchli, účelný a plne modulárny. Je veľmi jednoduchý a intuitívny, preto nevyžaduje takmer žiadne štúdium. Templejty sa renderujú volaním funkcie. Každého oslovili iné technológie, preto sa do budúcna neplánuje veľmi obsiahla komplexita. Špecialne funkcionalita sa nainštaluje ako npm balík alebo sa ako súbor skopíruje do jedného z adresárov libs|services|utils. Vďaka predvytvorenej základnej štruktúre projektu so skriptom pre automatické vytváranie indexov sa môžete naplno venovať už len dizajnu a byznis logike vášho projektu (src/). Cez klientske komponenty je možné rozbiť stránku na malé reciklovateľné, samostatné kúsky, ktoré medzi sebou defaultne komunikujú cez eventy.  
+**Framework `Base.JS v0.9.0`** tvorí jednoduchý základ Vášho projektu. Je rýchli, účelný a plne modulárny. Je veľmi jednoduchý a intuitívny, preto nevyžaduje takmer žiadne štúdium. Každého oslovili iné technológie, preto sa do budúcna neplánuje veľmi obsiahla komplexita. Špecialna funkcionalita sa nainštaluje ako npm balík alebo sa ako súbor skopíruje do jedného z adresárov `libs/`|`services/`|`utils/`. Vďaka predvytvorenej základnej štruktúre projektu so skriptom pre automatické vytváranie indexov sa môžete naplno venovať už len dizajnu a byznis logike vášho projektu (`src/`). Cez klientske komponenty je možné rozbiť stránku na malé reciklovateľné, samostatné kúsky, ktoré medzi sebou defaultne komunikujú cez eventy.  
   
-Na strane vášho IDE editora sa aj klientska časť tvári ako Node.js aplikácia, vďaka čomu máte prístup k jeho plnej nápovede. Všetky funkcie frameworku sú pre túto nápovedu zdokumentované a umožňujú nepovinné definície typov. Každý priečinok obsahuje funkčný pomocný '_example.js' súbor.  
+Na strane vášho IDE editora sa aj klientska časť tvári ako Node.js aplikácia, vďaka čomu máte prístup k jeho plnej nápovede. Všetky funkcie frameworku sú pre túto nápovedu zdokumentované a umožňujú nepovinné definície typov. Každý priečinok obsahuje funkčný pomocný `_example.js` súbor.  
   
-Po prvom spustení sa vygeneruje/upravý konfiguračný súbor 'jsconfig.json', cez ktorý je možné konfigurovať správanie frameworku a jeho services/utils funkcií. Rovnako sa do súboru 'package.json' pridajú nevihnutné dependencie a skripty: 'start' a 'indexing'.  
-  
-**ALERT:** Framework nepodporuje a ani nebude podporovať zastaralé browsre!
-  
+Po prvom spustení sa vygeneruje/upravý konfiguračný súbor `jsconfig.json`, cez ktorý je možné konfigurovať správanie frameworku a jeho `services/utils` funkcií. Rovnako sa do súboru `package.json` pridajú nevihnutné dependencie a skripty: 'npm run start' a 'npm run indexing'.  
+
+**ALERT:** Framework nepodporuje a ani nebude podporovať zastaralé browsre!  
+**ALERT:** Framework now does not have reactive template editor. Template rendering is started manualy.  
+
 # Download, Installation and First start
 ```
 git clone https://github.com/ObscurusGrassator/Base.JS.git you_project_name
@@ -50,17 +51,20 @@ Poradie inicializácie funkcii a tried z priečinkov:
 7. client/services/**/*.js
 8. client/src/**/*.js
   
-**WARNING:** Kód na klientovy využívajúci funkcie z utils/services/src by mal byť ovrapowaný spustiteľnou funkciou alebo cez `window.afterLoadRequires.unshift(() => { ... });`, aby sa nezavolal skôr, ako sa načítajú funkcie, ktoré využíva.  
+**WARNING:** Kód na klientovy využívajúci funkcie z `utils/services/src` by mal byť ovrapowaný spustiteľnou funkciou alebo cez `window.afterLoadRequires.unshift(() => { ... });`, aby sa nezavolal skôr, ako sa načítajú funkcie, ktoré využíva (`require()`).  
 V prípade shared funkcií môžete použiť napríklad:
 ```
 let wrapper = () => { ... };
-// @ts-ignore
+// @ts-ignore // wrapped, if call in browser
 if (typeof require === 'undefined') window.afterLoadRequires.unshift(wrapper); else wrapper();
 ```
 
 # Template modificator
+Framework now does not have reactive template editor. Template rendering is started manualy:
+```
 const templateEditor = require(\'client/utils/templateEditor.base.js\');
 templateEditor(/* 'css selector', DomElement */);
+```
 
 ### Supported properties in examples
  *   <... onbase="{ **if**: canThisHidden }" ...> ... </...>
