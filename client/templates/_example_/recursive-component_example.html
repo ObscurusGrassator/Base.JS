@@ -21,4 +21,7 @@
 
 	this.groups = this.parent.groups;
 	this.users = this.parent.users;
+
+	/** @type {function(): void} */
+	this.destructor; // this function is called, when is thisElement removed from template
 </script>

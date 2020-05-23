@@ -9,9 +9,10 @@ this.parent; // contain parent this
 this.templateJsVariable = 'ThisIsTemplateJsVariable';
 this.array = [1, 2, 3, 4, 5];
 
-s.event._example_.exampleRoot.listen((event, output) => {
+const listeners = [];
+listeners.push(s.event._example_.exampleRoot.listen((event, output) => {
 	document.getElementById("template_example_element_id").innerHTML = thisElement.id;
-});
+}));
 
 s.event._example_.exampleRoot.send({
 	my_prop_root: 'ThisIsEventOutput_' + s.content.contentExample
@@ -29,4 +30,9 @@ this.users = {
 this.groups = {
 	X: {name: 'GroupX', users: ['A', 'Y', 'B']},
 	Y: {name: 'GroupY', users: ['B', 'C']},
+};
+
+/** @type {function(): void} */
+this.destructor = () => { // this function is called, when is thisElement removed from template
+	listeners.forEach(l => l.removeListen());
 };

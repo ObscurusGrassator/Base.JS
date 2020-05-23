@@ -68,7 +68,7 @@ async function readFile(/** @type {String} */ filePath, content, isIndexTemplate
 	if (filePath.substring(-3) == '.js') result = '<script> ' + wraperBefore + /* onlyJS(result) */ result + wraperAfter + '\n</script>';
 	else if (filePath.substring(-4) == '.css') result = `<style>\n${result}\n//# sourceURL=${filePath}\n</style>`;
 	else if (filePath.substring(-5) == '.html') result =
-		((isIndexTemplate ? '' : `<div style="display: none;" _BaseJS_TemplateName_="${templateName}"></div>`) + result)
+		((isIndexTemplate ? '' : `<div style="display: none;" _BaseJS_TemplateName_="${templateName}" onbase="{}"></div>`) + result)
 		// .replace(/(\s*onbase\s*=\s*\"\s*(\{\{)?\s*\(?\s*\{)(_BaseJS_ComponentId_)?/g,
 		// 	(all, base, b, iff) => iff ? all : `${base}_BaseJS_ComponentId_: '_BaseJS_ComponentId_${id}', `)
 		.replace(/([\s\S]*?)(\<script[^\>]*?\>)([\s\S]*?)(\<\/script\>)/i, (all, /** @type {String} */ before, start, content, end) => {

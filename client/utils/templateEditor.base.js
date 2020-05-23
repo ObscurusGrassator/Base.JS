@@ -1,3 +1,5 @@
+const arraysDiff = require('shared/utils/arraysDiff.base.js');
+
 let commands = [/^if$/i, /^setHtml$/i, /^setAttr$/i, /^setClass$/i, /^js$/i, /^template$/i,
 	/^input$/i, /^_BaseJS_ComponentId_$/i,
 	/^forIn$/i, /^_forIn$/i, /^key$/i, /^_BaseJS_ForEachKey_\S+$/i];
@@ -27,7 +29,7 @@ let _BaseJS_ComponentId_counter = 0;
  * @param {Object} [input = {}] Input object
  * @param {Object} [parent = {}] Parent this
  */
-function templateEditor(selector = '', startElement = document.body, input = {}, parent = {}) {
+function templateEditor(selector = '', startElement = document.body, input = {}, parent = {}, usedIDs = new Set()) {
 	// @ts-ignore
 	let templateHTML = window.templateHTML || {};
 	// @ts-ignore
@@ -36,8 +38,16 @@ function templateEditor(selector = '', startElement = document.body, input = {},
 	let templateJsThis = window.templateJsThis || {};
 
 	let _BaseJS_ComponentId_ = '_BaseJS_ComponentId_'; // default ID in index.html
-	let firstOnbase = startElement.querySelector(selector || '*');
+	let templateIdElement = startElement.querySelector(selector + ' *');
+	let firstOnbase = startElement.querySelector(selector + ' [onbase]');
 	if (!firstOnbase) return;
+
+	let isRootCall = false;
+	let oldIDs = new Set();
+	if (usedIDs.size === 0) {
+		isRootCall = true;
+		startElement.querySelectorAll(selector + ' [onbase]').forEach(e => oldIDs.add(e.getAttribute('_BaseJS_ComponentId_')));
+	}
 
 	startElement.querySelectorAll(selector + ' [onbase*="template"]').forEach(e => e.innerHTML = '');
 	startElement.querySelectorAll(selector + ' [onbase*="_template"]').forEach(e => e.innerHTML = '');
@@ -45,21 +55,25 @@ function templateEditor(selector = '', startElement = document.body, input = {},
 		e.setAttribute('onbase', e.getAttribute('onbase').replace(/^(\{\{)?\s*\(?|\)?\s*(\}\})?$/g, ''))
 	);
 	startElement.querySelectorAll(selector + ' [onbase*="forIn"]').forEach(e => e.classList.add('_BaseJS_class_forIn'));
+	startElement.querySelectorAll(selector + ' ._BaseJS_class__forIn').forEach(e => e.parentNode.removeChild(e));
 	startElement.querySelectorAll(selector + ' ._BaseJS_class_hidden').forEach(e => e.classList.remove('_BaseJS_class_hidden'));
 
-	let templateName = firstOnbase.getAttribute('_basejs_templatename_');
-	if (templateName) {
+	let templateName = templateIdElement.getAttribute('_basejs_templatename_');
+	if (templateName && !templateIdElement.hasAttribute('_BaseJS_ComponentId_')) {
 		_BaseJS_ComponentId_ = '_BaseJS_ComponentId_' + (++_BaseJS_ComponentId_counter);
-		firstOnbase.id = _BaseJS_ComponentId_;
+		templateIdElement.id = _BaseJS_ComponentId_;
 		templateJS[templateName].call(new function() {
 			this.input = input;
 			this.parent = parent;
 		}, _BaseJS_ComponentId_);
-		// new templateJS[templateName](_BaseJS_ComponentId_);
 	} else {
 		_BaseJS_ComponentId_ = firstOnbase.getAttribute('_BaseJS_ComponentId_') || _BaseJS_ComponentId_;
+		if (_BaseJS_ComponentId_ != '_BaseJS_ComponentId_') {
+			templateName = document.getElementById(_BaseJS_ComponentId_).getAttribute('_basejs_templatename_');
+		}
 	}
 
+	usedIDs.add(_BaseJS_ComponentId_);
 	startElement.querySelectorAll(selector + ' [onbase]').forEach(e =>
 		e.setAttribute('_BaseJS_ComponentId_', _BaseJS_ComponentId_)
 	);
@@ -83,7 +97,7 @@ function templateEditor(selector = '', startElement = document.body, input = {},
 						}
 					}
 
-					if (!baseEval.call(this, evalValueIf, templateName, element).if) {
+					if (!baseEval.call(this, evalValueIf, templateName, _BaseJS_ComponentId_).if) {
 						element.classList.add('_BaseJS_class_hidden');
 						element.querySelectorAll('[onbase]').forEach(e => e.classList.add('_BaseJS_class_hidden'));
 						return;
@@ -103,7 +117,7 @@ function templateEditor(selector = '', startElement = document.body, input = {},
 					if ([/^forIn$/i, /^_forIn$/i, /^key$/i, /^_BaseJS_ForEachKey_\S+$/i, /^_BaseJS_ComponentId_$/i].map(a => a.source).includes(commands[i].source)) continue;
 					evalValue = evalValue.replace(new RegExp('([\{\t ]' + commands[i].source.substring(1, -1) + ':)'), '$1 true ||');
 				}
-				try { var obj = baseEval.call(this, evalValue, templateName); } catch (err) { return; }
+				try { var obj = baseEval.call(this, evalValue, templateName, _BaseJS_ComponentId_); } catch (err) { return; }
 
 				for (let i in obj) {
 					if (commands.find(c => c.test(i))) {
@@ -117,8 +131,6 @@ function templateEditor(selector = '', startElement = document.body, input = {},
 								element.classList.add(classId);
 							}
 
-							// remove old clons
-							startElement.querySelectorAll(`.${classId}._BaseJS_class__forIn`).forEach(e => e.parentNode.removeChild(e));
 							// remove _BaseJS_EditorGroupClass_ in deep child forIn
 							startElement.querySelectorAll('.' + classId + ' ._BaseJS_class_forIn').forEach(e => {
 								e.classList.forEach((v, k) => {
@@ -181,7 +193,7 @@ function templateEditor(selector = '', startElement = document.body, input = {},
 		if (element.classList.contains('_BaseJS_class_hidden')) return;
 
 		(function() {
-			try { var obj = baseEval.call(this, element.getAttribute('onbase'), templateName); } catch (err) { return; }
+			try { var obj = baseEval.call(this, element.getAttribute('onbase'), templateName, _BaseJS_ComponentId_); } catch (err) { return; }
 
 			for (let i in obj) {
 				if (commands.find(c => c.test(i))) {
@@ -190,8 +202,8 @@ function templateEditor(selector = '', startElement = document.body, input = {},
 
 						if (i == 'template' && templateHTML) {
 							element.innerHTML = decodeURI(templateHTML[obj[i]]); // async operation
-							// setTimeout(() => templateEditor('', element, obj['input'] || {}, this), 1);
-							templateEditor('', element, obj['input'] || {}, this);
+							// setTimeout(() => templateEditor('', element, obj['input'] || {}, this, usedIDs), 1);
+							templateEditor('', element, obj['input'] || {}, this, usedIDs);
 						}
 						if (i == 'js' && typeof obj[i] == 'function') obj[i](element);
 						if (i == 'setHtml') element.innerHTML = obj[i];
@@ -213,9 +225,17 @@ function templateEditor(selector = '', startElement = document.body, input = {},
 		// @ts-ignore
 		}).call(templateJsThis[_BaseJS_ComponentId_]);
 	});
+
+	if (isRootCall) {
+		arraysDiff(Array.from(oldIDs), Array.from(usedIDs)).difference.forEach(id => {
+			if (id && oldIDs.has(id) && typeof templateJsThis[id].destructor == 'function') {
+				templateJsThis[id].destructor();
+			}
+		});
+	}
 };
 
-function baseEval(baseAttribute, templateName) {
+function baseEval(baseAttribute, templateName, _BaseJS_ComponentId_) {
 	let lett = '';
 	try {
 		let match = baseAttribute.match(/_BaseJS_ForEachKey_\S+['"]?:\s*['"]?.+?['",\}]/g) || [];
@@ -226,7 +246,7 @@ function baseEval(baseAttribute, templateName) {
 
 		return eval(`${lett} new Object(${baseAttribute});`);
 	} catch (err) {
-		console.error(`Template: client/templates/${templateName}.html - Bad JavaScript in "onbase" element property: ${lett}${baseAttribute}`, err);
+		console.error(`_BaseJS_ComponentId_: ${_BaseJS_ComponentId_}; \n- Template: client/templates/${templateName}.html; \n- Bad JavaScript in "onbase" element property: \n- ${lett} \n- ${baseAttribute} \n-`, err);
 		throw err;
 	}
 }
