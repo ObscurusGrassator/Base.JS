@@ -126,7 +126,7 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 							continue;
 						}
 
-						if (/\.ignr\./.test(file)) continue;
+						if (!objectPathsSource && /\.ignr\./.test(file)) continue;
 						if (file.substr(file.length - 14) == '/src/_index.js') continue;
 
 						let functionName = file.match(/(^|\/)([a-zA-Z_\-]+)[^\/]*.js$/i)[2].replace(/[_\-]$/, '');

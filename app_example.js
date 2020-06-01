@@ -14,7 +14,7 @@ module.exports = {
 	) => {
 		res.setHeader('Content-Type', 'text/html');
 
-		s.storage.server(storage => storage.cookie._exampleCookieStorage.v = 'serverValue');
+		s.storage.edit(storage => storage.cookie._exampleCookieStorage.v = 'serverValue');
 
 		if (req.url == '/') req.url = '_example_/index_example.html';
 		// else if (req.url.substr(0, 5) == '/api/') {

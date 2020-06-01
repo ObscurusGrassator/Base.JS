@@ -141,41 +141,22 @@ function setCookies(obj) {
 	else data.server.response.setHeader('Set-Cookie', cookie);
 }
 
+function storageEdit(selectFunction, userObject) {
+	dataEdit = userObject || data;
+	path = [];
+	let result = selectFunction(userObject ? new Proxy({}, handler) : proxyData);
+	if (typeof result == 'boolean') return result;
+	else return result._BaseJS_value;
+}
+
+/**
+ * Safe edit property.
+ * It is a type oriented alternative to Lodash.<get/set/...>
+ */
 class Storage {
 	/**
-	 * Safe edit property.
-	 * 
-	 * Special storage properties: storage.cookie, storage.session, storage.local
-	 * 
-	 * @param {function(import('client/types/storage').Type): any} selectFunction
-	 * 
-	 * @example client(storage => storage.a.b.c);
-	 * @example client(storage => storage.a.b.d = 'test');
-	 * @example client(storage => storage.a.b.e.push('test'));
-	 * @example client(storage => delete storage.a.b.f);
-	 */
-	static client(selectFunction) {
-		return Storage.edit(selectFunction);
-	}
-
-	/**
-	 * Safe edit property.
-	 * 
-	 * Special storage properties: storage.cookie
-	 * 
-	 * @param {function(import('server/types/storage').Type): any} selectFunction
-	 * 
-	 * @example server(storage => storage.a.b.c);
-	 * @example server(storage => storage.a.b.d = 'test');
-	 * @example server(storage => storage.a.b.e.push('test'));
-	 * @example server(storage => delete storage.a.b.f);
-	 */
-	static server(selectFunction) {
-		return Storage.edit(selectFunction);
-	}
-
-	/**
 	 * Safe edit property of user object or array.
+	 * It is a type oriented alternative to Lodash.<get/set/...>
 	 * 
 	 * @template T
 	 * 
@@ -188,16 +169,44 @@ class Storage {
 	 * @example server({a: {b: {c: 'x'}}}, storage => delete storage.a.b.f);
 	 */
 	static of(userObject, selectFunction) {
-		return Storage.edit(selectFunction, userObject);
+		return storageEdit(selectFunction, userObject);
 	}
-
-	static edit(selectFunction, userObject) {
-		dataEdit = userObject || data;
-		path = [];
-		let result = selectFunction(userObject ? new Proxy({}, handler) : proxyData);
-		if (typeof result == 'boolean') return result;
-		else return result._BaseJS_value;
+}
+class StorageClient extends Storage {
+	/**
+	 * Safe edit property.
+	 * It is a type oriented alternative to Lodash.<get/set/...>
+	 * 
+	 * Special storage properties: storage.cookie, storage.session, storage.local
+	 * 
+	 * @param {function(import('client/types/storage').Type): any} selectFunction
+	 * 
+	 * @example client(storage => storage.a.b.c);
+	 * @example client(storage => storage.a.b.d = 'test');
+	 * @example client(storage => storage.a.b.e.push('test'));
+	 * @example client(storage => delete storage.a.b.f);
+	 */
+	static edit(selectFunction) {
+		return storageEdit(selectFunction);
+	}
+}
+class StorageServer extends Storage {
+	/**
+	 * Safe edit property.
+	 * It is a type oriented alternative to Lodash.<get/set/...>
+	 * 
+	 * Special storage properties: storage.cookie
+	 * 
+	 * @param {function(import('server/types/storage').Type): any} selectFunction
+	 * 
+	 * @example server(storage => storage.a.b.c);
+	 * @example server(storage => storage.a.b.d = 'test');
+	 * @example server(storage => storage.a.b.e.push('test'));
+	 * @example server(storage => delete storage.a.b.f);
+	 */
+	static edit(selectFunction) {
+		return storageEdit(selectFunction);
 	}
 }
 
-module.exports = Storage;
+module.exports = {StorageClient, StorageServer};

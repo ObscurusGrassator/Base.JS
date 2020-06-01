@@ -1,7 +1,7 @@
 module.exports = {
 	error: require('shared/utils/error.base.js'),
 	console: require('shared/utils/console.base.js'),
-	storage: require('shared/services/storage.base.js'),
+	storage: require('client/services/storage.base.js'),
 	config: require('shared/services/jsconfig.base.js').value,
 	templateEditor: require('client/utils/templateEditor.base.js'),
 

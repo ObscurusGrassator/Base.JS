@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 var error;
-if (typeof require === 'undefined' || (fs.existsSync('jsconfig.json') && fs.existsSync('shared/services/.jsconfig.gen.ignr.js'))) {
+if (typeof require === 'undefined' || fs.existsSync('jsconfig.json')) {
 	error = require('shared/utils/error.base.js');
 } else error = message => (new Error(message)).stack;
 

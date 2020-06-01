@@ -19,17 +19,17 @@ const concoleWarnError = (console) => {
 	};
 
 	process.on('uncaughtException', (err) => {
-		console.error('Uncaught exception:', err.stack || err);
+		console.error('Uncaught exception:', err);
 		if (s.config.utils.email.sendEmailAfter.error) {
 			s.util.email('' + s.error(err))
-			.catch((err) => { console.error(err); });
+			.catch(err => { console.error(err); });
 		}
 	});
 	process.on('unhandledRejection', (/** @type {Error} */ err, promise) => {
-		console.error('Unhandled Rejection:', err.stack || err)
+		console.error('Unhandled Rejection:', err)
 		if (s.config.utils.email.sendEmailAfter.error) {
 			s.util.email('' + s.error(err))
-			.catch((err) => { console.error(err); });
+			.catch(err => { console.error(err); });
 		}
 	});
 };
@@ -53,8 +53,10 @@ const s = require('server/src/_index.js');
 
 const console0 = s.util.console.configure({userErrorFunction: s.util.error});
 let debugFileRegExp;
-s.service.storage.server(
-	(s) => s.server.help.push({prop: 'debuging=/app\\.js/i', desc: 'show console.debug for'}));
+s.storage.edit(s => s.server.help.push(
+	{prop: 'debuging', desc: 'show all console.debug'},
+	{prop: 'debuging=/app\\.js/i', desc: 'show console.debug of specific files'}
+));
 for (let i in process.argv) {
 	if (process.argv[i].substr(0, 9) === 'debuging=') {
 		let match = process.argv[i].match(/=\/?([^\/]+)\/?(.*)$/);
@@ -134,8 +136,8 @@ concoleWarnError(console0);
 				}
 			}
 
-			s.service.storage.server(storage => storage.server.response = res);
-			s.service.storage.server(storage => storage.server.request = req);
+			s.storage.edit(storage => storage.server.response = res);
+			s.storage.edit(storage => storage.server.request = req);
 
 			await app.callPerResponce(req, res);
 		} catch(err) {
@@ -148,54 +150,73 @@ concoleWarnError(console0);
 		console.info('Server running at', console.colors.bold, console.colors.green, 'http://' + s.config.server.hostname + ':' + s.config.server.port);
 	});
 
-	s.service.storage.server((s) => s.server.help.push({prop: 'refresh', desc: 'refresh web page (mac only)'}));
-	s.service.storage.server((s) => s.server.help.push({prop: 'toBrowser', desc: 'go to browser web page (mac only)'}));
-	if (process.argv.includes('refresh') || process.argv.includes('toBrowser')) {
-		await s.modul["run-applescript"](`
-			set urll to "${s.config.server.protocol}://${s.config.server.hostname}${s.config.server.port ? ':'+s.config.server.port : ''}"
-			on is_running(appName)
-				tell application "System Events" to (name of processes) contains appName
-			end is_running
-			set chromeRunning to is_running("Google Chrome")
+	let refreshAndToBrowser = async () => {
+		if (process.argv.includes('refresh') || process.argv.includes('toBrowser')) {
+			await s.modul["run-applescript"](`
+				set urll to "${s.config.server.protocol}://${s.config.server.hostname}${s.config.server.port ? ':'+s.config.server.port : ''}"
+				on is_running(appName)
+					tell application "System Events" to (name of processes) contains appName
+				end is_running
+				set chromeRunning to is_running("Google Chrome")
 
-			if chromeRunning then
-				tell application "Google Chrome"
-					set i to 0
-					set j to 0
-					repeat with w in (windows)
-						set j to j + 1
-						repeat with t in (tabs of w)
-							set i to i + 1
-							if URL of t starts with urll then
-								set (active tab index of window j) to i
-								# set active tab index of w to i
-								# set index of w to 1
-								${process.argv.includes('toBrowser') ? 'activate' : ''}
-								${process.argv.includes('refresh') ?
-									`tell application "Google Chrome" to tell the active tab of its first window
-										reload
-									end tell` : ''
-								}
-								return
-							end if
+				if chromeRunning then
+					tell application "Google Chrome"
+						set i to 0
+						set j to 0
+						repeat with w in (windows)
+							set j to j + 1
+							repeat with t in (tabs of w)
+								set i to i + 1
+								if URL of t starts with urll then
+									set (active tab index of window j) to i
+									# set active tab index of w to i
+									# set index of w to 1
+									${process.argv.includes('toBrowser') ? 'activate' : ''}
+									${process.argv.includes('refresh') ?
+										`tell application "Google Chrome" to tell the active tab of its first window
+											reload
+										end tell` : ''
+									}
+									return
+								end if
+							end repeat
 						end repeat
-					end repeat
+						tell application "Google Chrome"
+							activate
+							open location urll
+						end tell
+					end tell
+				else
 					tell application "Google Chrome"
 						activate
 						open location urll
 					end tell
-				end tell
-			else
-				tell application "Google Chrome"
-					activate
-					open location urll
-				end tell
-			end if
-		`);
+				end if
+			`);
+		}
+	}
+	s.storage.edit(s => s.server.help.push(
+		{prop: 'refresh', desc: 'refresh web page (mac only)'},
+		{prop: 'toBrowser', desc: 'go to browser web page (mac only)'}
+	));
+	refreshAndToBrowser();
+
+	let ignnoreWatchFiles = s.config.manager.ignnoreWatchFiles;
+	s.storage.edit(s => s.server.help.push({prop: 'refreshAfterChange', desc: 'refresh server after its file change'}));
+	if (process.argv.includes('refreshAfterChange')) {
+		s.modul.fs.watch('./', {recursive: true}, (eventType, filename) => {
+			for (let i in ignnoreWatchFiles) {
+				if (new RegExp(ignnoreWatchFiles[i], 'i').test(filename)) return;
+			}
+			if (/^client\//i.test(filename)) refreshAndToBrowser();
+			else process.exit(2);
+		});
 	}
 
-	s.service.storage.server((s) => s.server.help.push({prop: 'testing', desc: 'start tests'}));
-	s.service.storage.server((s) => s.server.help.push({prop: 'testing=/fileWithTest/', desc: 'start specific tests'}));
+	s.storage.edit(s => s.server.help.push(
+		{prop: 'testing', desc: 'start tests'},
+		{prop: 'testing=/fileWithTest/', desc: 'start specific tests'}
+	));
 	for (let i in process.argv) {
 		if (process.argv[i] === 'testing') s.service.testing.testAll(); // await
 		else if (process.argv[i].substr(0, 8) === 'testing=') {
@@ -204,5 +225,5 @@ concoleWarnError(console0);
 		}
 	}
 
-	console.info('Help>', s.console.colors.cyan, 'npm start', s.service.storage.server((s) => s.server.help).map((help) => help.prop).join(' '));
+	console.info('Help>', s.console.colors.cyan, 'npm start', s.storage.edit((s) => s.server.help).map((help) => help.prop).join(' '));
 })().catch((err) => { console.error(err); });

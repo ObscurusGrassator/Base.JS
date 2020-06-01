@@ -8,6 +8,9 @@ var console = typeof window !== 'undefined' && window.requires['shared/utils/con
 let tests = [];
 let failed = 0;
 
+/**
+ * Functionality testing (unit tests)
+ */
 class Testing {
 	/** @type {Number} */
 	static get failed() { return failed; };

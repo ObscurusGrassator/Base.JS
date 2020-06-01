@@ -55,7 +55,13 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 			"shortcuts": {
 				"serverRestart": "r\n",
 				"serverRestartAndTerminalClear": "c\n"
-			}
+			},
+			"ignnoreWatchFiles": [
+				"^node_modules\\/",
+				"^\\.gitBase\\.JS\\/FETCH_HEAD$",
+				"[^\\/]index\\.js$",
+				"\\.gen\\."
+			]
 		},
 
 		"services": {},
@@ -64,7 +70,6 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 	let str = jsonStringify(jsconfigObj, space);
 	if (string.replace(/\n$/, '') != str) {
 		fs.writeFileSync('jsconfig.json', str);
-		fs.writeFileSync('shared/services/.jsconfig.gen.ignr.js', 'module.exports = ' + str);
 	}
 
 
@@ -113,7 +118,7 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 	if (!fs.existsSync(fileName)) {
 		fs.writeFileSync(fileName, 
 			'module.exports = {\n'
-			+ space + "config: require('shared/services/.jsconfig.gen.ignr.js'),\n"
+			+ space + "config: require('jsconfig.json'),\n"
 			+ space + "contentExample: '',\n"
 			+ space + "pathVariables: '',\n"
 			+ '};\n'
@@ -122,7 +127,6 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 
 	if (!fs.existsSync('client/css/')) fs.mkdirSync('client/css/');
 /**************************************************************************/
-
 
 /***************************************************************
 * Manager call app in child process for server restart options *

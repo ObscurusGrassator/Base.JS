@@ -1,4 +1,4 @@
-**Framework `Base.JS v0.9.0`** tvorí jednoduchý základ Vášho projektu. Je rýchli, účelný a plne modulárny. Je veľmi jednoduchý a intuitívny, preto nevyžaduje takmer žiadne štúdium. Každého oslovili iné technológie, preto sa do budúcna neplánuje veľmi obsiahla komplexita. Špecialna funkcionalita sa nainštaluje ako npm balík alebo sa ako súbor skopíruje do jedného z adresárov `libs/`|`services/`|`utils/`. Vďaka predvytvorenej základnej štruktúre projektu so skriptom pre automatické vytváranie indexov sa môžete naplno venovať už len dizajnu a byznis logike vášho projektu (`src/`). Cez klientske komponenty je možné rozbiť stránku na malé reciklovateľné, samostatné kúsky, ktoré medzi sebou defaultne komunikujú cez eventy.  
+**Framework `Base.JS v0.9.0`** tvorí jednoduchý základ Vášho projektu. Je rýchli, účelný a plne modulárny. Je veľmi jednoduchý a intuitívny, preto nevyžaduje takmer žiadne štúdium. Každého oslovili iné technológie, preto sa do budúcna neplánuje veľmi obsiahla komplexita. Špecialna funkcionalita sa nainštaluje ako npm balík alebo sa ako súbor skopíruje do jedného z adresárov `libs/`|`services/`|`utils/`. Vďaka predvytvorenej základnej štruktúre projektu so skriptom pre automatické vytváranie indexov sa môžete naplno venovať už len dizajnu a byznis logike vášho projektu (`src/`). Vytvorené `index.js` súbory kopírujú kvôli prehladnosti svoju priečinkovú štruktúru. Cez klientske komponenty je možné rozbiť stránku na malé reciklovateľné, samostatné kúsky, ktoré medzi sebou defaultne komunikujú cez eventy.  
   
 Na strane vášho IDE editora sa aj klientska časť tvári ako Node.js aplikácia, vďaka čomu máte prístup k jeho plnej nápovede. Všetky funkcie frameworku sú pre túto nápovedu zdokumentované a umožňujú nepovinné definície typov. Každý priečinok obsahuje funkčný pomocný `_example.js` súbor.  
   
@@ -26,7 +26,10 @@ npm start testing=/fileWithTests/i
 npm start debuging
 npm start debuging=/fileWithTests/i
 
-# (MacOS only) Refresh web page and go to browser web page:
+# Restart node server after project file change
+npm start refreshAfterChange
+
+# (MacOS only) Refresh web page and go to browser web page after start/restart node server:
 npm start refresh toBrowser
 ```
   
@@ -98,6 +101,7 @@ jsconfig.json        // project configuration
 jsconfig.local.json  // local project configuration changes compared to jsconfig.js
 client/
    services/
+      storage.base.js                   // saveing/sharing variables/objects
       event.base.js                     // communication of components through events
    utils/
       browserTestCompatibility.base.js  // page is not shown for old/incompatible browsers
@@ -117,21 +121,22 @@ client/
    contentType.js    // types definition for effective work with
 server/
    services/
+      storage.base.js               // saveing/sharing variables/objects
    utils/
       getFilePaths.base.js          // deep file list of folder
       getRealTemplatePath.base.js   // '/_example_/98765' ==> '/article/<id>'
       htmlGenerator.base.js         // creating one client html file
       indexCreate.base.js           // creating index.js of all folder files
    types/
-      storage/          // types definition for effective work with
-                        //   saveing/sharing variables/objects
+      storage/              // types definition for effective work with
+                            //   saveing/sharing variables/objects
    src/
-      _index.js         // fast require() contain utils and services
+      _index.js             // fast require() contain utils and services
 shared/
    services/
-      jsconfig.base.js  // default updating and JS access to project configuration
-      storage.base.js   // saveing/sharing variables/objects
-      testing.base.js   // testing biznis logic
+      jsconfig.base.js      // default updating and JS access to project configuration
+      storage.ignr.base.js  // saveing/sharing variables/objects
+      testing.base.js       // testing biznis logic
    utils/
 ```
 

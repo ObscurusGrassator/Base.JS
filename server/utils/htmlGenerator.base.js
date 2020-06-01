@@ -157,7 +157,7 @@ async function htmlGenerator(content = {}, template = 'index', html = [], css = 
 				let paths = await getFilePaths(path, /(^|\/)(?!\.index\.js)(?!index\.js)[^\/]*\.(js|css)$/);
 				let _index;
 				for (let path of paths) {
-					if (/\.(js|css)/.test(path) && (!/\.ignr\./.test(path) || /getActualElement\./.test(path))) {
+					if (/\.(js|css)/.test(path) /*&& (!/\.ignr\./.test(path) || /getActualElement\./.test(path))*/) {
 						if (path.substr(path.length - 14) == '/src/_index.js') {
 							_index = await readFile(path, inputContent);
 						} else {

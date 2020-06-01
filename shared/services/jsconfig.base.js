@@ -4,7 +4,6 @@ const get = require('shared/utils/get.base.js');
 const defaults = require('shared/utils/defaults.base.js');
 const jsonStringify = require('shared/utils/jsonStringify.base.js');
 const confBase = require('jsconfig.json');
-const ConfType = require('shared/services/.jsconfig.gen.ignr.js');
 
 var local = {};
 try {
@@ -14,9 +13,12 @@ try {
 
 var conf;
 
+/**
+ * Working with project configuration.
+ * Source configuration file: jsconfig.json and jsconfig.local.json
+ */
 class Config {
-	// @ts-ignore
-	/** @type {ConfType} */
+	/** @type {typeof confBase} */
 	static get value() {
 		if (!conf) {
 			if (typeof require !== 'undefined') conf = defaults(local, confBase);
