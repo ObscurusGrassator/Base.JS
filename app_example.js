@@ -1,6 +1,8 @@
 const s = require('server/src/_index.js');
 const srcExample = require('server/src/_example.js');
 
+/** @typedef {import('client/types/contentType.js').ContentType} ContentType */
+
 module.exports = {
 	callBeforeServerStarting: async (
 		/** @type {import('http').IncomingMessage} */ req,
@@ -26,14 +28,14 @@ module.exports = {
 
 		if (realPath.path == 'notFounds.html') res.statusCode = 404;
 
+		/** @type ContentType */
+		let content = {
+			config: s.config, // Framework send this property automatically with filtered properties started wtih '_' prefix
+			contentExample: 'ThisIsServerContent',
+			pathVariables: realPath.variables
+		};
+
 		// In production generate HTML only onece and update content with: s.util.htmlGenerator.contentRewrite()
-		res.end(await s.util.htmlGenerator.create(
-			{
-				config: s.config,
-				contentExample: 'ThisIsServerContent',
-				pathVariables: realPath.variables
-			},
-			realPath.path
-		));
+		res.end(await s.util.htmlGenerator.create(content, realPath.path));
 	}
 };

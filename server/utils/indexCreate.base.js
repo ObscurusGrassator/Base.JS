@@ -48,17 +48,21 @@ const config = require('shared/services/jsconfig.base.js').update('utils._create
 async function indexCreate(destinationPath = null, dirPathsSource = [], type = 'utils', objectPathsSource = null) {
 	try {
 		if (!destinationPath && dirPathsSource.length === 0) {
-			let contentType = `module.exports = {
-				"config": require('shared/services/jsconfig.base.js').value,
-			};`;
+			let contentType = '/**'
+				+ ' * @typedef {Object} ContentType'
+				+ ' * @property {typeof import(\'jsconfig.json\')} config'
+				+ ' * @property {string} contentExample'
+				+ ' * @property {string} pathVariables'
+				+ ' */'
+				+ 'export {}';
 
 			if (!fs.existsSync('client/libs/')) fs.mkdirSync('client/libs/');
-			if (!fs.existsSync('client/contentType.js')) {
-				await promisify(fs.writeFile, 'client/contentType.js', contentType);
+			if (!fs.existsSync('client/types/contentType.js')) {
+				await promisify(fs.writeFile, 'client/types/contentType.js', contentType);
 			}
 
-			if (await fs.readFileSync('client/contentType.js', 'utf8') == contentType) {
-				console.info('In "client/contentType.js" file you can specify object type sended from server to client.');
+			if (await fs.readFileSync('client/types/contentType.js', 'utf8') == contentType) {
+				console.info('In "client/types/contentType.js" file you can specify object type sended from server to client.');
 			}
 
 			let proms = [];
@@ -110,6 +114,7 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 			proms.push(getFilePaths(
 				dirPathsSource[i],
 				new RegExp("(^|\\/)(?!\\.index\\.js)(?!index\\.js)[^\\/]*\\.js$"),
+				true,
 				['libs', 'services'].indexOf(type) > -1
 			));
 		}

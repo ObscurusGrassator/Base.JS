@@ -1,5 +1,3 @@
-const get = require('shared/utils/get.base.js');
-
 /**
  * Difference and intersection of two input array.
  * 
@@ -9,29 +7,30 @@ const get = require('shared/utils/get.base.js');
  * @param {T[]} B
  * @param {function} [comparation = (a, b) => a === b]
  * 
- * @returns {{difference: T[], intersection: T[]}}
+ * @returns {{intersection: T[], difference: T[], differenceLeft: T[], differenceRight: T[]}}
  * 
- * @example arraysDiff([2, 3], [3, 4]); // {difference: [2, 4], intersection: [3]}
+ * @example arraysDiff([2, 3], [3, 4]);
+ *   === {intersection: [3], difference: [2, 4], differenceLeft: [2], differenceRight: [4]}
  */
 function arraysDiff(A, B, comparation = (a, b) => a === b) {
-	/** @type {{difference: T[], intersection: T[]}} */
-	const result = {difference: [], intersection: []};
-	const A2 = [...A];
-	const B2 = [...B];
+	/** @type {{intersection: T[], difference: T[], differenceLeft: T[], differenceRight: T[]}} */
+	const result = {intersection: [], difference: [], differenceLeft: [], differenceRight: []};
+	/** @type {{[k: string]: T}} */ const A2 = {}; for (let i in A) { A2['_' + i] = A[i]; }
+	/** @type {{[k: string]: T}} */ const B2 = {}; for (let i in B) { B2['_' + i] = B[i]; }
 
-	for (let a in A2) {
-		let intersection = false;
-		for (let b in B2) {
-			if (comparation(A2[a], B2[b])) {
-				result.intersection.push(A2[a]);
-				intersection = true;
-				B2.splice(+b, 1);
+	for (let a in A) {
+		for (let b in B) {
+			if (comparation(A[a], B[b])) {
+				result.intersection.push(A[a]);
+				delete A2['_' + a];
+				delete B2['_' + b];
 			}
 		}
-		if (!intersection) result.difference.push(A2[a]);
 	}
 
-	result.difference = result.difference.concat(B2);
+	result.difference = Object.values(A2).concat(Object.values(B2));
+	result.differenceLeft = Object.values(A2);
+	result.differenceRight = Object.values(B2);
 
 	return result;
 };

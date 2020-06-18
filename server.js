@@ -112,7 +112,7 @@ concoleWarnError(console0);
 			showNewCommits.join('\n').substr(1),
 			'\n  ', hashOld, '-->', hashNew,
 			console.colors.blue, '\n   Command for update:', console.colors.reset,
-			console.colors.green, console.colors.bold, 'npm update',
+			console.colors.green, console.colors.bold, 'npm run update',
 		);
 	});
 
@@ -208,8 +208,8 @@ concoleWarnError(console0);
 			for (let i in ignnoreWatchFiles) {
 				if (new RegExp(ignnoreWatchFiles[i], 'i').test(filename)) return;
 			}
-			if (/^client\//i.test(filename)) refreshAndToBrowser();
-			else process.exit(2);
+			// if (/^client\/templates\//i.test(filename)) refreshAndToBrowser(); // user can have disabled full html generation per server call
+			process.exit(2);
 		});
 	}
 

@@ -1,8 +1,7 @@
-/** @template UserData @typedef {import('client/types/events/eventType.ignr').EventType<UserData>} EventType<UserData> */
+/** @template UserData @typedef {import('client/types/events/eventType.ignr.base.js').EventType<UserData>} EventType<UserData> */
 
 /**
- * @typedef ExampleRoot
- * @type {Object}
+ * @typedef {Object} ExampleRoot
  * @property {String} my_prop_root - User string velue
  */
 

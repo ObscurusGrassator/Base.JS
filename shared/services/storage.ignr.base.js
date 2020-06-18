@@ -179,7 +179,7 @@ class StorageClient extends Storage {
 	 * 
 	 * Special storage properties: storage.cookie, storage.session, storage.local
 	 * 
-	 * @param {function(import('client/types/storage').Type): any} selectFunction
+	 * @param {function(import('client/types/storage').Type & {[key: string]: any}): any} selectFunction
 	 * 
 	 * @example client(storage => storage.a.b.c);
 	 * @example client(storage => storage.a.b.d = 'test');
@@ -197,7 +197,7 @@ class StorageServer extends Storage {
 	 * 
 	 * Special storage properties: storage.cookie
 	 * 
-	 * @param {function(import('server/types/storage').Type): any} selectFunction
+	 * @param {function(import('server/types/storage').Type & {[key: string]: any}): any} selectFunction
 	 * 
 	 * @example server(storage => storage.a.b.c);
 	 * @example server(storage => storage.a.b.d = 'test');

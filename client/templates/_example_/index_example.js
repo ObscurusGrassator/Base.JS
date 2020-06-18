@@ -1,3 +1,4 @@
+export {}; // Cannot redeclare exported variable ... ts(2323)
 const thisElement = require('client/utils/getActualElement.ignr.base.js');
 const s = require('client/src/_index.js');
 

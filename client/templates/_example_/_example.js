@@ -1,6 +1,7 @@
 const thisElement = require('client/utils/getActualElement.ignr.base.js');
 const s = require('client/src/_index.js');
 
+export {}; // Cannot redeclare exported variable ... ts(2323)
 /** @type {any} */
 this.input; // contain context from parent: onbase="{{template: ..., input: ...}}"
 /** @type {any} */

@@ -1,4 +1,4 @@
-**Framework `Base.JS v0.9.0`** tvorí jednoduchý základ Vášho projektu. Je rýchli, účelný a plne modulárny. Je veľmi jednoduchý a intuitívny, preto nevyžaduje takmer žiadne štúdium. Každého oslovili iné technológie, preto sa do budúcna neplánuje veľmi obsiahla komplexita. Špecialna funkcionalita sa nainštaluje ako npm balík alebo sa ako súbor skopíruje do jedného z adresárov `libs/`|`services/`|`utils/`. Vďaka predvytvorenej základnej štruktúre projektu so skriptom pre automatické vytváranie indexov sa môžete naplno venovať už len dizajnu a byznis logike vášho projektu (`src/`). Vytvorené `index.js` súbory kopírujú kvôli prehladnosti svoju priečinkovú štruktúru. Cez klientske komponenty je možné rozbiť stránku na malé reciklovateľné, samostatné kúsky, ktoré medzi sebou defaultne komunikujú cez eventy.  
+**Framework `Base.JS v0.9.1`** tvorí jednoduchý základ Vášho projektu. Je rýchli, účelný a plne modulárny. Je veľmi jednoduchý a intuitívny, preto nevyžaduje takmer žiadne štúdium. Každého oslovili iné technológie, preto sa do budúcna neplánuje veľmi obsiahla komplexita. Špecialna funkcionalita sa nainštaluje ako npm balík alebo sa ako súbor skopíruje do jedného z adresárov `libs/`|`services/`|`utils/`. Vďaka predvytvorenej základnej štruktúre projektu so skriptom pre automatické vytváranie indexov sa môžete naplno venovať už len dizajnu a byznis logike vášho projektu (`src/`). Vytvorené `index.js` súbory kopírujú kvôli prehladnosti svoju priečinkovú štruktúru. Cez klientske komponenty je možné rozbiť stránku na malé reciklovateľné, samostatné kúsky, ktoré medzi sebou defaultne komunikujú cez eventy.  
   
 Na strane vášho IDE editora sa aj klientska časť tvári ako Node.js aplikácia, vďaka čomu máte prístup k jeho plnej nápovede. Všetky funkcie frameworku sú pre túto nápovedu zdokumentované a umožňujú nepovinné definície typov. Každý priečinok obsahuje funkčný pomocný `_example.js` súbor.  
   
@@ -54,7 +54,7 @@ Poradie inicializácie funkcii a tried z priečinkov:
 7. client/services/**/*.js
 8. client/src/**/*.js
   
-**WARNING:** Kód na klientovy využívajúci funkcie z `utils/services/src` by mal byť ovrapowaný spustiteľnou funkciou alebo cez `window.afterLoadRequires.unshift(() => { ... });`, aby sa nezavolal skôr, ako sa načítajú funkcie, ktoré využíva (`require()`).  
+**WARNING:** Kód na klientovy využívajúci funkcie z `utils/`|`services/`|`src/` by mal byť ovrapowaný spustiteľnou funkciou alebo cez `window.afterLoadRequires.unshift(() => { ... });`, aby sa nezavolal skôr, ako sa načítajú funkcie, ktoré využíva (`require()`).  
 V prípade shared funkcií môžete použiť napríklad:
 ```
 let wrapper = () => { ... };
@@ -65,31 +65,49 @@ if (typeof require === 'undefined') window.afterLoadRequires.unshift(wrapper); e
 # Template modificator
 Framework now does not have reactive template editor. Template rendering is started manualy:
 ```
-const templateEditor = require(\'client/utils/templateEditor.base.js\');
+const templateEditor = require('client/utils/templateEditor.base.js');
 templateEditor(/* 'css selector', DomElement */);
 ```
 
 ### Supported properties in examples
- *   <... onbase="{ **if**: canThisHidden }" ...> ... </...>
- *   <... onbase="{ **forIn**: arrayOrObject, **key**: \'key\' }" ...> ... </...>
+ *   <... onbase="{ **if**: this.variableInTemplateJS }" ...> ... </...>
+ *   <... onbase="{ **forIn**: this.arrayOrObjectFromTemplateJS,
+            **key**: \'key\' }" ...> ... </...>
  *   <... onbase="{ **template**: \'_example_/sub-component_example.html\',
-            **input**: this.variableInTemplateJS }" ...> ... </...>
+            **input**: this.arrayOrObjectFromTemplateJS[key] }" ...> ... </...>
  *   <... onbase="{ **setHtml**: content.contentExample || 123 }" ...> ... </...>
  *   <... onbase="{ **setHtml**: this.variableInTemplateJS }" ...> ... </...>
  *   <... onbase="{ **setAttr**: {src: content.contentExample} }" ...> ... </...>
  *   <... onbase="{ **setClass**: {content.className: \'test\' == content.contentExample} }" ...> ... </...>
  *   <... onbase="{ **js**: thisElement => console.log(\'loaded\', thisElement.id) }" ...> ... </...>
 
+### Variables available in component
+ * **content**
+   - user data from server (content.config)
+   - entering to function `htmlGenerator`
+   - types are defined in client/types/contentType.js
+ * **this.input**
+   - contain context from parent: onbase="{{template: ..., **input**: ...}}"
+ * **this.parent**
+   - contain parent this
+ * **this.***
+   - user variable from component JS file
+
+JS can also access to DOM component element:
+```
+const thisElement = require('client/utils/getActualElement.ignr.base.js');
+```
+
 ### Order to evaluate property 'onbase'
 1. if
 2. forIn, key
-3. others
+3. ...others
 
 
 # File structure
 
-Súbory frameworku majú suffix `.base`.  
-Všetky `index.js` súbory sú automaticky generované frameworkom. Tieto súbory indexujú všetky `.js` súbory obsiahnuté v priečinku/och zadefinovananých v jsconfig.json > utils._createIndex okrem súborov s preffixom `.ignr`.  
+Súbory frameworku majú suffix `.base`. (Napr.: fileName.ignr.base.js)  
+Všetky `index.js` súbory sú automaticky generované frameworkom. Tieto súbory indexujú všetky `.js` súbory obsiahnuté v priečinku/och zadefinovananých v jsconfig.json > utils._createIndex okrem súborov so suffixom `.ignr`.  
 Ostatné frameforkom vygenerované súbory majú suffix `.gen`.  
   
 ```
@@ -98,27 +116,27 @@ Ostatné frameforkom vygenerované súbory majú suffix `.gen`.
 manager.js           // start project (call server.js)
 server.js            // start server (call your_app.js)
 jsconfig.json        // project configuration
-jsconfig.local.json  // local project configuration changes compared to jsconfig.js
+jsconfig.local.json  // configuration for local development extends/overrides jsconfig.js
 client/
    services/
       storage.base.js                   // saveing/sharing variables/objects
       event.base.js                     // communication of components through events
    utils/
-      browserTestCompatibility.base.js  // page is not shown for old/incompatible browsers
+      browserTestCompatibility.base.js  // logic for detect old/incompatible browsers
       getActualElement.ignr.base.js     // get parent DOM element in/of actual template
-      templateEditor.base.js            // manual generation dynamic HTML contents
+      templateEditor.base.js            // function for generating HTML from template
    types/
       events/        // types definition for effective work with events
       storage/       // types definition for effective work with
                      //   saveing/sharing variables/objects
-                     //   content send from server for client
+      contentType.js // types definition for effective work with
+                     //   content send from server to client
    src/
       _index.js      // fast require() - libs, contain utils and services
    libs/             // downloaded libraries. e.g.: jquery, lodash
    templates/        // one sandbox .html tmplate must have equal file name as
                      //   possible .js a .css extended files
    css/              // global styles
-   contentType.js    // types definition for effective work with
 server/
    services/
       storage.base.js               // saveing/sharing variables/objects

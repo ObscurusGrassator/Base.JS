@@ -1,5 +1,8 @@
 const error = require('shared/utils/error.base.js');
 
+/** @template UserData @typedef {import('client/types/events/eventType.ignr.base.js').EventType<UserData>} EventType<UserData> */
+/** @template O @template A @typedef {import('shared/types/general.base.js').DeepAnyJoinObjRead<O, A>} DeepAnyJoinObjRead */
+
 let path = [];
 
 /** @type {ProxyHandler} */
@@ -41,7 +44,8 @@ const proxy = {_BaseJS_root: true};
 /**
  * Easy communication of components through events.
  * 
- * @type {import('client/types/events').Type}
+ * @template UserData
+ * @type {DeepAnyJoinObjRead<import('client/types/events').Type, EventType<any>>}
  * 
  * @example
  *   let listen = event.userPath.eventName.listen(

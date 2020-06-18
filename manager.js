@@ -45,6 +45,9 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 		"exclude": ["node_modules"],
 
 		"startFile": "app_example.js",
+		"templates": {
+			"notSupportedBrowser": "client/templates/notSupportedBrowser.base.html"
+		},
 		"server": {
 			"protocol": "http",
 			"hostname": "0.0.0.0",
@@ -114,14 +117,16 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 
 
 
-	let fileName = 'client/contentType.js';
+	let fileName = 'client/types/contentType.js';
 	if (!fs.existsSync(fileName)) {
-		fs.writeFileSync(fileName, 
-			'module.exports = {\n'
-			+ space + "config: require('jsconfig.json'),\n"
-			+ space + "contentExample: '',\n"
-			+ space + "pathVariables: '',\n"
-			+ '};\n'
+		fs.writeFileSync(fileName,
+			'/**'
+			+ ' * @typedef {Object} ContentType'
+			+ ' * @property {typeof import(\'jsconfig.json\')} config'
+			+ ' * @property {string} contentExample'
+			+ ' * @property {string} pathVariables'
+			+ ' */'
+			+ 'export {}'
 		);
 	}
 

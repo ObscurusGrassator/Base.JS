@@ -1,3 +1,7 @@
+/** @type {import('client/types/contentType.js').ContentType} */
+// @ts-ignore
+let content = window.content;
+
 module.exports = {
 	error: require('shared/utils/error.base.js'),
 	console: require('shared/utils/console.base.js'),
@@ -9,6 +13,6 @@ module.exports = {
 	service: require('client/services/'),
 	src: require('client/src/'),
 
-	content: require('client/contentType.js'),
+	content,
 	event: require('client/services/event.base.js'),
 };

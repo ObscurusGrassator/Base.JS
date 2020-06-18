@@ -10,7 +10,8 @@ const objectClone = require('shared/utils/objectClone.base.js');
 const promisify = require('shared/utils/promisify.base.js');
 const console = require('shared/utils/console.base.js');
 const config = require('shared/services/jsconfig.base.js').value;
-const contentType = require('client/contentType.js');
+
+/** @typedef {import('client/types/contentType.js').ContentType} ContentType */
 
 let templates = [];
 let inputContent = {};
@@ -19,7 +20,7 @@ let inputContent = {};
 async function readFile(/** @type {String} */ filePath, content, isIndexTemplate = false, /** @type {String[] | false} */ js = false) {
 	let isExternalLibrary = filePath.substr(0, 12) == 'client/libs/' ? true : false;
 	filePath = filePath.replace(new RegExp(pathLib.resolve('') + '\\/', 'g'), '');
-	let result = (fs.existsSync(filePath) ? await promisify(fs.readFile, filePath, 'utf8') : '');
+	let result = fs.existsSync(filePath) ? await promisify(fs.readFile, filePath, 'utf8') : '';
 	if (!result) return result;
 
 	if (!isExternalLibrary && filePath.substring(-4) != '.css') result = result
@@ -85,7 +86,7 @@ async function readFile(/** @type {String} */ filePath, content, isIndexTemplate
  * To content param is automatic added 'config' property. It contains
  *   jsconfig properties content whose names does not begin with character '_'.
  * 
- * @param {contentType | {[key: string]: any}} [content = {}] Json content readable in client JavaScript.
+ * @param {ContentType | {[key: string]: any}} [content = {}] Json content readable in client JavaScript.
  * @param {String} [template = 'index'] Parent html template for building
  * @param {String[]} [html = []] Private property - Do not set
  * @param {String[]} [css = []] Private property - Do not set
@@ -116,7 +117,7 @@ async function htmlGenerator(content = {}, template = 'index', html = [], css = 
 			for (let content of contents) {
 				if (content.template) {
 					js.push(`<script> window.templateHTML['${content.template}'] = "${
-						encodeURI(content.html)
+						encode(content.html)
 						// content.html.replace(/([\`])/g, '\$1') //.replace(/([\\\"])/g, '\$1')
 					}";\n//# sourceURL=client/templates/${content.template}.html\n</script>`);
 				}
@@ -193,6 +194,7 @@ async function htmlGenerator(content = {}, template = 'index', html = [], css = 
 		}
 		for (let i in dirs) await fromDirs(dirs[i]);
 
+		let notSuppTempl = config.templates.notSupportedBrowser;
 		js.unshift(`
 			<style>
 				._BaseJS_class_hidden { display: none; }
@@ -203,11 +205,13 @@ async function htmlGenerator(content = {}, template = 'index', html = [], css = 
 				window.templateJsThis = {}; // 'this' per HTML template JS for client/utils/templateEditor.base.js
 				window.requires = {}; // list of node require content
 				window.afterLoadRequires = []; // loading stack of node require content
-				var content = window.requires[\'client/contentType.js\'] =
+				window.content = window.requires['client/types/contentType.js'] =
 					/*<.*content*.->*/ ${JSON.stringify(content)} /*<-.*content*.>*/ ;
+				window.templateHTML['${notSuppTempl}'] = \`
+					${fs.existsSync(notSuppTempl) ? encode(await promisify(fs.readFile, notSuppTempl, 'utf8')) : ''}\`;
+				${fs.existsSync(notSuppTempl) ? await promisify(fs.readFile, 'client/utils/browserTestCompatibility.ignr.base.js', 'utf8') : ''}
 				//# sourceURL=BaseJS-framework
 			</script>
-			${await readFile('client/utils/browserTestCompatibility.base.js')}
 			${css.join('\n')}
 			${utilsJs.join('\n')}
 		`);
@@ -232,7 +236,7 @@ async function htmlGenerator(content = {}, template = 'index', html = [], css = 
 		// js = [];
 		js.push(`<script>
 			window.addEventListener('load', async () => {
-				new window.templateJS['${template}']('_BaseJS_ComponentId_');
+				window.templateJS && new window.templateJS['${template}']('_BaseJS_ComponentId_');
 			}, false);
 			//# sourceURL=BaseJS-framework
 		</script>`);
@@ -273,6 +277,8 @@ function contentUpdate(html, contentPart) {
 		return JSON.stringify(defaults(JSON.parse(cont), contentPart));
 	});
 }
+
+function encode(str) { return Buffer.from(encodeURI(str)).toString('base64'); }
 
 module.exports = {
 	create: htmlGenerator,

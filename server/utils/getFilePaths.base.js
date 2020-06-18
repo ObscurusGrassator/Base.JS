@@ -10,11 +10,12 @@ const error = require('shared/utils/error.base.js');
  * 
  * @param {String} dirPath 
  * @param {RegExp} [regExp = /.+/] Regular expression test for returned file path
+ * @param {Boolean} [deep = true] Deep searchinng
  * @param {Boolean} [libOrService = false] If true, function not return files into service folders
  * 
  * @returns {Promise<String[]>}
  */
-function getFilePaths(dirPath, regExp = /.+/, libOrService = false) {
+function getFilePaths(dirPath, regExp = /.+/, deep = true, libOrService = false) {
 	if (dirPath[0] === '.') {
 		dirPath = path.join(new Error().stack
 			.match(/^ +at .*$/gm)[1]
@@ -29,7 +30,7 @@ function getFilePaths(dirPath, regExp = /.+/, libOrService = false) {
 	 *
 	 * @returns {Promise<String[]>}
 	 */
-	let deep = (dirPath, regExp, libOrService, dirPathOrig = null) => {
+	let recursive = (dirPath, regExp, deep, libOrService, dirPathOrig = null) => {
 		dirPathOrig = dirPathOrig || dirPath;
 		return new Promise((resolve, reject) => {
 			let results = [];
@@ -57,7 +58,7 @@ function getFilePaths(dirPath, regExp = /.+/, libOrService = false) {
 						const stat = await promisify(fs.stat, file);
 
 						if (stat && stat.isDirectory()) {
-							proms.push(deep(file, regExp, libOrService, dirPathOrig));
+							if (deep) proms.push(recursive(file, regExp, deep, libOrService, dirPathOrig));
 						} else if (regExp.test(file)) {
 							proms.push(Promise.resolve([file]));
 						}
@@ -76,7 +77,7 @@ function getFilePaths(dirPath, regExp = /.+/, libOrService = false) {
 			});
 		}).catch((err) => { return Promise.reject(error(err)); });
 	};
-	return deep(dirPath, regExp, libOrService);
+	return recursive(dirPath, regExp, deep, libOrService);
 };
 
 require('shared/services/testing.base.js').add(async () => {

@@ -7,15 +7,13 @@ const optionsDefault = {
 	orderInArray: orderInArray
 };
 
-/** @typedef {import('../types/general.base.js').Deep<{}, "_keepOrder">} Deep_keepOrder */
-
 /**
  * Test if object contain all 'mustHave' properties.
- * If "mustHave" input object contain array with "_keepOrder" ("_randomOrder") object property on last position, this array order is (is't) controlled.
+ * If "mustHave" input object contain array with {orderInArray: "keep"} ({orderInArray: "random"}) object property on last position, this array order is (is't) controlled.
  * 
  * @template {Array | {[key: string]: any}} T
  * @param {T} object
- * @param {T | Deep_keepOrder} mustHave
+ * @param {import('../types/general.base.js').DeepJoinObjPartial<T, {orderInArray: "keep" | "random"}>} mustHave
  * @param {Object} options
  * @param {any[][]} [options.equalsValues = [[undefined, false]] ] Defaul undefined === false
  * @param {String | Boolean} [options.throwAfterUncontain = false] If set message string, is throw: [options.throwAfterUncontain, path, bugs[]]
@@ -24,8 +22,8 @@ const optionsDefault = {
  * @example contain({a: {x: 2}, b: {y: 3}}, {b: {y: 3}}); // true
  * @example contain({a: {x: 2}, b: {y: 3}}, {b: {x: 2}}); // false
  * @example contain({a: {array: [{x: 5}, {y: 6}]}}, {a: {array: [{y: 6}]}}); // true
- * @example contain({a: {array: [{x: 5}, {y: 6}]}}, {a: {array: [{y: 6}, {_keepOrder: true}]}}); // false
- * @example contain({a: {array: [{x: 5}, {y: 6}]}}, {a: {array: [{x: 5}, {_keepOrder: true}]}}); // true
+ * @example contain({a: {array: [{x: 5}, {y: 6}]}}, {a: {array: [{y: 6}, {orderInArray: "keep"}]}}); // false
+ * @example contain({a: {array: [{x: 5}, {y: 6}]}}, {a: {array: [{x: 5}, {orderInArray: "keep"}]}}); // true
  * @example contain({}, {b: false}); // true
  * 
  * @returns {Boolean}
@@ -49,10 +47,14 @@ function contain(object, mustHave, options = optionsDefault) {
 		if (typeof mustHave == 'object') {
 			for (let m in mustHave) {
 				if (Array.isArray(mustHave) && mustHave.length-1 === +m
-					&& ['_keepOrder', '_randomOrder'].indexOf(mustHave[m]) > -1) continue;
-				else if (Array.isArray(mustHave) && (
-						(options.orderInArray == 'random' && mustHave[mustHave.length-1] !== '_keepOrder') ||
-						(options.orderInArray == 'keep' && mustHave[mustHave.length-1] === '_randomOrder') )) {
+					&& (mustHave[m].orderInArray && ['keep', 'random'].indexOf(mustHave[m].orderInArray) > -1)
+						|| ['_keepOrder', '_randomOrder'].indexOf(mustHave[m]) > -1) continue;
+				else if (Array.isArray(mustHave)
+					&& ((options.orderInArray == 'random' && (mustHave[mustHave.length-1] !== '_keepOrder'
+							|| (mustHave[mustHave.length-1].orderInArray && mustHave[mustHave.length-1].orderInArray !== 'keep'))
+						|| (options.orderInArray == 'keep' && (mustHave[mustHave.length-1].orderInArray === '_randomOrder'
+							|| (mustHave[mustHave.length-1].orderInArray && mustHave[mustHave.length-1].orderInArray === 'random'))
+				)))) {
 					let eq = false;
 					for (let o in object) {
 						if (loop(object[o], mustHave[m], opt, path, {bugs: []})) eq = true; // tento contain nemá pushovať bug
@@ -99,7 +101,8 @@ function contain(object, mustHave, options = optionsDefault) {
 	};
 	return loop(object, mustHave, options);
 }
-// contain({a: 2, obj: {b: 'c'}, arr: ['a', 'b']}, {a: 'w', arr: ['a', "_keepOrder"], dd: 21})
+// contain({a: 2, obj: {b: 'c'}, arr: [{d: 'd'}, 'b']}, {a: 'w', arr: ['b', {orderInArray: "keep"}], dd: 21})
+contain({a: 2, obj: {b: 'c'}, arr: [{d: 'd'}, 'b']}, {a: 3, arr: ['b', {orderInArray: "keep"}], dd: 21})
 
 module.exports = contain;
 

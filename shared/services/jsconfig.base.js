@@ -21,9 +21,8 @@ class Config {
 	/** @type {typeof confBase} */
 	static get value() {
 		if (!conf) {
-			if (typeof require !== 'undefined') conf = defaults(local, confBase);
 			// @ts-ignore
-			else conf = window.requires['client/contentType.js'].config;
+			conf = window.requires['client/types/contentType.js'].config;
 		}
 		return conf;
 	}

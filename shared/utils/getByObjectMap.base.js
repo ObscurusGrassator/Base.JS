@@ -6,9 +6,9 @@ const objectClone = require('shared/utils/objectClone.base.js');
  * @template T
  * 
  * @param {T} inputObj
- * @param {T | import('../types/general.base.js').Deep<true, any>} mapObj
+ * @param {import('../types/general.base.js').DeepJoinObjPartialWrite<T, true>} mapObj
  * 
- * @returns {T | import('../types/general.base.js').Deep<true, any>}
+ * @returns {import('../types/general.base.js').DeepJoinObjPartialWrite<T, true>}
  * 
  * @example getByObjectMap({a: {x: 2}, b: 4}, {a: true}); // {a: {x: 2}}
  */
@@ -34,7 +34,7 @@ function getByObjectMap(inputObj, mapObj) {
 	return loop(result, mapObj);
 };
 
-// let a = {a: {b: [{c: {d: 12}}, {c: {d: 23}}], y: 77}, x: 66};
-// getByObjectMap(a, {a: {b: [{c: 22}]}});
+let a = {a: {b: [{c: {d: 12}}, {c: {d: 23}}], y: 77}, x: 66};
+getByObjectMap(a, {a: {b: [{c: true}]}});
 
 module.exports = getByObjectMap;

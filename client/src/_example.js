@@ -17,7 +17,9 @@ window.addEventListener('load', () => {
 		if (JSON.stringify(s.storage.edit(storage => storage.local))     !== undefined) throw new Error('First local is not empty');
 
 		s.storage.edit(storage => storage._example_._example.array[0].a = 'aaa');
-		if (s.storage.edit(storage => storage._example_._example.array[0].a) !== 'aaa') throw new Error('Getting faile');
+		if (s.storage.edit(storage => storage._example_._example.array[0].a) !== 'aaa') {
+			throw new Error('Storage property get failed');
+		}
 		// or
 		s.util.contain(
 			s.storage.edit(storage => storage._example_._example.array[0]),
@@ -28,6 +30,14 @@ window.addEventListener('load', () => {
 		s.util.contain(
 			s.storage.edit(storage => storage),
 			{_example_: {_example: {array: [{a: 'aaa'}]}}},
+			{throwAfterUncontain: 'Storage property get failed'}
+		);
+		// or
+		/** @type {import('client/types/storage').Type['_example_']} */
+		let StoreContent = s.storage.edit(storage => storage._example_);
+		s.util.contain(
+			StoreContent,
+			{_example: {array: [{a: 'aaa'}]}}, // intellisense will help you now
 			{throwAfterUncontain: 'Storage property get failed'}
 		);
 

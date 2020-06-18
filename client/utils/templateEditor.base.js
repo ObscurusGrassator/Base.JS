@@ -13,21 +13,37 @@ let _BaseJS_ComponentId_counter = 0;
  * 
  * Notice: For access to .js template variable it must defined with 'this.'.
  * 
- * @example of transformed html "onbase" atribute:
- *   <... onbase="{ if: canThisHidden }" ...> ... </...>
- *   <... onbase="{ forIn: arrayOrObject, key: 'key' }" ...> ... </...>
- *   <... onbase="{ template: '_example_/sub-component_example.html', input: this.variableInTemplateJS }" ...> ... </...>
+ * @param {String} [selector = ''] Specific element selector for modification
+ * @param {Element} [startElement = ducument.body] Specific element for modification
+ * @param {Object} [input = {}] Input object
+ * @param {Object} [parent = {}] Parent this
  *
+ * @example of transformed html "onbase" atribute:
+ *   <... onbase="{ if: this.variableInTemplateJS }" ...> ... </...>
+ *   <... onbase="{ forIn: this.arrayOrObjectFromTemplateJS, key:'key' }" ...> ... </...>
+ *   <... onbase="{ template: '_example_/sub-component_example.html', input: this.arrayOrObjectFromTemplateJS[key] }" ...> ... </...>
  *   <... onbase="{ setHtml: content.contentExample || 123 }" ...> ... </...>
  *   <... onbase="{ setHtml: this.variableInTemplateJS }" ...> ... </...>
  *   <... onbase="{ setAttr: {src: content.contentExample} }" ...> ... </...>
  *   <... onbase="{ setClass: {content.className: 'test' == content.contentExample} }" ...> ... </...>
  *   <... onbase="{ js: thisElement => console.log('loaded', thisElement.id) }" ...> ... </...>
- * 
- * @param {String} [selector = ''] Specific element selector for modification
- * @param {Element} [startElement = ducument.body] Specific element for modification
- * @param {Object} [input = {}] Input object
- * @param {Object} [parent = {}] Parent this
+ *
+ * Variables available in component:
+ *   - content
+ *     - user data from server (content.config)
+ *     - entering to function `htmlGenerator`
+ *     - types are defined in client/types/contentType.js
+ *   - this.input
+ *     - contain context from parent: onbase="{{template: ..., input ...}}"
+ *   - this.parent
+ *     - contain parent this
+ *   - this.*
+ *     - user variable from component JS file
+ *
+ * Order to evaluate property 'onbase':
+ *   1. if
+ *   2. forIn, key
+ *   3. others
  */
 function templateEditor(selector = '', startElement = document.body, input = {}, parent = {}, usedIDs = new Set()) {
 	// @ts-ignore
@@ -201,7 +217,7 @@ function templateEditor(selector = '', startElement = document.body, input = {},
 						if (Array.isArray(obj[i])) { obj[i] = obj[i].filter(o => o); }
 
 						if (i == 'template' && templateHTML) {
-							element.innerHTML = decodeURI(templateHTML[obj[i]]); // async operation
+							element.innerHTML = decodeURI(window.atob(templateHTML[obj[i]])); // async operation
 							// setTimeout(() => templateEditor('', element, obj['input'] || {}, this, usedIDs), 1);
 							templateEditor('', element, obj['input'] || {}, this, usedIDs);
 						}
