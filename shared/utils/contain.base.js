@@ -102,7 +102,6 @@ function contain(object, mustHave, options = optionsDefault) {
 	return loop(object, mustHave, options);
 }
 // contain({a: 2, obj: {b: 'c'}, arr: [{d: 'd'}, 'b']}, {a: 'w', arr: ['b', {orderInArray: "keep"}], dd: 21})
-contain({a: 2, obj: {b: 'c'}, arr: [{d: 'd'}, 'b']}, {a: 3, arr: ['b', {orderInArray: "keep"}], dd: 21})
 
 module.exports = contain;
 
