@@ -31,6 +31,7 @@ async function readFile(/** @type {String} */ filePath, content, isIndexTemplate
 				after} ${js !== false ? '' : '});'}`)
 		.replace(/require\(["']((client|shared)\/[a-zA-Z0-9_\-\/\.]*)["']\)/gi, (all, path) => `window.requires["${path.replace(/\/$/, '')}"]`)
 		.replace(/require\(['"][^\)\/]+['"]\)/gi, 'undefined') // require('fs'); v shared/services/jsconfig.base.js
+		.replace(/export\s*\{\};/gi, '')
 		.replace(/(const|var|let)\s*[a-zA-Z0-9_\-]+\s*=\s*require\([\s\S]+?(;;|; |;\n| else)/gi,
 			(all, lett, req) => req == ';;' ? all : req)
 		.replace(/module\.exports\s*=/gi, `window.requires['${filePath.replace(/\/$/, '')}'] =`);

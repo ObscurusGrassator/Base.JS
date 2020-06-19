@@ -34,7 +34,9 @@ function getByObjectMap(inputObj, mapObj) {
 	return loop(result, mapObj);
 };
 
-// let a = {a: {b: [{c: {d: 12}}, {c: {d: 23}}], y: 77}, x: 66};
-// getByObjectMap(a, {a: {b: [{c: true}]}});
+() => {
+	let a = {a: {b: [{c: {d: 12}}, {c: {d: 23}}], y: 77}, x: 66};
+	getByObjectMap(a, {a: {b: [{c: true}]}});
+};
 
 module.exports = getByObjectMap;
