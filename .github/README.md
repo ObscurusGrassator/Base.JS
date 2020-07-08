@@ -1,4 +1,4 @@
-**Framework `Base.JS v0.9.1`** is a simple base for your project. It's fast, focused and fully modular. It is very simple and intuitive, so it requires almost no study. As everybody has a different needs, we do not plan to include a lot of specialized features in the framework itself. Custom features can be installed as npm packages or added as a file into one of the `libs/`, `services/` or `utils/` directories. Thanks to the included basic project structure and a script for automatically creating index files, you're free to focus on the business logic and design side of your project (`src/`). The created `index.js` files copy their folder structure for clarity. With the client components, you can break up your site into a bunch of small recyclable, separate pieces, which communicate using events by default.  
+**(Node.js backend/frontend) Framework `Base.JS v0.9.1`** is a simple base for your project. It's fast, focused and fully modular. It is very simple and intuitive, so it requires almost no study. As everybody has a different needs, we do not plan to include a lot of specialized features in the framework itself. Custom features can be installed as npm packages or added as a file into one of the `libs/`, `services/` or `utils/` directories. Thanks to the included basic project structure and a script for automatically creating index files, you're free to focus on the business logic and design side of your project (`src/`). The created `index.js` files copy their folder structure for clarity. With the client components, you can break up your site into a bunch of small recyclable, separate pieces, which communicate using events by default.  
   
 The client side looks like a Node.js application, which allows for any IDE autocomplete functionality. All framework functions are fully documented and allow for an optional type definitions. Every directory contains an `_example.js` file with working sample code.  
 
@@ -18,7 +18,7 @@ NODE_PATH=. node manager.js
 ```
 npm start
 
-# Application's tests can by run with:
+# Application's tests (shared/services/testing.base.js) can by run with:
 npm start testing
 npm start testing=/fileWithTests/i
 
@@ -61,6 +61,7 @@ let wrapper = () => { ... };
 // @ts-ignore // wrapped, if call in browser
 if (typeof require === 'undefined') window.afterLoadRequires.unshift(wrapper); else wrapper();
 ```
+**NOTICE:** Code in `client/templates/` is already automatically wrapped in `window.addEventListener('load', async () => { ... }, false);`  
 
 # Template modificator
 Framework now does not have reactive template editor. Template rendering is started manualy:
@@ -114,7 +115,7 @@ jsconfig.json        // project configuration
 jsconfig.local.json  // configuration for local development extends/overrides jsconfig.js
 client/
    services/
-      storage.base.js                   // saveing/sharing variables/objects
+      storage.base.js                   // (link to) saving/sharing variables/objects
       event.base.js                     // communication of components through events
    utils/
       browserTestCompatibility.base.js  // logic for detect old/incompatible browsers
@@ -123,7 +124,7 @@ client/
    types/
       events/        // types definition for effective work with events
       storage/       // types definition for effective work with
-                     //   saveing/sharing variables/objects
+                     //   saving/sharing variables/objects
       contentType.js // types definition for effective work with
                      //   content send from server for client
    src/
@@ -134,7 +135,7 @@ client/
    css/              // global styles
 server/
    services/
-      storage.base.js               // saveing/sharing variables/objects
+      storage.base.js               // (link to) saving/sharing variables/objects
    utils/
       getFilePaths.base.js          // deep file list of folder
       getRealTemplatePath.base.js   // '/_example_/98765' ==> '/article/<id>'
@@ -142,13 +143,13 @@ server/
       indexCreate.base.js           // creating index.js of all folder files
    types/
       storage/              // types definition for effective work with
-                            //   saveing/sharing variables/objects
+                            //   saving/sharing variables/objects
    src/
       _index.js             // fast require() contain utils and services
 shared/
    services/
-      jsconfig.base.js      // default updating and JS access to project configuration
-      storage.ignr.base.js  // saveing/sharing variables/objects
+      jsconfig.base.js      // default configuration loader and configuration reader
+      storage.ignr.base.js  // implementation of saving/sharing variables/objects
       testing.base.js       // testing biznis logic
    utils/
 ```

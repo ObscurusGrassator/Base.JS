@@ -8,12 +8,14 @@ const optionsDefault = {
 };
 
 /**
- * Test if object contain all 'mustHave' properties.
- * If "mustHave" input object contain array with {orderInArray: "keep"} ({orderInArray: "random"}) object property on last position, this array order is (is't) controlled.
+ * Test if 'source' contain all 'mustHave' properties.
+ * If 'mustHave' contain array with {orderInArray: "keep"} ({orderInArray: "random"}) object property on last position, this array order is (is't) controlled.
+ * 'mustHave' can contain compare function(sourcePart): boolean
  * 
+ * @author obscurus.grassator@gmail.com
  * @template {Array | {[key: string]: any}} T
- * @param {T} object
- * @param {import('../types/general.base.js').DeepJoinObjPartial<T, {orderInArray: "keep" | "random"}>} mustHave
+ * @param {T} source
+ * @param {import('../types/general.base.js').DeepJoinObjPartialWrite<T, {orderInArray: "keep" | "random"} | function(any): Boolean>} mustHave
  * @param {Object} options
  * @param {any[][]} [options.equalsValues = [[undefined, false]] ] Defaul undefined === false
  * @param {String | Boolean} [options.throwAfterUncontain = false] If set message string, is throw: [options.throwAfterUncontain, path, bugs[]]
@@ -21,28 +23,37 @@ const optionsDefault = {
  * 
  * @example contain({a: {x: 2}, b: {y: 3}}, {b: {y: 3}}); // true
  * @example contain({a: {x: 2}, b: {y: 3}}, {b: {x: 2}}); // false
+ * @example contain({a: {x: 2}, b: {y: 3}}, {b: {y: s => s === 2}}); // true
  * @example contain({a: {array: [{x: 5}, {y: 6}]}}, {a: {array: [{y: 6}]}}); // true
  * @example contain({a: {array: [{x: 5}, {y: 6}]}}, {a: {array: [{y: 6}, {orderInArray: "keep"}]}}); // false
  * @example contain({a: {array: [{x: 5}, {y: 6}]}}, {a: {array: [{x: 5}, {orderInArray: "keep"}]}}); // true
- * @example contain({}, {b: false}); // true
+ * @example contain({}, {b: false}); // true for default options
  * 
  * @returns {Boolean}
  * @throws {[String | Boolean, String, [Object]]} // [opt.throwAfterUncontain, filaName, [bugInfoObject]] // IF options.throwAfterUncontain = 'message'
  */
-function contain(object, mustHave, options = optionsDefault) {
-	const loop = (object, mustHave, options, path = '', bugs = {bugs: []}) => {
+function contain(source, mustHave, options = optionsDefault) {
+	const loop = (source, mustHave, options, path = '', bugs = {bugs: []}) => {
 		let opt = {...optionsDefault, ...options};
 		let bug = false;
 
 		for (let e of opt.equalsValues || []) {
 			let isIn = false;
 			for (let v of e || []) {
-				if (object === v) { if (!isIn) isIn = true; else return true; }
+				if (source === v) { if (!isIn) isIn = true; else return true; }
 				if (mustHave === v) { if (!isIn) isIn = true; else return true; }
 			}
 		}
 
-		if (object === mustHave) return true;
+		if (source === mustHave) return true;
+
+		if (typeof mustHave == 'function') {
+			if (mustHave(source)) return true;
+			else {
+				bug = true;
+				bugs.bugs.push({path: path, mustPass: mustHave.toString(), withArgument: source});
+			}
+		}
 
 		if (typeof mustHave == 'object') {
 			for (let m in mustHave) {
@@ -56,21 +67,21 @@ function contain(object, mustHave, options = optionsDefault) {
 							|| (mustHave[mustHave.length-1].orderInArray && mustHave[mustHave.length-1].orderInArray === 'random'))
 				)))) {
 					let eq = false;
-					for (let o in object) {
-						if (loop(object[o], mustHave[m], opt, path, {bugs: []})) eq = true; // tento contain nemá pushovať bug
+					for (let o in source) {
+						if (loop(source[o], mustHave[m], opt, path, {bugs: []})) eq = true; // tento contain nemá pushovať bug
 					}
 					if (!eq) {
 						bug = true;
-						bugs.bugs.push({path: path, mustContain: mustHave[m], inArray: object});
+						bugs.bugs.push({path: path, mustContain: mustHave[m], inArray: source});
 						if (!opt.throwAfterUncontain) return false;
 					}
 				}
-				else if (typeof object != 'object') { // || !object[m] // toto tam nesmie byť, lebo to preskakuje options.equalsValues
+				else if (typeof source != 'object') { // || !source[m] // toto tam nesmie byť, lebo to preskakuje options.equalsValues
 					bug = true;
-					bugs.bugs.push({path: path, mustContain: mustHave, inObject: object});
+					bugs.bugs.push({path: path, mustContain: mustHave, inSource: source});
 					if (!opt.throwAfterUncontain) return false;
 				}
-				else if (!loop(object[m], mustHave[m], opt, path + (path ? '.' : '') + m, bugs)) {
+				else if (!loop(source[m], mustHave[m], opt, path + (path ? '.' : '') + m, bugs)) {
 					bug = true;
 					// bugs.push spúšťa contain v ife
 					if (!opt.throwAfterUncontain) return false;
@@ -79,7 +90,7 @@ function contain(object, mustHave, options = optionsDefault) {
 			if (!bug) return true;
 		}
 
-		if (!bug) bugs.bugs.push({path: path, mustByEqualTo: mustHave, testedValue: object});
+		if (!bug) bugs.bugs.push({path: path, mustByEqualTo: mustHave, testedValue: source});
 
 		if (opt.throwAfterUncontain && path === '') {
 			/** @type {String | false} */
@@ -99,12 +110,12 @@ function contain(object, mustHave, options = optionsDefault) {
 			throw [opt.throwAfterUncontain, file, bugs.bugs];
 		} else return false;
 	};
-	return loop(object, mustHave, options);
+	return loop(source, mustHave, options);
 }
 
 () => {
-	// contain({a: 2, obj: {b: 'c'}, arr: [{d: 'd'}, 'b']}, {a: 'w', arr: ['b', {orderInArray: "keep"}]})
-	contain({a: 2, obj: {b: 'c'}, arr: [{d: 'd'}, 'b']}, {arr: ['b', {orderInArray: "keep"}]})
+	// contain({a: 2, obj: {b: 'c'}, arr: [{d: 'd'}, 'b']}, {a: 'w', arr: ['b', {orderInArray: "keep"}]});
+	contain({a: 2, obj: {b: 'c'}, arr: [{d: 'd'}, 'b']}, {arr: ['b', {orderInArray: "keep"}], a: a => a === 2});
 };
 
 module.exports = contain;
