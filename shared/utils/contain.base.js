@@ -61,10 +61,10 @@ function contain(source, mustHave, options = optionsDefault) {
 					&& (mustHave[m].orderInArray && ['keep', 'random'].indexOf(mustHave[m].orderInArray) > -1)
 						|| ['_keepOrder', '_randomOrder'].indexOf(mustHave[m]) > -1) continue;
 				else if (Array.isArray(mustHave)
-					&& ((options.orderInArray == 'random' && (mustHave[mustHave.length-1] !== '_keepOrder'
-							|| (mustHave[mustHave.length-1].orderInArray && mustHave[mustHave.length-1].orderInArray !== 'keep'))
+					&& ((options.orderInArray == 'random' && mustHave[mustHave.length-1] !== '_keepOrder'
+							&& (!mustHave[mustHave.length-1].orderInArray || mustHave[mustHave.length-1].orderInArray !== 'keep')
 						|| (options.orderInArray == 'keep' && (mustHave[mustHave.length-1].orderInArray === '_randomOrder'
-							|| (mustHave[mustHave.length-1].orderInArray && mustHave[mustHave.length-1].orderInArray === 'random'))
+							|| (!mustHave[mustHave.length-1].orderInArray || mustHave[mustHave.length-1].orderInArray === 'random'))
 				)))) {
 					let eq = false;
 					for (let o in source) {
