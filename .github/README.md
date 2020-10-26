@@ -1,4 +1,4 @@
-**(Node.js backend/frontend) Framework `Base.JS v0.9.1`** is a simple base for your project. It's fast, focused and fully modular. It is very simple and intuitive, so it requires almost no study. As everybody has a different needs, we do not plan to include a lot of specialized features in the framework itself. Custom features can be installed as npm packages or added as a file into one of the `libs/`, `services/` or `utils/` directories. Thanks to the included basic project structure and a script for automatically creating index files, you're free to focus on the business logic and design side of your project (`src/`). The created `index.js` files copy their folder structure for clarity. With the client components, you can break up your site into a bunch of small recyclable, separate pieces, which communicate using events by default.  
+**(Node.js backend/frontend) Framework `Base.JS v1.0.0`** is a simple base for your project. It's fast, focused and fully modular. It is very simple and intuitive, so it requires almost no study. As everybody has a different needs, we do not plan to include a lot of specialized features in the framework itself. Custom features can be installed as npm packages or added as a file into one of the `libs/`, `services/` or `utils/` directories. Thanks to the included basic project structure and a script for automatically creating index files, you're free to focus on the business logic and design side of your project (`src/`). The created `index.js` files copy their folder structure for clarity. With the client components, you can break up your site into a bunch of small recyclable, separate pieces, which communicate using events by default.  
   
 The client side looks like a Node.js application, which allows for any IDE autocomplete functionality. All framework functions are fully documented and allow for an optional type definitions. Every directory contains an `_example.js` file with working sample code.  
 
@@ -67,20 +67,27 @@ if (typeof require === 'undefined') window.afterLoadRequires.unshift(wrapper); e
 Framework now does not have reactive template editor. Template rendering is started manualy:
 ```
 const templateEditor = require('client/utils/templateEditor.base.js');
+// OR
+const templateEditor = require('client/src/_index.js').templateEditor;
+
 templateEditor(/* 'css selector', DomElement */);
 ```
-
+A `this` used in attributes with the prefix `on` (eg: onclick, onchange) also contains the `this` properties of the component in the JS file. Be careful not to overwrite them.  
+  
+**WARNING:** `onbase` supports only synchronous JavaScript so that it is not possible to change the variables used during the rendering of DOM Elements. Asynchronous functions can redraw the affected elements additionally.  
+  
+**WARNING:** DOM properties (`onbase`) evaluate current content that can be changed interactively. In the case of `forIn`, it is possible to change the first` forIn` HTMLElement in the series (the others will be prefixed with `_`). For example, if you delete a class assigned to it and regenerate it (`templateEditor ()`), that class will no longer have any `forIn` HTMLElement.  
+  
 ### Supported properties in examples
- *   <... onbase="{ **if**: this.variableInTemplateJS }" ...> ... </...>
- *   <... onbase="{ **forIn**: this.arrayOrObjectFromTemplateJS,
-            **key**: \'key\' }" ...> ... </...>
- *   <... onbase="{ **template**: \'_example_/sub-component_example.html\',
-            **input**: this.arrayOrObjectFromTemplateJS[key] }" ...> ... </...>
+ *   <... onbase="{ **if**: this.variableInTemplateJS }" ...> If false, it is not processed by this modifier and gets the css class `_BaseJS_class_hidden`. </...>
+ *   <... onbase="{ **forIn**: this.arrayOrObjectFromTemplateJS, **key**: \'key\' }" ...> ... </...>
+ *   <... onbase="{ **template**: \'_example_/sub-component_example.html\', **input**: this.arrayOrObjectFromTemplateJS[key] }" ...></...>
  *   <... onbase="{ **setHtml**: content.contentExample || 123 }" ...> ... </...>
  *   <... onbase="{ **setHtml**: this.variableInTemplateJS }" ...> ... </...>
  *   <... onbase="{ **setAttr**: {src: content.contentExample} }" ...> ... </...>
  *   <... onbase="{ **setClass**: {content.className: \'test\' == content.contentExample} }" ...> ... </...>
- *   <... onbase="{ **js**: thisElement => console.log(\'loaded\', thisElement.id) }" ...> ... </...>
+ *   <... onbase="{ **js**: console.log(\'loaded\', this.id) }" ...> ... </...>
+ *   <... onbase="{ **priority**: 2 }" ...> Until the element is loaded in order of priority, it gets the css class `_BaseJS_class_loading`. </...>
 
 ### Variables available in component
  * **content**
@@ -92,7 +99,10 @@ templateEditor(/* 'css selector', DomElement */);
  * **this.parent**
    - contain parent this
  * **this.***
-   - user variable from component JS file
+   - merge of HTMLElement this and user variable from component JS file
+ * **\***
+   - objects and functions from `utils.*` and `services.*` (Eg.: `onbase="({ if: Storage.get(...`)
+   - variable defined via `window.* = ...;`
 
 ### Order to evaluate property 'onbase'
 1. if
