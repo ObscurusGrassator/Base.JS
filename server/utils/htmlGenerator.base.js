@@ -13,7 +13,7 @@ const config = require('shared/services/jsconfig.base.js').value;
 
 /** @typedef {import('client/types/contentType.js').ContentType} ContentType */
 
-let templates = [];
+let templates = {};
 let inputContent = {};
 
 /**
@@ -21,7 +21,7 @@ let inputContent = {};
  * require() transformation and setting component instance ID to getActualElement().
  * @returns {Promise<String>}
 */
-async function readFile(/** @type {String} */ filePath, content, isIndexTemplate = false, /** @type {String[] | false} */ js = false) {
+async function readFile(/** @type {String} */ filePath, content, isIndexTemplate = false, /** @type {String[] | false} */ js = false, /** @type { String[] } */ css = []) {
 	let isExternalLibrary = filePath.substr(0, 12) == 'client/libs/' ? true : false;
 	filePath = filePath.replace(new RegExp(pathLib.resolve('') + '\\/', 'g'), '');
 	let result = fs.existsSync(filePath) ? await promisify(fs.readFile, filePath, 'utf8') : '';
@@ -39,6 +39,7 @@ async function readFile(/** @type {String} */ filePath, content, isIndexTemplate
 		.replace(/export\s*\{\};/gi, '')
 		.replace(/(const|var|let)\s*[a-zA-Z0-9_\-]+\s*=\s*require\([\s\S]+?(;;|; |;\n| else)/gi,
 			(all, lett, req) => req == ';;' ? all : req)
+		.replace(/(module\.exports\s*=\s*(function\s*)?([\-_a-zA-Z0-9]+))/gi, `window['$3'] = $1`)
 		.replace(/module\.exports\s*=/gi, `window.requires['${filePath.replace(/\/$/, '')}'] =`);
 
 	let cont = [], position = [];
@@ -63,24 +64,28 @@ async function readFile(/** @type {String} */ filePath, content, isIndexTemplate
 	}
 
 	let templateName = filePath.replace(/^client\/templates\/?|\.html$|\.js$/g, '');
-	let wraperBefore = `window.templateJS['${templateName}'] = (function(_BaseJS_ComponentId_) { ${
+	let jsWraperBefore = `window.templateJS['${templateName}'] = (function(_BaseJS_ComponentId_) { ${
 		!js !== false ? '' : 'window.templateJsThis[_BaseJS_ComponentId_] = this;'}`;
-	let wraperAfter = `
+	let jsWraperAfter = `
 		\n})${js !== false ? '' : '.apply(this)'};
 		\n//# sourceURL=${filePath}`;
 	// let onlyJS = (js) => isExternalLibrary ? js : js
 	// 	.replace(/(\sonbase\s*=\s*(\\?)\"\s*(\{\{)?\s*\(?\s*\{)(_BaseJS_ComponentId_)?/g,
 	// 		(all, base, a, b, iff) => iff ? all : `${base}_BaseJS_ComponentId_: ${a?`'`:`"`}${a?`"`:`'`}+${id}+${a?`"'`:`'"`}, `);
 
-	if (filePath.substring(-3) == '.js') result = '<script> ' + wraperBefore + /* onlyJS(result) */ result + wraperAfter + '\n</script>';
-	else if (filePath.substring(-4) == '.css') result = `<style>\n${result}\n//# sourceURL=${filePath}\n</style>`;
+	if (filePath.substring(-3) == '.js') result = '<script> ' + jsWraperBefore + /* onlyJS(result) */ result + jsWraperAfter + '\n</script>';
+	else if (filePath.substring(-4) == '.css') result = `<style>\n${result}\n/*# sourceURL=${filePath}*/\n</style>`;
 	else if (filePath.substring(-5) == '.html') result =
 		((isIndexTemplate ? '' : `<div style="display: none;" _BaseJS_TemplateName_="${templateName}" onbase="{}"></div>`) + result)
 		// .replace(/(\s*onbase\s*=\s*\"\s*(\{\{)?\s*\(?\s*\{)(_BaseJS_ComponentId_)?/g,
 		// 	(all, base, b, iff) => iff ? all : `${base}_BaseJS_ComponentId_: '_BaseJS_ComponentId_${id}', `)
-		.replace(/([\s\S]*?)(\<script[^\>]*?\>)([\s\S]*?)(\<\/script\>)/i, (all, /** @type {String} */ before, start, content, end) => {
+		.replace(/([\s\S]*?)(\<script[^\>]*?\>)([\s\S]*?)(\<\/script\>)/ig, (all, /** @type {String} */ before, start, content, end) => {
 			// @ts-ignore
-			js.push(start + (before+'\n').match(/\n/g).join('') + wraperBefore + /* onlyJS(content) */ content + wraperAfter + end);
+			js.push(start + (before.match(/\n/g) || []).join('') + jsWraperBefore + /* onlyJS(content) */ content + jsWraperAfter + end);
+			return before;
+		})
+		.replace(/([\s\S]*?)(\<style[^\>]*?\>)([\s\S]*?)(\<\/style\>)/ig, (all, /** @type {String} */ before, start, content, end) => {
+			css.push(start + (before.match(/\n/g) || []).join('') + content + `\n/*# sourceURL=${filePath}*/\n` + end);
 			return before;
 		});
 
@@ -112,35 +117,29 @@ async function htmlGenerator(content = {}, template = 'index') {
 
 		template = template.replace(/^client\/templates\/?|\.html$|\.js$/g, ''); // duplication
 
-		if (content) templates = [];
-		let html0 = '';
+		if (content) templates = {};
+		if (templates[template]) return templates[template];
+		let html0 = await readFile('client/templates/' + template + '.html', inputContent, !!content, js, css);
+		if (templates[template]) return templates[template];
+
+		templates[template] = html0;
 
 		// onbase="{ template: '_example_/sub-component_example.html' }
-		if (templates.indexOf(template) === -1) {
-			templates.push(template);
+		/** @type {Promise<{template: String, html: String}>[]} */ let proms = [];
+		html0.replace(/\s+onbase\s*\=[^\}]*template\s*\:\s*\'([^\']+)\'/gi, (all, template) => {
+			proms.push(deep(null, template, html, css, js).then( html => ({template, html}) ));
+			return all;
+		});
+		await Promise.all(proms);
 
-			html0 = await readFile('client/templates/' + template + '.html', inputContent, !!content, js);
+		js.push(`<script> window.templateHTML['${template}'] = "${
+			encode(html0)
+			// html0.replace(/([\`])/g, '\$1') //.replace(/([\\\"])/g, '\$1')
+		}";\n//# sourceURL=client/templates/${template}.html\n</script>`);
 
-			/** @type {Promise<{template: String, html: String}>[]} */ let proms = [];
-			html0.replace(/\s+onbase\s*\=[^\}]*template\s*\:\s*\'([^\']+)\'/gi, (all, template) => {
-				proms.push(deep(null, template, html, css, js).then( html => ({template, html}) ));
-				return all;
-			});
-			await Promise.all(proms).then(contents => {
-				for (let content of contents) {
-					if (content.template) {
-						js.push(`<script> window.templateHTML['${content.template}'] = "${
-							encode(content.html)
-							// content.html.replace(/([\`])/g, '\$1') //.replace(/([\\\"])/g, '\$1')
-						}";\n//# sourceURL=client/templates/${content.template}.html\n</script>`);
-					}
-				}
-			});
-
-			html.push(html0);
-			css.push(await readFile('client/templates/' + template + '.css', inputContent, !!content, js));
-			js.push(await readFile('client/templates/' + template + '.js', inputContent, !!content, js));
-		}
+		html.push(html0);
+		css.push(await readFile('client/templates/' + template + '.css', inputContent, !!content, js, css));
+		js.push(await readFile('client/templates/' + template + '.js', inputContent, !!content, js, css));
 
 		/******************************************************
 		 * This is called only once the first 'htmlGenerator' *
@@ -210,7 +209,7 @@ async function htmlGenerator(content = {}, template = 'index') {
 			let notSuppTempl = config.templates.notSupportedBrowser;
 			js.unshift(`
 				<style>
-					._BaseJS_class_hidden { display: none; }
+					._BaseJS_class_hidden { display: none !important; }
 				</style>
 				<script>
 					window.templateHTML = {}; // HTML templates
@@ -238,11 +237,20 @@ async function htmlGenerator(content = {}, template = 'index') {
 	
 					if (window.requires['shared/utils/console.base.js']) {
 						window.requires['shared/utils/console.base.js'].configure({
+							userErrorFunction: window.requires['shared/utils/error.base.js'],
 							debugFileRegExp: ${console.debugFileRegExp}
 						});
 					}
 					window.afterLoadRequires = [];
 					//# sourceURL=BaseJS-framework
+				</script>
+			`);
+
+			js.push(`
+				<script>
+					function onFunctionWrapper(that, _BaseJS_ComponentId_, cb) {
+						cb.call(Object.assign(that, window.templateJsThis[_BaseJS_ComponentId_]));
+					}
 				</script>
 			`);
 
