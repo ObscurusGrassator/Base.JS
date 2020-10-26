@@ -45,6 +45,7 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 		"exclude": ["node_modules"],
 
 		"startFile": "app_example.js",
+		"appName": "app-name",
 		"templates": {
 			"notSupportedBrowser": "client/templates/notSupportedBrowser.base.html"
 		},
@@ -73,18 +74,13 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 	let str = jsonStringify(jsconfigObj, space);
 	if (string.replace(/\n$/, '') != str) {
 		fs.writeFileSync('jsconfig.json', str);
-	}
 
-
-
-	if (!fs.existsSync('jsconfig.local.json')) {
 		fs.writeFileSync('jsconfig.local.json', jsonStringify({
 			"server": {
-				"hostname": "127.0.0.1",
-				"port": 3000
+				"hostname": "127.0.0.1"
 			}
 		}, space));
-	};
+	}
 
 
 
@@ -94,6 +90,7 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 		"scripts": {
 			"start": "NODE_PATH=. node manager.js",
 			"bg": "NODE_PATH=. nohup node manager.js &",
+			"stop": "if [ -z \"$appName\" ]; then echo \"usege:> appName=app-name_from_jsconfig.json npm run kill\"; else kill -INT $(ps -ef | grep \"appName-${appName}\" | grep server.js | awk '{print $2}'); fi",
 			"indexing": "NODE_PATH=. node -e \"require('server/utils/indexCreate.base.js')()\"",
 			"update": "git --git-dir=.gitBase.JS pull & npm install"
 		},
@@ -120,13 +117,13 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 	let fileName = 'client/types/contentType.js';
 	if (!fs.existsSync(fileName)) {
 		fs.writeFileSync(fileName,
-			'/**'
-			+ ' * @typedef {Object} ContentType'
-			+ ' * @property {typeof import(\'jsconfig.json\')} config'
-			+ ' * @property {string} contentExample'
-			+ ' * @property {string} pathVariables'
-			+ ' */'
-			+ 'export {}'
+			'/**\n'
+			+ ' * @typedef {Object} ContentType\n'
+			+ ' * @property {typeof import(\'jsconfig.json\')} config\n'
+			+ ' * @property {string} contentExample\n'
+			+ ' * @property {string} pathVariables\n'
+			+ ' */\n'
+			+ 'export {}\n'
 		);
 	}
 
@@ -147,6 +144,7 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 		time = (new Date()).getTime();
 		let args = process.argv.slice(1);
 		args[0] = args[0].replace(/manager\.js$/, 'server.js');
+		args.push('appName-' + jsconfigObj.appName);
 
 		let result = child_process.spawnSync(process.argv[0], args, {
 			env: process.env, stdio: [process.stdin, process.stdout, process.stderr]}
