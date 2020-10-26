@@ -13,7 +13,11 @@
 	Dynamic template DOM attributes modification -->
 		<span onbase="({ setAttr: {title: 'Title'}, setClass: {TestItalic: true} })">TextWithClassAndTitleProperty</span>
 	<br>
-	This element ID --> <span ID="template_example_element_id"></span>
+	This component element ID -->
+		<span ID="template_example_identifitator"></span>
+	<br>
+	This element ID -->
+		<span ID="template_example_element_id" onbase="({ setHtml: this.id })"></span>
 	<br>
 	Parent JavaScript variable -->
 		<span onbase="({ setHtml: this.parent.indexJsVariable })"></span>
@@ -27,7 +31,8 @@
 	Generated table in template: <table>
 		<tr onbase="({ forIn: this.array, key: 'a' })">
 			<td onbase="({ forIn: this.array, key: 'b' })">
-				<b onbase="({ setHtml: +this.array[a] + +this.array[b] * 10 })"></b>
+				<b onbase="({ setHtml: +this.array[a] + +this.array[b] * 10 })"
+				   onclick="alert(this.tagName + ': ' + (+this.array[a] + +this.array[b] * 10))"></b>
 				- <span onbase="({ template: '_example_/sub-component_example.html' })"></span>
 			</td>
 		</tr>

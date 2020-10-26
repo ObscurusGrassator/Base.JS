@@ -23,7 +23,9 @@ async function getRealTemplatePath(path = '/index.html', defaultPath = 'notFound
 	path = pathLib.join(pathPrefix, path.replace(/\/$/, ''));
 	let lastPathPart = (path) => {
 		if (fs.existsSync(pathLib.join(path, 'index.html'))) return {path: pathLib.join(path, 'index.html'), variables: {}};
+		else if (fs.existsSync(pathLib.join(path, 'index.js'))) return {path: pathLib.join(path, 'index.js'), variables: {}};
 		if (fs.existsSync(path + '.html')) return {path: path + '.html', variables: {}};
+		else if (fs.existsSync(path + '.js')) return {path: path + '.js', variables: {}};
 		if (fs.existsSync(path)) return {path: path, variables: {}};
 		return {path: defaultPath, variables: {}};
 	};

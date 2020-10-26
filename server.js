@@ -38,16 +38,17 @@ concoleWarnError(console);
 process.stdin.resume();
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', async (data) => {
-	if (data == s.config.manager.shortcuts.serverRestart) {
+	if (data.toString() == s.config.manager.shortcuts.serverRestart) {
 		process.exit(2);
 	}
-	if (data == s.config.manager.shortcuts.serverRestartAndTerminalClear) {
+	if (data.toString() == s.config.manager.shortcuts.serverRestartAndTerminalClear) {
 		await s.modul["run-applescript"](`
 			tell application "System Events" to tell process "Terminal" to keystroke "k" using command down
 		`);
 		process.exit(2);
 	}
 });
+process.on('SIGINT', () => process.exit(3));
 
 const s = require('server/src/_index.js');
 
@@ -122,7 +123,17 @@ concoleWarnError(console0);
 
 	s.modul.http.createServer(async (req, res) => {
 		res.statusCode = 200;
+
 		try {
+			let postData = await new Promise((res, rej) => {
+				if (req.method == 'POST') {
+					let result = '';
+					req.on('data', (data) => result += data );
+					req.on('end', () => res(result) );
+					req.on('error', err => rej(err) );
+				} else res('');
+			});
+
 			let input = s.util.urlParser(req.url);
 			let file = input.parts[input.parts.length-1];
 			let fileSufix = file.substr(file.lastIndexOf('.') + 1);
@@ -138,8 +149,9 @@ concoleWarnError(console0);
 
 			s.storage.edit(storage => storage.server.response = res);
 			s.storage.edit(storage => storage.server.request = req);
+			s.storage.edit(storage => storage.server.postData = postData);
 
-			await app.callPerResponce(req, res);
+			await app.callPerResponce(req, res, postData);
 		} catch(err) {
 			console.error(err);
 			res.statusCode = 500;

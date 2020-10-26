@@ -48,7 +48,7 @@ function error(...err) {
 			.replace(/ Error\n/g, '\n')
 			.replace(/Error:/g, '')
 			.replace(new RegExp(pathLib.resolve('') + '\\/', 'g'), '');
-	
+
 		return result;
 	}
 };

@@ -2,7 +2,7 @@ const util = require('client/utils');
 const service = require('client/services');
 
 /**
- * Utility väčšinou exportujú konkrétnu funkciu alebo objekt niekoľkých funkcií
+ * Utilities usually export a specific function or object of several functions.
  * Most IDEs can generate help with documentation and identify type errors.
  * Index files are re-generated when the server is started or by the command: 'npm run indexing'.
  * 

@@ -1,7 +1,6 @@
 const thisElement = require('client/utils/getActualElement.ignr.base.js');
 const s = require('client/src/_index.js');
 
-export {}; // Cannot redeclare exported variable ... ts(2323)
 /** @type {any} */
 this.input; // contain context from parent: onbase="{{template: ..., input: ...}}"
 /** @type {any} */
@@ -12,7 +11,7 @@ this.array = [1, 2, 3, 4, 5];
 
 const listeners = [];
 listeners.push(s.event._example_.exampleRoot.listen((event, output) => {
-	document.getElementById("template_example_element_id").innerHTML = thisElement.id;
+	document.getElementById("template_example_identifitator").innerHTML = thisElement.id;
 }));
 
 s.event._example_.exampleRoot.send({
@@ -20,7 +19,7 @@ s.event._example_.exampleRoot.send({
 });
 
 s.service.testing.add(async () => {
-	if (thisElement.id !== 'template_example_example') throw new Error('Bad parent ID');
+	if (thisElement.id !== 'template_example_example_wrapper') throw new Error('Bad parent ID');
 });
 
 this.users = {

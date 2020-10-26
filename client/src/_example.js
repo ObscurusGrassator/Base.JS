@@ -16,9 +16,9 @@ window.addEventListener('load', () => {
 		if (JSON.stringify(s.storage.edit(storage => storage.session))   !== undefined) throw new Error('First session is not empty');
 		if (JSON.stringify(s.storage.edit(storage => storage.local))     !== undefined) throw new Error('First local is not empty');
 
-		s.storage.edit(storage => storage._example_._example.array[0].a = 'aaa');
+		s.storage.write(storage => storage._example_._example.array[0].a = 'aaa');
 		if (s.storage.edit(storage => storage._example_._example.array[0].a) !== 'aaa') {
-			throw new Error('Storage property get failed');
+			throw new Error('Storage property set failed');
 		}
 		// or
 		s.util.contain(
@@ -39,6 +39,13 @@ window.addEventListener('load', () => {
 			StoreContent,
 			{_example: {array: [{a: 'aaa'}]}}, // intellisense will help you now
 			{throwAfterUncontain: 'Storage property get failed'}
+		);
+
+		s.storage.edit(storage => storage._example_._example.set('newGenericString', 'yyy'));
+		s.util.contain(
+			s.storage.edit(storage => storage),
+			{_example_: {_example: {newGenericString: 'yyy'}}},
+			{throwAfterUncontain: 'Storage property set (unsafe part) failed'}
 		);
 
 		s.storage.edit(storage => storage._example_._example.array.push({a: 'xxx'}));
