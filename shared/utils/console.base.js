@@ -191,7 +191,7 @@ function configure(options = {}) {
 
 		console.optionsDefault = {
 			backupFilePath: config.backupFilePath,
-			userErrorFunction: (message) => (new Error(message)).stack,
+			userErrorFunction: (message) => (message instanceof Error ? message : new Error(message)).stack,
 			debugFileRegExp: new RegExp(debugFile[1], debugFile[2]) || /.*/i,
 			enableFileRegExp: new RegExp(enableFile[1], enableFile[2]) || /.*/,
 		};
