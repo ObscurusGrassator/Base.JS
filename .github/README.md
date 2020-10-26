@@ -187,15 +187,10 @@ shared/
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/login/?returnTo=https://gitpod.io/%23snapshot/410bff42-fba7-426c-a0dd-2dc4cdca01d3)
 
-After open empty project you can set [Download, Installation and First start](#download-installation-and-first-start) commands to terminal.
-After server starting Gitpod show popup "A service is available on port 3000". You can click on "Open Preview".
-
-### You can login to testing GitHub account:
-```
-Login:    GitpodTest
-Password: Gitpod123
-```
-
+The editor requires a github login, but also allows you to quickly create an anonymous account.  
+After open empty project you can set [Download, Installation and First start](#download-installation-and-first-start) commands to terminal.  
+After server starting Gitpod show popup "A service is available on port 3000". You can click on "Open Preview".  
+  
 ### Look for example at:
 - client/src/\_example.js
 - client/templates/\_example\_/\_example.html

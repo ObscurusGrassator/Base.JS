@@ -52,7 +52,7 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 		"server": {
 			"protocol": "http",
 			"hostname": "0.0.0.0",
-			"port": 80,
+			"port": 3000,
 			"publicHTTPsuffixes": ["gif", "jpg", "png"]
 		},
 		"manager": {
