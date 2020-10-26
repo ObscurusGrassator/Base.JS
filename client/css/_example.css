@@ -1,0 +1,8 @@
+._BaseJS_class_loading {
+	background-image: url("client/images/loading/30.gif") !important;
+	background-repeat: no-repeat !important;
+	background-position: center !important;
+	padding: 30px !important;
+	height: 0 !important;
+	box-sizing: border-box;
+}

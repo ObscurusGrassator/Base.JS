@@ -4,17 +4,26 @@ const srcExample = require('server/src/_example.js');
 /** @typedef {import('client/types/contentType.js').ContentType} ContentType */
 
 module.exports = {
-	callBeforeServerStarting: async (
-		/** @type {import('http').IncomingMessage} */ req,
-		/** @type {import('http').ServerResponse} */ res
-	) => {
+	callBeforeServerStarting: async () => {
 	},
 
 	callPerResponce: async (
 		/** @type {import('http').IncomingMessage} */ req,
-		/** @type {import('http').ServerResponse} */ res
-	) => {
+		/** @type {import('http').ServerResponse} */ res,
+		/** @type { String } */ postData
+		) => {
 		res.setHeader('Content-Type', 'text/html');
+
+		if (req.url.substr(0, 5) == '/api/') {
+			let realPath = await s.util.getRealTemplatePath(req.url, '', 'server');
+			if (!realPath.path) {
+				res.statusCode = 404;
+				res.end();
+				return;
+			}
+			res.end(await require(realPath.path)(req, res, realPath.variables, postData));
+			return;
+		}
 
 		s.storage.edit(storage => storage.cookie._exampleCookieStorage.v = 'serverValue');
 

@@ -6,7 +6,7 @@
  * @param {T} obj
  * @param {function(any, string|number, (String | Number)[]): void} deepFunction deepFunction(objectPart, key, objectPartPath)
  * 
- * @example objectDeepPropertiesProcessing(obj, (o, i) => { if (o[i] === 0) o[i] = false; });
+ * @example objectDeepPropertiesProcessing(object, (objPart, i) => { if (objPart[i] === 0) objPart[i] = false; });
  * 
  * @returns {T} Modified obj
  */

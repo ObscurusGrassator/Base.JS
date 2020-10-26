@@ -21,7 +21,7 @@ function set(object, path, value) {
 
 	path.reduce((obj, v, i) => {
 		if (++counter === path.length) obj[v] = value;
-		else if (!obj[v] && obj[v] !== 0 && obj[v] !== false) obj[v] = isNaN(+path[i+1]) ? {} : [];
+		else if (!obj[v] && obj[v] !== 0 && obj[v] !== false) obj[v] = isNaN(+path[+i+1]) ? {} : [];
 		// @ts-ignore
 		else if (typeof obj[v] != 'object') throw error(`Path ${path.join('.')} not exist, because ${v} is ${typeof obj[v]}`);
 

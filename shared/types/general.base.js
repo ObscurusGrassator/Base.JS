@@ -13,7 +13,7 @@
 //  * @template A Array property
 //  * @typedef {_Deep9<O, A>} Deep
 //  * @example
-//  *   typedef {import('shared/types/general.base.js').Deep<{newProperty: string}, "newArrayItem">} DeepExtension
+//  *   ...typedef {import('shared/types/general.base.js').Deep<{newProperty: string}, "newArrayItem">} DeepExtension
 //  *   function:
 //  *      param {SpecificType | DeepExtension} extension Deep extension of SpecificType
 //  */
@@ -32,7 +32,7 @@
 //  * @template A Array property
 //  * @typedef {_Deep1<O, A>} Deep
 //  * @example
-//  *   typedef {import('shared/types/general.base.js').Deep<{newProperty: string}, "newArrayItem">} DeepExtension
+//  *   ...typedef {import('shared/types/general.base.js').Deep<{newProperty: string}, "newArrayItem">} DeepExtension
 //  *   function:
 //  *      param {SpecificType & DeepExtension} extension Deep extension of SpecificType
 //  */
@@ -76,7 +76,7 @@
  * @template {{[k: string]: any}} B Deep joined object
  * @typedef {_DeepJoinObj1<A, B> | A} DeepJoinObj
  * @example
- *   typedef {import('shared/types/general.base.js').DeepJoinObj<A, B>} DeepJoinObjExtension<A, B>
+ *   ...typedef {import('shared/types/general.base.js').DeepJoinObj<A, B>} DeepJoinObjExtension<A, B>
  *   type {DeepJoinObj< {a: {b: {c: number}, arr: {d: number}[]}}, {y: number, test: string} >}
  *   let e = {a: {b: {c: 2}, arr: [{d: 21}]}, y: 12};
  *   e.a.arr[0].y;
@@ -111,7 +111,7 @@ e2.a.arr[0].y;
  * @template {{[k: string]: any}} B Deep joined object
  * @typedef {_DeepJoinObjPartial1<A, B> | Partial<A>} DeepJoinObjPartial
  * @example
- *   typedef {import('shared/types/general.base.js').DeepJoinObjPartial<A, B>} DeepJoinObjPartialExtension<A, B>
+ *   ...typedef {import('shared/types/general.base.js').DeepJoinObjPartial<A, B>} DeepJoinObjPartialExtension<A, B>
  *   type {DeepJoinObjPartial< {a: {b: {c: number}, arr: {d: number}[]}}, {y: number, test: string} >}
  *   let e = {a: {b: {c: 2}, arr: [{d: 21}]}, y: 12};
  *   e.a.arr[0].y;
@@ -144,7 +144,7 @@ w2.a.arr[0].y;
  * @template B Deep joined object
  * @typedef {_DeepJoinObjPartialWrite1<A, B> | Partial<A>} DeepJoinObjPartialWrite
  * @example
- *   typedef {import('shared/types/general.base.js').DeepJoinObjPartialWrite<A, B>} DeepJoinObjPartialWriteExtension<A, B>
+ *   ...typedef {import('shared/types/general.base.js').DeepJoinObjPartialWrite<A, B>} DeepJoinObjPartialWriteExtension<A, B>
  *   type {DeepJoinObjPartialWrite< {a: {b: {c: number}, arr: {d: number}[]}}, {y: number, test: string} >}
  *   let e = {a: {b: {c: 2}, arr: [{d: 21}]}, y: 12};
  *   e.a.arr[0].y;
@@ -173,7 +173,7 @@ let t = {a: {arr: [{d: 21}, "test"]}};
  * @template B Deep joined object
  * @typedef {_DeepJoinObjPartialRead1<A, B> | Partial<A>} DeepJoinObjPartialRead
  * @example
- *   typedef {import('shared/types/general.base.js').DeepJoinObjPartialRead<A, B>} DeepJoinObjPartialReadExtension<A, B>
+ *   ...typedef {import('shared/types/general.base.js').DeepJoinObjPartialRead<A, B>} DeepJoinObjPartialReadExtension<A, B>
  *   type {DeepJoinObjPartialRead< {a: {b: {c: number}, arr: {d: number}[]}}, {y: number, test: string} >}
  *   let e = {a: {b: {c: 2}, arr: [{d: 21}]}, y: 12};
  *   e.a.arr[0].y;
@@ -202,7 +202,7 @@ r.a.arr[0].d;
 //  * @template {{[k: string]: any}} B Deep joined object
 //  * @typedef {_DeepAnyJoinObj1<A, B>} DeepAnyJoinObj
 //  * @example
-//  *   typedef {import('shared/types/general.base.js').DeepAnyJoinObj<A, B>} DeepAnyJoinObjExtension<A, B>
+//  *   ...typedef {import('shared/types/general.base.js').DeepAnyJoinObj<A, B>} DeepAnyJoinObjExtension<A, B>
 //  *   type {DeepAnyJoinObj< {a: {b: {c: number}, arr: {d: number}[]}}, {y: number, test: string} >}
 //  *   let e = {a: {b: {c: 2}, arr: [{d: 21}]}, y: 12};
 //  *   e.a.arr[0].y;
@@ -252,7 +252,7 @@ r.a.arr[0].d;
  * @template {{[k: string]: any}} B Deep joined object
  * @typedef {_DeepAnyJoinObjRead1<A, B>} DeepAnyJoinObjRead
  * @example
- *   typedef {import('shared/types/general.base.js').DeepAnyJoinObjRead<A, B>} DeepAnyJoinObjReadExtension<A, B>
+ *   ...typedef {import('shared/types/general.base.js').DeepAnyJoinObjRead<A, B>} DeepAnyJoinObjReadExtension<A, B>
  *   type {DeepAnyJoinObjRead< {a: {b: {c: number}, arr: {d: number}[]}}, {y: number, test: string} >}
  *   let e = {a: {b: {c: 2}, arr: [{d: 21}]}, y: 12};
  *   e.a.arr[0].y;
@@ -287,7 +287,7 @@ h.y;
  * @template {{[k: string]: any}} B Deep joined object
  * @typedef {_DeepAnyJoinObjWrite1<A, B>} DeepAnyJoinObjWrite
  * @example
- *   typedef {import('shared/types/general.base.js').DeepAnyJoinObjWrite<A, B>} DeepAnyJoinObjWriteExtension<A, B>
+ *   ...typedef {import('shared/types/general.base.js').DeepAnyJoinObjWrite<A, B>} DeepAnyJoinObjWriteExtension<A, B>
  *   type {DeepAnyJoinObjWrite< {a: {b: {c: number}, arr: {d: number}[]}}, {y: number, test: string} >}
  *   let e = {a: {b: {c: 2}, arr: [{d: 21}]}, y: 12};
  *   e.a.arr[0].y;
@@ -317,7 +317,7 @@ let k = {a: {b: {c: 2}, arr: [{d: 21, xxx: {yyy: {y: 323}}}]}, y: 12};
 //  * @template {{[k: string]: any}} B Deep joined object
 //  * @typedef {_DeepOrObj1<A, B>} DeepOrObj
 //  * @example
-//  *   typedef {import('shared/types/general.base.js').DeepOrObj<A, B>} DeepOrObjExtension<A, B>
+//  *   ...typedef {import('shared/types/general.base.js').DeepOrObj<A, B>} DeepOrObjExtension<A, B>
 //  *   type {DeepOrObj< {a: {b: {c: number}, arr: {d: number}[]}}, {y: number, test: string} >}
 //  *   let e = {a: {b: {c: 2}, arr: [{d: 21}]}, y: 12};
 //  *   e.a.arr[0].y;
@@ -347,7 +347,7 @@ let k = {a: {b: {c: 2}, arr: [{d: 21, xxx: {yyy: {y: 323}}}]}, y: 12};
 //  * @template C Array property
 //  * @typedef {_DeepAddArrayItems1<A, B, C>} DeepAddArrayItems
 //  * @example
-//  *   typedef {import('shared/types/general.base.js').DeepAddArrayItems<A, B, C>} DeepAddArrayItemsExtension<A, B, C>
+//  *   ...typedef {import('shared/types/general.base.js').DeepAddArrayItems<A, B, C>} DeepAddArrayItemsExtension<A, B, C>
 //  *   function:
 //  *      param {DeepAddArrayItems<{newProperty: string}, "newArrayItem">} extension DeepAddArrayItems extension of SpecificType
 //  */
@@ -379,7 +379,7 @@ let k = {a: {b: {c: 2}, arr: [{d: 21, xxx: {yyy: {y: 323}}}]}, y: 12};
 //  * @template {{[k: string]: any}} C Array property
 //  * @typedef {_DeepAddArrayItems1<A, B, C>} DeepAddArrayItems
 //  * @example
-//  *   typedef {import('shared/types/general.base.js').DeepAddArrayItems<A, B, C>} DeepAddArrayItemsExtension<A, B, C>
+//  *   ...typedef {import('shared/types/general.base.js').DeepAddArrayItems<A, B, C>} DeepAddArrayItemsExtension<A, B, C>
 //  *   function:
 //  *      param {DeepAddArrayItems<{newProperty: string}, "newArrayItem">} extension DeepAddArrayItems extension of SpecificType
 //  */
@@ -414,7 +414,7 @@ let k = {a: {b: {c: 2}, arr: [{d: 21, xxx: {yyy: {y: 323}}}]}, y: 12};
 //  * @template A Array property
 //  * @typedef {_DeepAny_1<O, A>} DeepAny_
 //  * @example
-//  *   typedef {import('shared/types/general.base.js').DeepAny_<{newProperty: string}, "newArrayItem">} DeepAny_Extension
+//  *   ...typedef {import('shared/types/general.base.js').DeepAny_<{newProperty: string}, "newArrayItem">} DeepAny_Extension
 //  *   function:
 //  *      param {SpecificType | DeepAny_Extension} extension DeepAny_ extension of SpecificType
 //  */
@@ -440,7 +440,7 @@ let k = {a: {b: {c: 2}, arr: [{d: 21, xxx: {yyy: {y: 323}}}]}, y: 12};
 //  * @template A Array property
 //  * @typedef {_OrAny1<O, A>} OrAny
 //  * @example
-//  *   typedef {import('shared/types/general.base.js').OrAny<{newProperty: string}, "newArrayItem">} OrAnyExtension
+//  *   ...typedef {import('shared/types/general.base.js').OrAny<{newProperty: string}, "newArrayItem">} OrAnyExtension
 //  *   type {SpecificUserType & OrAnyExtension} extension OrAny extension of SpecificUserType
 //  */
 // export {}
