@@ -1,6 +1,9 @@
 const util = require('shared/utils');
 const error = require('shared/utils/error.base.js');
 
+/** @template A @template B @typedef {import('shared/types/general.base.js').DeepAnyJoinObjRead<A, B>} DeepAnyJoinObjRead<A, B> */
+/** @template A @template B @typedef {import('shared/types/general.base.js').DeepAnyJoinObjWrite<A, B>} DeepAnyJoinObjWrite<A, B> */
+
 const config = require('shared/services/jsconfig.base.js').update('services.storage', {
 	"services": {
 		"storage": {
@@ -24,9 +27,19 @@ let path = [];
 const handler = {
 	apply: (obj, thisArg, argumentsList) => {
 		let orig = util.get(dataEdit, path.slice(0, path.length-1));
-		orig[path[path.length-1]].apply(orig, argumentsList);
+		let prop = path[path.length-1];
+		let result;
+
+// console.log(555, obj, path, orig);
+		if (prop == 'get') {
+			result = util.get.apply(orig, [orig].concat(argumentsList));
+		} else if (prop == 'set') {
+			result = util.set.apply(orig, [orig].concat(argumentsList));
+		} else {
+			result = orig[prop].apply(orig, argumentsList);
+		}
 		saveSpecial(path[0]);
-		return orig;
+		return result;
 	},
 	get: (obj, prop) => {
 		if (obj._BaseJS_default) {
@@ -68,6 +81,12 @@ const handler = {
 		if (!value && ['push', 'pop', 'shift', 'unshift'].indexOf(prop.toString()) > -1) {
 			util.set(dataEdit, path.slice(0, path.length-1), []);
 			return new Proxy([][prop], handler);
+		}
+		else if (value && !value[prop] && prop == 'get') {
+			return new Proxy((path, defautValue) => util.get(value, path || '', defautValue), handler); // tu vstupuje do proxy funkcia, nie objekt
+		}
+		else if (value && !value[prop] && prop == 'set') {
+			return new Proxy((path, value) => util.set(value, path, value), handler); // tu vstupuje do proxy funkcia, nie objekt
 		}
 		else if (value && typeof value[prop] == 'function') {
 			return new Proxy(value[prop], handler); // tu vstupuje do proxy funkcia, nie objekt
@@ -155,7 +174,31 @@ function storageEdit(selectFunction, userObject) {
  */
 class Storage {
 	/**
-	 * Safe edit property of user object or array.
+	 * Type-NOT-safe property getting.
+	 * It is a type oriented alternative to Lodash.<get/set/...>
+	 * 
+	 * WARNING: Special storage properties (cookie, session, local) cannot be selected !!
+	 * 
+	 * @param {String | Array<String, Number>} [path = '']
+	 * @param {any} [defautValue]
+	 */
+	static get(path, defautValue) {
+		return util.get(data, path || '', defautValue);
+	}
+	/**
+	 * Type-NOT-safe property editing.
+	 * It is a type oriented alternative to Lodash.<get/set/...>
+	 * 
+	 * WARNING: Special storage properties (cookie, session, local) cannot be edited !!
+	 * 
+	 * @param {String | Array<String, Number>} path
+	 * @param {any} value
+	 */
+	static set(path, value) {
+		return util.set(data, path, value);
+	}
+	/**
+	 * Type-safe property editing of user object or array.
 	 * It is a type oriented alternative to Lodash.<get/set/...>
 	 * 
 	 * @template T
@@ -163,10 +206,10 @@ class Storage {
 	 * @param {T} userObject
 	 * @param {function(T): any} selectFunction
 	 * 
-	 * @example server({a: {b: {c: 'x'}}}, storage => storage.a.b.c);
-	 * @example server({a: {b: {c: 'x'}}}, storage => storage.a.b.d = 'test');
-	 * @example server({a: {b: {c: 'x'}}}, storage => storage.a.b.e.push('test'));
-	 * @example server({a: {b: {c: 'x'}}}, storage => delete storage.a.b.f);
+	 * @example Storage.of({a: {b: {c: 'x'}}}, storage => storage.a.b.c);
+	 * @example Storage.of({a: {b: {c: 'x'}}}, storage => storage.a.b.d = 'test');
+	 * @example Storage.of({a: {b: {c: 'x'}}}, storage => storage.a.b.e.push('test'));
+	 * @example Storage.of({a: {b: {c: 'x'}}}, storage => delete storage.a.b.f);
 	 */
 	static of(userObject, selectFunction) {
 		return storageEdit(selectFunction, userObject);
@@ -174,37 +217,70 @@ class Storage {
 }
 class StorageClient extends Storage {
 	/**
-	 * Safe edit property.
+	 * Type-safe property editing.
 	 * It is a type oriented alternative to Lodash.<get/set/...>
 	 * 
 	 * Special storage properties: storage.cookie, storage.session, storage.local
 	 * 
-	 * @param {function(import('client/types/storage').Type & {[key: string]: any}): any} selectFunction
+	 * @param {function(DeepAnyJoinObjRead<import('client/types/storage').Type, {set: typeof Storage.set}>): any} selectFunction
 	 * 
-	 * @example client(storage => storage.a.b.c);
-	 * @example client(storage => storage.a.b.d = 'test');
-	 * @example client(storage => storage.a.b.e.push('test'));
-	 * @example client(storage => delete storage.a.b.f);
+	 * @example Storage.edit(storage => storage.a.b.c);
+	 * @example Storage.edit(storage => storage.a.b.d = 'test');
+	 * @example Storage.edit(storage => storage.a.b.e.push('test'));
+	 * @example Storage.edit(storage => delete storage.a.b.f);
 	 */
 	static edit(selectFunction) {
+		return storageEdit(selectFunction);
+	}
+	/**
+	 * Type-safe property editing.
+	 * It is equals as method edit(), but types is not erroring.
+	 * It is a type oriented alternative to Lodash.<get/set/...>
+	 * 
+	 * Special storage properties: storage.cookie, storage.session, storage.local
+	 * 
+	 * @param {function(DeepAnyJoinObjWrite<import('client/types/storage').Type, {set: typeof Storage.set}>): any} selectFunction
+	 * 
+	 * @example Storage.edit(storage => storage.a.b.c);
+	 * @example Storage.edit(storage => storage.a.b.d = 'test');
+	 * @example Storage.edit(storage => storage.a.b.e.push('test'));
+	 * @example Storage.edit(storage => delete storage.a.b.f);
+	 */
+	static write(selectFunction) {
 		return storageEdit(selectFunction);
 	}
 }
 class StorageServer extends Storage {
 	/**
-	 * Safe edit property.
+	 * Type-safe property editing.
 	 * It is a type oriented alternative to Lodash.<get/set/...>
 	 * 
 	 * Special storage properties: storage.cookie
 	 * 
-	 * @param {function(import('server/types/storage').Type & {[key: string]: any}): any} selectFunction
+	 * @param {function(DeepAnyJoinObjRead<import('server/types/storage').Type, {get: typeof Storage.get}>): any} selectFunction
 	 * 
-	 * @example server(storage => storage.a.b.c);
-	 * @example server(storage => storage.a.b.d = 'test');
-	 * @example server(storage => storage.a.b.e.push('test'));
-	 * @example server(storage => delete storage.a.b.f);
+	 * @example Storage.edit(storage => storage.a.b.c);
+	 * @example Storage.edit(storage => storage.a.b.d = 'test');
+	 * @example Storage.edit(storage => storage.a.b.e.push('test'));
+	 * @example Storage.edit(storage => delete storage.a.b.f);
 	 */
 	static edit(selectFunction) {
+		return storageEdit(selectFunction);
+	}
+	/**
+	 * Type-safe property editing.
+	 * It is a type oriented alternative to Lodash.<get/set/...>
+	 * 
+	 * Special storage properties: storage.cookie
+	 * 
+	 * @param {function(DeepAnyJoinObjWrite<import('server/types/storage').Type, {get: typeof Storage.get}>): any} selectFunction
+	 * 
+	 * @example Storage.edit(storage => storage.a.b.c);
+	 * @example Storage.edit(storage => storage.a.b.d = 'test');
+	 * @example Storage.edit(storage => storage.a.b.e.push('test'));
+	 * @example Storage.edit(storage => delete storage.a.b.f);
+	 */
+	static write(selectFunction) {
 		return storageEdit(selectFunction);
 	}
 }
