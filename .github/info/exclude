@@ -20,6 +20,9 @@
 !client/src/_index.js
 !client/templates/
 !client/css/
+!client/images/
+!client/images/loading/
+!client/images/loading/*
 !client/types/
 !client/types/events/
 !client/types/storage/
@@ -28,6 +31,7 @@
 !client/types/storage/session.js
 
 !server/
+!server/api/
 !server/services/
 !server/utils/
 !server/src/
