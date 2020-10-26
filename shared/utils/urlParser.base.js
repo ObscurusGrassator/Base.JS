@@ -1,13 +1,16 @@
 /**
  * URL object extension
- * @param {String} [url] Examples: "http://example.com", "/path/page.html"
+ * @param {String} [url] Examples: "http://example.com", "www.example.com", "/path/page.html"
+ * @param {{isExternal?: Boolean}} [options = {}]
  * @return UrlParserReturn
  */
-function urlParser(url) {
+function urlParser(url, options = {}) {
 	/** @type {UrlParserReturn} */
 	let result;
 
 	if (!url) return result;
+
+	if ((options.isExternal && !/^https?:\/\//.test(url)) || /^www\./.test(url)) url = 'https://' + url;
 
 	try {
 		// @ts-ignore
