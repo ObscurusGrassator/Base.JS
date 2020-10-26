@@ -1,4 +1,4 @@
-**(Node.js backend/frontend) Framework `Base.JS v0.9.1`** tvorí jednoduchý základ Vášho projektu. Je rýchli, účelný a plne modulárny. Je veľmi jednoduchý a intuitívny, preto nevyžaduje takmer žiadne štúdium. Každého oslovili iné technológie, preto sa do budúcna neplánuje veľmi obsiahla komplexita. Špecialna funkcionalita sa nainštaluje ako npm balík alebo sa ako súbor skopíruje do jedného z adresárov `libs/`|`services/`|`utils/`. Vďaka predvytvorenej základnej štruktúre projektu so skriptom pre automatické vytváranie indexov sa môžete naplno venovať už len dizajnu a byznis logike vášho projektu (`src/`). Vytvorené `index.js` súbory kopírujú kvôli prehladnosti svoju priečinkovú štruktúru. Cez klientske komponenty je možné rozbiť stránku na malé reciklovateľné, samostatné kúsky, ktoré medzi sebou defaultne komunikujú cez eventy.  
+**(Node.js backend/frontend) Framework `Base.JS v1.0.0`** tvorí jednoduchý základ Vášho projektu. Je rýchli, účelný a plne modulárny. Je veľmi jednoduchý a intuitívny, preto nevyžaduje takmer žiadne štúdium. Každého oslovili iné technológie, preto sa do budúcna neplánuje veľmi obsiahla komplexita. Špecialna funkcionalita sa nainštaluje ako npm balík alebo sa ako súbor skopíruje do jedného z adresárov `libs/`|`services/`|`utils/`. Vďaka predvytvorenej základnej štruktúre projektu so skriptom pre automatické vytváranie indexov sa môžete naplno venovať už len dizajnu a byznis logike vášho projektu (`src/`). Vytvorené `index.js` súbory kopírujú kvôli prehladnosti svoju priečinkovú štruktúru. Cez klientske komponenty je možné rozbiť stránku na malé reciklovateľné, samostatné kúsky, ktoré medzi sebou defaultne komunikujú cez eventy.  
   
 Na strane vášho IDE editora sa aj klientska časť tvári ako Node.js aplikácia, vďaka čomu máte prístup k jeho plnej nápovede. Všetky funkcie frameworku sú pre túto nápovedu zdokumentované a umožňujú nepovinné definície typov. Každý priečinok obsahuje funkčný pomocný `_example.js` súbor.  
   
@@ -67,20 +67,27 @@ if (typeof require === 'undefined') window.afterLoadRequires.unshift(wrapper); e
 Framework now does not have reactive template editor. Template rendering is started manualy:
 ```
 const templateEditor = require('client/utils/templateEditor.base.js');
-templateEditor(/* 'css selector', DomElement */);
-```
+// OR
+const templateEditor = require('client/src/_index.js').templateEditor;
 
+templateEditor(/* 'css selector', DomElement, options */);
+```
+`this` použité v atributoch s prefixom `on` (napr.: onclick, onchange) obsahuje aj `this` vlastnosti komponentu v JS súbore. Pozor, aby ste si ich neprepísali.  
+  
+**WARNING:** `onbase` podporuje len synchronny JavaScript, aby nebolo možné meniť použité premenné počas renderovania DOM Elementov. Asynchronne funkcie môžu prerenderovať dotknuté elementy dodatočne.  
+  
+**WARNING:** DOM vlastnosti (`onbase`) vyhodnocujú aktuálny obsah, ktorý je možné interaktývne meniť. V prípade `forIn` je možné meniť prvý `forIn` HTMLElement v rade (ostatným pribudne prefix `_`). Ak teda napríklad zmažete jemu pridelenú classu a opätovne ho pregenerujete (`templateEditor()`), túto class už nebude mať žiadny `forIn` HTMLElement.  
+  
 ### Supported properties in examples
- *   <... onbase="{ **if**: this.variableInTemplateJS }" ...> ... </...>
- *   <... onbase="{ **forIn**: this.arrayOrObjectFromTemplateJS,
-            **key**: \'key\' }" ...> ... </...>
- *   <... onbase="{ **template**: \'_example_/sub-component_example.html\',
-            **input**: this.arrayOrObjectFromTemplateJS[key] }" ...> ... </...>
+ *   <... onbase="{ **if**: this.variableInTemplateJS }" ...> Pri hodnote false nie je spracovaná týmto modifikátorom a dostáva css triedu `_BaseJS_class_hidden`. </...>
+ *   <... onbase="{ **forIn**: this.arrayOrObjectFromTemplateJS, **key**: \'key\' }" ...> ... </...>
+ *   <... onbase="{ **template**: \'_example_/sub-component_example.html\', **input**: this.arrayOrObjectFromTemplateJS[key] }" ...> ... </...>
  *   <... onbase="{ **setHtml**: content.contentExample || 123 }" ...> ... </...>
  *   <... onbase="{ **setHtml**: this.variableInTemplateJS }" ...> ... </...>
  *   <... onbase="{ **setAttr**: {src: content.contentExample} }" ...> ... </...>
  *   <... onbase="{ **setClass**: {content.className: \'test\' == content.contentExample} }" ...> ... </...>
- *   <... onbase="{ **js**: thisElement => console.log(\'loaded\', thisElement.id) }" ...> ... </...>
+ *   <... onbase="{ **js**: console.log(\'loaded\', this.id) }" ...> ... </...>
+ *   <... onbase="{ **priority**: 2 }" ...> Kým sa element nenačíta v poradí priority, dostáva css triedu `_BaseJS_class_loading`. </...>
 
 ### Variables available in component
  * **content**
@@ -91,8 +98,11 @@ templateEditor(/* 'css selector', DomElement */);
    - contain context from parent: onbase="{{template: ..., **input**: ...}}"
  * **this.parent**
    - contain parent this
- * **this.***
-   - user variable from component JS file
+ * **this.\***
+   - merge of HTMLElement this and user variable from component JS file
+ * **\***
+   - objects and functions from `utils.*` and `services.*` (Napr.: `onbase="({ if: Storage.get(...`)
+   - variable defined via `window.* = ...;`
 
 JS can also access to DOM component element:
 ```
@@ -101,8 +111,9 @@ const thisElement = require('client/utils/getActualElement.ignr.base.js');
 
 ### Order to evaluate property 'onbase'
 1. if
-2. forIn, key
-3. ...others
+2. priority
+3. forIn, key
+4. ...others
 
 
 # File structure
