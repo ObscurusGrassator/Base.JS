@@ -1,5 +1,7 @@
 const child_process = require('child_process');
 const fs = require('fs');
+const _path = require('path');
+// const net = require('net');
 
 const merge = require('shared/utils/merge.base.js');
 const defaults = require('shared/utils/defaults.base.js');
@@ -11,9 +13,12 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 	let object = {};
 	let string = '';
 	let space = '\t';
+
+	/** @returns {[ String, {}, String ]} */
 	let getContent = (fileName) => {
 		let object = {};
 		let string = '';
+		let space = '\t';
 		if (fs.existsSync(fileName)) {
 			string = fs.readFileSync(fileName, {encoding: 'utf8'});
 			let spaceMatch = string.match(/\n([ \t]+)[^ \t]/);
@@ -31,7 +36,6 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 
 
 
-	// @ts-ignore
 	[string, object, space] = getContent('jsconfig.json');
 	let jsconfigObj = defaults(object, {
 		"compilerOptions": {
@@ -45,16 +49,25 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 		"exclude": ["node_modules"],
 
 		"startFile": "app_example.js",
-		"appName": "app-name",
-		"templates": {
-			"notSupportedBrowser": "client/templates/notSupportedBrowser.base.html"
-		},
 		"server": {
-			"protocol": "http",
 			"hostname": "0.0.0.0",
+			"productionDomain": "yourdomain.com",
 			"port": 3000,
+			"https": {
+				"_privateKey": "/etc/letsencrypt/live/yourdomain.com/privkey.pem",
+				"_certificate": "/etc/letsencrypt/live/yourdomain.com/cert.pem",
+				"_chain": "/etc/letsencrypt/live/yourdomain.com/chain.pem"
+			},
 			"publicHTTPsuffixes": ["gif", "jpg", "png"]
 		},
+		"client": {
+			"refresh": "60 * 60 * 24",
+			"templateNotSupportedBrowser": "notSupportedBrowser.html",
+			"template": "original",
+			"templates": {
+				"original": {"path": "client/templates", "extend": "client/templates"}
+			}
+		},	
 		"manager": {
 			"shortcuts": {
 				"serverRestart": "r\n",
@@ -74,32 +87,47 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 	let str = jsonStringify(jsconfigObj, space);
 	if (string.replace(/\n$/, '') != str) {
 		fs.writeFileSync('jsconfig.json', str);
+	}
 
-		fs.writeFileSync('jsconfig.local.json', jsonStringify({
-			"server": {
-				"hostname": "127.0.0.1"
-			}
-		}, space));
+	[string, object, space] = getContent('jsconfig.local.json');
+	let jsconfigLocalObj = defaults(object, {
+		"server": {
+			"hostname": "127.0.0.1"
+		},
+		"utils": {
+			"email": [{
+				"_auth": { "user": "", "pass": "" }
+			}]
+		}
+	})
+	str = jsonStringify(jsconfigLocalObj, space);
+	if (string.replace(/\n$/, '') != str) {
+		fs.writeFileSync('jsconfig.local.json', str);
 	}
 
 
 
-	// @ts-ignore
 	[string, object, space] = getContent('package.json');
-	object = merge(object, {
-		"scripts": {
-			"start": "NODE_PATH=. node manager.js",
-			"bg": "NODE_PATH=. nohup node manager.js &",
-			"stop": "if [ -z \"$appName\" ]; then echo \"usege:> appName=app-name_from_jsconfig.json npm run kill\"; else kill -INT $(ps -ef | grep \"appName-${appName}\" | grep server.js | awk '{print $2}'); fi",
-			"indexing": "NODE_PATH=. node -e \"require('server/utils/indexCreate.base.js')()\"",
-			"update": "git --git-dir=.gitBase.JS pull & npm install"
-		},
+	object = merge(defaults(object, {
+		"engines": {"node": ">=12"},
 		"dependencies": {
 			"iconv-lite": "^0.4.24",
 			"nodemailer": "^6.3.0",
 			"shell-exec": "^1.0.2",
 			"mime": "^2.4.4",
-			"run-applescript": "^3.2.0"
+			"run-applescript": "^3.2.0",
+		},
+	}), {
+		"scripts": {
+			"update": "git --git-dir=.gitBase.JS pull & npm install",
+			"indexing": "NODE_PATH=. node -e \"require('server/utils/indexCreate.base.js')()\"",
+			"start": "NODE_PATH=. node manager.js",
+			"bgstart": "npm run bgstop; if test ! -e nohup.in; then mkfifo nohup.in; fi; NODE_PATH=. nohup sh -c 'node manager.js' < nohup.in & nohup sh -c 'sleep inf > nohup.in' > /dev/null & echo $! > .sleepPID",
+			"bgconnect": "tail -n100 -f nohup.out & echo $! > .tailPID; trap 'cat .tailPID | xargs kill -KILL; rm .tailPID; exit 0;' INT; cat > nohup.in",
+			"bgstop": "npm run _killSleep; npm run _killNohupFifo; npm run _killServer;",
+			"_killSleep": "if test -e .sleepPID; then cat .sleepPID | xargs kill -KILL; rm .sleepPID; fi;",
+			"_killNohupFifo": "if test -e 'nohup.in'; then rm nohup.in; fi;",
+			"_killServer": "if test -e .serverPID; then cat .serverPID | xargs kill -KILL; rm .serverPID; fi;",
 		},
 	});
 	str = jsonStringify(object, space);
@@ -114,17 +142,43 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 
 
 
-	let fileName = 'client/types/contentType.js';
+	let fileName = 'client/types/ServerContentType.js';
 	if (!fs.existsSync(fileName)) {
 		fs.writeFileSync(fileName,
 			'/**\n'
-			+ ' * @typedef {Object} ContentType\n'
+			+ ' * @typedef {Object} ServerContentType\n'
 			+ ' * @property {typeof import(\'jsconfig.json\')} config\n'
 			+ ' * @property {string} contentExample\n'
 			+ ' * @property {string} pathVariables\n'
 			+ ' */\n'
 			+ 'export {}\n'
 		);
+	}
+
+	fileName = jsconfigObj.client.templateNotSupportedBrowser;
+	let fileContent = `
+		<style>
+			.browserIsNotSupported {
+				position: absolute;
+				top: 0; bottom: 0; left: 0; right: 0;
+				margin: auto;
+				padding: 20vw;
+				height: max-content;
+				font-size: x-large;
+				color: red;
+			}
+		</style>
+		<div class="browserIsNotSupported">
+			\${(language == 'EN' ? 'You are trying to run this page on a limited or outdated browser. Please try again in a new (ideally desktop) version of one of the more known browsers. Unsupported technology: ' : '')}
+			\${(language == 'SK' ? 'Prehliadač, v ktorom sa pokúšate spustiť túto stránku je obmedzený alebo zastaralý. Prosím skúste to znova v novšej (ideálne desktopovej) verzií jedného z tých známejších prehliadačov. Nepodporované technológie: ' : '')}
+			\${notSupportedBrowserTechnologies.join(', ')}
+		</div>
+	`;
+	if (fileName) {
+		for (let template of Object.values(jsconfigObj.client.templates)) {
+			let path = _path.join(template.path, fileName);
+			if (!fs.existsSync(path)) fs.writeFileSync(path, fileContent);
+		}
 	}
 
 	if (!fs.existsSync('client/css/')) fs.mkdirSync('client/css/');
@@ -138,19 +192,31 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 		const console = require('shared/utils/console.base.js').configure({
 			userErrorFunction: require('shared/utils/error.base.js')
 		});
+		const email = require('server/utils/email.base.js');
 
 		await require('server/utils/indexCreate.base.js')();
 
 		time = (new Date()).getTime();
 		let args = process.argv.slice(1);
 		args[0] = args[0].replace(/manager\.js$/, 'server.js');
-		args.push('appName-' + jsconfigObj.appName);
+
+		// let inputFifo = process.stdin;
+		// for (let i in args) { if (args[i].substr(0, 10) == 'inputFifo=') {
+		// 	inputFifo = fs.createReadStream(args[i].substr(10));
+		// 	inputFifo.on('error', err => { console.error(err); });
+		// 	await new Promise(res => { inputFifo.on('open', res); });
+		// } }
 
 		let result = child_process.spawnSync(process.argv[0], args, {
-			env: process.env, stdio: [process.stdin, process.stdout, process.stderr]}
-		);
+			env: process.env,
+			stdio: [process.stdin, process.stdout, process.stderr],
+		});
 
-		if (result.status <= 1) {
+		if (['SIGKILL', 'SIGINT', 'SIGSTOP'].includes(result.signal)) {
+			if (fs.existsSync('.serverPID')) fs.rmSync('.serverPID');
+			process.exit();
+		}
+		else if (result.status <= 1) {
 			if ((new Date()).getTime() - time > 5000) {
 				console.info(' ' + console.colors.red2, console.colors.reset + console.colors.bold + console.colors.red,
 					'SERVER RESTART AFTER FATAL ERROR...');
@@ -159,19 +225,15 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 				console.info(' ' + console.colors.red2, console.colors.reset + console.colors.bold + console.colors.red,
 					'SERVER RESTART FAILDED...', (new Date()).getTime() - time, '> 5000');
 
-				if (jsconfigObj.utils['email'] && jsconfigObj.utils['email'].sendEmailAfter
-						&& jsconfigObj.utils['email'].sendEmailAfter.fatalError) {
-					require('server/utils/email.base.js')('SERVER RESTART FAILDED')
+				email('SERVER RESTART FAILDED', {group: 'sendEmailAfterFatalError'})
 					.catch((err) => { console.error(err); });
-				}
 			}
 		}
-		if (result.status == 2) {
+		else if (result.status == 2) {
 			console.info(' ' + console.colors.red2, console.colors.reset + console.colors.bold + console.colors.red,
 				'SERVER RESTART...');
 			app();
 		}
-		if (result.status == 3) process.exit();
 	};
 
 	app();

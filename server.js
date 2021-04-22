@@ -5,7 +5,7 @@ Error.stackTraceLimit = Infinity;
 
 const pathLib = require('path');
 
-const concoleWarnError = (console) => {
+const concoleWarnError = (console, /** @type { any } */ b = {error: e => e.toString(), util: {email: (...a) => Promise.resolve()}}) => {
 	module.constructor.prototype.require = function (path = '') {
 		if (path.substr(0, 7) == 'client/') { // IDE 'requires' helpers are skipped.
 			try {
@@ -18,69 +18,80 @@ const concoleWarnError = (console) => {
 		} else return this.constructor._load(path, this);
 	};
 
+	let error;
 	process.on('uncaughtException', (err) => {
-		console.error('Uncaught exception:', err);
-		if (s.config.utils.email.sendEmailAfter.error) {
-			s.util.email('' + s.error(err))
-			.catch(err => { console.error(err); });
+		if (error != err) {
+			let error = 'Uncaught exception: ' + b.error(err);
+			console.error(error);
+			b.util.email(error, {group: 'sendEmailAfterError'}).catch(err => { console.error(err); });
 		}
+		error = err;
 	});
-	process.on('unhandledRejection', (/** @type {Error} */ err, promise) => {
-		console.error('Unhandled Rejection:', err)
-		if (s.config.utils.email.sendEmailAfter.error) {
-			s.util.email('' + s.error(err))
-			.catch(err => { console.error(err); });
+	process.on('unhandledRejection', (err, promise) => {
+		if (error != err) {
+			let error = 'Unhandled Rejection: ' + b.error(err);
+			console.error(error)
+			b.util.email(error, {group: 'sendEmailAfterError'}).catch(err => { console.error(err); });
 		}
+		error = err;
 	});
 };
 concoleWarnError(console);
 
+const b = require('server/src/_index.js');
+const console0 = b.util.console.configure({userErrorFunction: b.util.error});
+
 process.stdin.resume();
 process.stdin.setEncoding('utf8');
-process.stdin.on('data', async (data) => {
-	if (data.toString() == s.config.manager.shortcuts.serverRestart) {
+process.stdin.on('error', async err => { console.error(err); });
+// process.stdin.on('end', async () => { console.log('end'); process.stdin.reopen; });
+process.stdin.on('data', async data => {
+	// let toTMPFile = str => b.modul.fs.writeFileSync('.tmp', str);
+	if (data.toString() == b.config.manager.shortcuts.serverRestart) {
 		process.exit(2);
 	}
-	if (data.toString() == s.config.manager.shortcuts.serverRestartAndTerminalClear) {
-		await s.modul["run-applescript"](`
+	else if (data.toString() == b.config.manager.shortcuts.serverRestartAndTerminalClear) {
+		await b.modul["run-applescript"](`
 			tell application "System Events" to tell process "Terminal" to keystroke "k" using command down
 		`);
 		process.exit(2);
 	}
+	else { try { eval(data.toString()); } catch (err) { console.error(err); } }
 });
-process.on('SIGINT', () => process.exit(3));
 
-const s = require('server/src/_index.js');
-
-const console0 = s.util.console.configure({userErrorFunction: s.util.error});
 let debugFileRegExp;
-s.storage.edit(s => s.server.help.push(
+b.storage.edit(s => s.server.help.push(
 	{prop: 'debuging', desc: 'show all console.debug'},
-	{prop: 'debuging=/app\\.js/i', desc: 'show console.debug of specific files'}
+	{prop: 'debuging=/app\\.js/i', desc: 'show console.debug of specific files'},
+	// {prop: 'inputFifo=nohup.in', desc: 'redirect fifo to app input'},
 ));
 for (let i in process.argv) {
-	if (process.argv[i].substr(0, 9) === 'debuging=') {
-		let match = process.argv[i].match(/=\/?([^\/]+)\/?(.*)$/);
-		debugFileRegExp = new RegExp(match[1], match[2]);
+	if (process.argv[i].substr(0, 8) === 'debuging') {
+		if (process.argv[i].substr(8, 1) === '=') {
+			let match = process.argv[i].match(/=\/?([^\/]+)\/?(.*)$/);
+			debugFileRegExp = new RegExp(match[1], match[2]);
+		} else debugFileRegExp = /.*/;
 	}
 }
 debugFileRegExp && console0.configure({debugFileRegExp: debugFileRegExp});
 
-concoleWarnError(console0);
+concoleWarnError(console0, b);
 /************************/
 
 
 (async () => {
 	const console = console0;
-	const app = require(s.config.startFile);
+	const app = require(b.config.startFile);
 
-	if (!s.modul.fs.existsSync('.gitBase.JS') && s.modul.fs.existsSync('.git')) {
-		s.modul.fs.renameSync('.git', '.gitBase.JS');
-		s.modul.fs.writeFileSync('.gitBase.JS/info/exclude', s.modul.fs.readFileSync('.github/info/exclude'));
+	b.util.promisify(b.modul.fs.writeFile, '.serverPID', process.pid+'' || '');
+
+	if (!b.modul.fs.existsSync('.gitBase.JS') && b.modul.fs.existsSync('.git')) {
+		b.modul.fs.renameSync('.git', '.gitBase.JS');
+		b.modul.fs.writeFileSync('.gitBase.JS/info/exclude', b.modul.fs.readFileSync('.github/info/exclude'));
 	}
-	s.modul["shell-exec"]('alias gitb="git --git-dir=.gitBase.JS"');
+	b.modul["shell-exec"]('alias gitb="git --git-dir=.gitBase.JS"');
 
-	s.modul["shell-exec"](`
+	b.modul["shell-exec"](`
 		git --git-dir=.gitBase.JS rev-parse HEAD;
 		git --git-dir=.gitBase.JS fetch origin master;
 		git --git-dir=.gitBase.JS log master..origin/master --format="%H %B"
@@ -117,12 +128,15 @@ concoleWarnError(console0);
 		);
 	});
 
-	await s.util.killPort(s.config.server.port);
+	await b.util.killPort(b.config.server.port);
 
 	await app.callBeforeServerStarting();
 
-	s.modul.http.createServer(async (req, res) => {
-		res.statusCode = 200;
+	let serverFunction = async (
+		/** @type { import('http').IncomingMessage } */ req,
+		/** @type { import('http').ServerResponse } */ res,
+	) => {
+		res.statusCode = 0;
 
 		try {
 			let postData = await new Promise((res, rej) => {
@@ -134,38 +148,160 @@ concoleWarnError(console0);
 				} else res('');
 			});
 
-			let input = s.util.urlParser(req.url);
+			let input = b.util.urlParser(req.url);
 			let file = input.parts[input.parts.length-1];
 			let fileSufix = file.substr(file.lastIndexOf('.') + 1);
 
-			for (let suffix of s.config.server.publicHTTPsuffixes) {
+			for (let suffix of b.config.server.publicHTTPsuffixes) {
 				if (file.substring((-1 * suffix.length) -1) == '.' + suffix) {
-					var img = s.modul.fs.readFileSync(input.parts.join('/'));
-					res.setHeader('Content-Type', s.modul.mime.getType(fileSufix));
+					if (!b.modul.fs.existsSync(input.parts.join('/'))) {
+						res.statusCode = 404;
+						throw `File "${input.parts.join('/')}" is not exists.`;
+					}
+					let etag = '' +  b.modul.fs.statSync(input.parts.join('/')).mtime.getTime();
+					if (etag === req.headers['if-none-match']) {
+						res.statusCode = 304;
+						res.end();
+						return;
+					}
+					var img = b.modul.fs.readFileSync(input.parts.join('/'));
+					res.setHeader('Content-Type', b.modul.mime.getType(fileSufix));
+					res.setHeader('ETag', etag);
+					if (!res.getHeader('Cache-Control')) {
+						res.setHeader('Cache-Control', `public, max-age=${eval(b.config.client.refresh)}`);
+					}
+					res.statusCode = 200;
 					res.end(img, 'binary');
 					return;
 				}
 			}
 
-			s.storage.edit(storage => storage.server.response = res);
-			s.storage.edit(storage => storage.server.request = req);
-			s.storage.edit(storage => storage.server.postData = postData);
+			b.storage.write(storage => storage.server.response = res);
+			b.storage.write(storage => storage.server.request = req);
+			b.storage.write(storage => storage.server.getData = input.queries);
+			b.storage.write(storage => storage.server.postData = postData);
 
-			await app.callPerResponce(req, res, postData);
-		} catch(err) {
-			console.error(err);
-			res.statusCode = 500;
-			res.setHeader('Content-Type', 'text/html');
-			res.end(JSON.stringify(s.util.error(err)));
+			let response = await app.callPerResponce(req, res, input.queries, postData);
+			if (!(response instanceof Buffer) && typeof response != 'string') {
+				response = JSON.stringify(response);
+			}
+
+			if (!res.statusCode) res.statusCode = 200;
+			res.end(response);
 		}
-	}).listen(s.config.server.port, s.config.server.hostname, () => {
-		console.info('Server running at', console.colors.bold, console.colors.green, 'http://' + s.config.server.hostname + ':' + s.config.server.port);
+		catch(err) {
+			if (!res.statusCode) {
+				res.statusCode = 500;
+				err = 'Internal error (response): ' + b.error(err);
+				console.error(err);
+				b.util.email(err, {group: 'sendEmailAfterError'}).catch(err => { console.error(err); });
+			}
+			res.setHeader('Content-Type', 'text/html');
+			res.end(JSON.stringify(err));
+		}
+	};
+
+	let httpsExists = b.modul.fs.existsSync(b.config.server.https._privateKey);
+
+	// // https://gist.github.com/bnoordhuis/4740141
+	// let httpSocket = 'http.sock'; b.modul.fs.existsSync(httpSocket) && b.modul.fs.unlinkSync(httpSocket);
+	// let httpsSocket = 'https.sock'; b.modul.fs.existsSync(httpsSocket) && b.modul.fs.unlinkSync(httpsSocket);
+
+	// b.modul.net.createServer(socket => {
+	// 	socket.once('data', function(buffer) {
+	// 		let byte = buffer[0];
+	// 		let address;
+
+	// 		if (byte === 22 && httpsExists) address = httpsSocket;
+	// 		if (byte === 22) address = httpSocket;
+	// 		else if (32 < byte && byte < 127) address = httpSocket;
+	// 		else throw 'Internal error (not http / not https)';
+
+	// 		let proxy = b.modul.net.createConnection(address, function() {
+	// 			proxy.write(buffer);
+	// 			socket.pipe(proxy).pipe(socket);
+	// 		});
+	// 	});
+	// 	socket.on("error", err => console.error('Socket error:', err));
+	// }).listen(+b.config.server.port, b.config.server.hostname, () => {
+	// 	console.info('Server socket rooter is runned');
+	// });
+
+	// b.modul.http.createServer((req, res) => {
+	// 	if (httpsExists) {
+	// 		res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
+	// 		res.end();
+	// 	}
+	// 	else return serverFunction(req, res);
+	// }).listen(httpSocket, b.config.server.hostname, () => {
+	// 	if (httpsExists) console.info('Redirection http to https is actived');
+	// 	else console.info('Server running at', console.colors.bold, console.colors.green, `http://${b.config.server.hostname}:${b.config.server.port}`);
+	// });
+
+	// if (httpsExists) b.modul.https.createServer({
+	// 	key: b.modul.fs.readFileSync(b.config.server.https._privateKey),
+	// 	cert: b.modul.fs.readFileSync(b.config.server.https._certificate),
+	// 	ca: b.modul.fs.readFileSync(b.config.server.https._chain)
+	// }, serverFunction).listen(httpsSocket, b.config.server.hostname, () => {
+	// 	console.info('Server running at', console.colors.bold, console.colors.green, `https://${b.config.server.hostname}:${b.config.server.port}`);
+	// });
+
+	// https://stackoverflow.com/questions/22453782/nodejs-http-and-https-over-same-port
+	let servers = {};
+    servers.http = b.modul.http.createServer((req, res) => {
+		if (httpsExists) {
+			res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
+			res.end();
+		}
+		else return serverFunction(req, res);
+	});
+	if (httpsExists) {
+		servers.https = b.modul.https.createServer({
+			key: b.modul.fs.readFileSync(b.config.server.https._privateKey),
+			cert: b.modul.fs.readFileSync(b.config.server.https._certificate),
+			ca: b.modul.fs.readFileSync(b.config.server.https._chain)
+		}, serverFunction);
+	}
+
+	let server = b.modul.net.createServer(socket => {
+		socket.once('data', buffer => {
+			socket.pause(); // Pause the socket
+			let byte = buffer[0]; // Determine if this is an HTTP(s) request
+
+			let protocol;
+			if (byte === 22) protocol = 'https';
+			else if (32 < byte && byte < 127) protocol = 'http';
+
+			let proxy = servers[protocol];
+			if (proxy) {
+				socket.unshift(buffer); // Push the buffer back onto the front of the data stream
+				proxy.emit('connection', socket); // Emit the socket to the HTTP(s) server
+			}
+
+			process.nextTick(() => socket.resume()); 
+		});
+		socket.on("error", err => {
+			// console.error('Socket error:', err)
+		});
+	});
+
+	// let server;
+	// if (httpsExists)
+	// 	server = b.modul.get('https').createServer({
+	// 		key: b.modul.fs.readFileSync(b.config.server.https._privateKey),
+	// 		cert: b.modul.fs.readFileSync(b.config.server.https._certificate),
+	// 		ca: b.modul.fs.readFileSync(b.config.server.https._chain)
+	// 	}, serverFunction);
+	// else server = b.modul.get('http').createServer(serverFunction);
+
+	server.listen(+b.config.server.port, b.config.server.hostname, () => {
+		console.info('Server running at', console.colors.bold, console.colors.green, `http${httpsExists ? 's' : ''}://${b.config.server.hostname}:${b.config.server.port}`);
 	});
 
 	let refreshAndToBrowser = async () => {
 		if (process.argv.includes('refresh') || process.argv.includes('toBrowser')) {
-			await s.modul["run-applescript"](`
-				set urll to "${s.config.server.protocol}://${s.config.server.hostname}${s.config.server.port ? ':'+s.config.server.port : ''}"
+			await b.modul["run-applescript"](`
+				set urll to "${httpsExists ? 'https' : 'http'}://${b.config.server.hostname}${b.config.server.port ? ':' + b.config.server.port : ''}"
 				on is_running(appName)
 					tell application "System Events" to (name of processes) contains appName
 				end is_running
@@ -207,16 +343,16 @@ concoleWarnError(console0);
 			`);
 		}
 	}
-	s.storage.edit(s => s.server.help.push(
+	b.storage.edit(s => s.server.help.push(
 		{prop: 'refresh', desc: 'refresh web page (mac only)'},
 		{prop: 'toBrowser', desc: 'go to browser web page (mac only)'}
 	));
 	refreshAndToBrowser();
 
-	let ignnoreWatchFiles = s.config.manager.ignnoreWatchFiles;
-	s.storage.edit(s => s.server.help.push({prop: 'refreshAfterChange', desc: 'refresh server after its file change'}));
+	let ignnoreWatchFiles = b.config.manager.ignnoreWatchFiles;
+	b.storage.edit(s => s.server.help.push({prop: 'refreshAfterChange', desc: 'refresh server after its file change'}));
 	if (process.argv.includes('refreshAfterChange')) {
-		s.modul.fs.watch('./', {recursive: true}, (eventType, filename) => {
+		b.modul.fs.watch('./', {recursive: true}, (eventType, filename) => {
 			for (let i in ignnoreWatchFiles) {
 				if (new RegExp(ignnoreWatchFiles[i], 'i').test(filename)) return;
 			}
@@ -225,17 +361,21 @@ concoleWarnError(console0);
 		});
 	}
 
-	s.storage.edit(s => s.server.help.push(
+	b.storage.edit(s => s.server.help.push(
 		{prop: 'testing', desc: 'start tests'},
 		{prop: 'testing=/fileWithTest/', desc: 'start specific tests'}
 	));
 	for (let i in process.argv) {
-		if (process.argv[i] === 'testing') s.service.testing.testAll(); // await
+		if (process.argv[i] === 'testing') b.service.testing.testAll(); // await
 		else if (process.argv[i].substr(0, 8) === 'testing=') {
 			let match = process.argv[i].match(/=\/?([^\/]+)\/?(.*)$/);
-			s.service.testing.testAll(new RegExp(match[1], match[2]));
+			b.service.testing.testAll(new RegExp(match[1], match[2]));
 		}
 	}
 
-	console.info('Help>', s.console.colors.cyan, 'npm start', s.storage.edit((s) => s.server.help).map((help) => help.prop).join(' '));
-})().catch((err) => { console.error(err); });
+	console.info('Help>', b.console.colors.cyan, 'npm start', b.storage.edit(s => s.server.help).map((help) => help.prop).join(' '));
+})().catch((err) => {
+	let error = 'Internal error: ' + b.error(err);
+	console.error(error);
+	b.util.email(error, {group: 'sendEmailAfterError'}).catch(err => { console.error(err); });
+});

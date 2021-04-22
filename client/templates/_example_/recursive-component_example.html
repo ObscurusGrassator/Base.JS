@@ -1,27 +1,28 @@
 <span onbase="({
-	setHtml: (this.users[this.input.show] && this.users[this.input.show].name)
-		|| this.groups[this.input.show].name + ':',
+	setHtml: (js.users[js.input.show] && js.users[js.input.show].name)
+		|| js.groups[js.input.show].name + ':',
 })"></span>
-<ul onbase="({ if: !this.users[this.input.show] })">
+<ul onbase="({ if: !js.users[js.input.show] })">
 	<li onbase="({
-		forIn: this.groups[this.input.show].users, key: 'i',
+		forIn: js.groups[js.input.show].users, key: 'i',
 		template: '_example_/recursive-component_example.html',
-		input: {show: this.groups[this.input.show].users[i]}
+		input: {show: js.groups[js.input.show].users[i]}
 	})"></li>
 </ul>
 
 <script>
-	const thisElement = require('client/utils/getActualElement.ignr.base.js');
-	const s = require('client/src/_index.js');
+	const b = require('client/src/_index.js');
 
 	/** @type {{show: String}} */
 	this.input; // contain context from parent: onbase="{{template: ..., input: ...}}"
 	/** @type {any} */
 	this.parent; // contain parent this
+	/** @type {HTMLElement} */
+	this.htmlElement; // contain HTMLElement of this template
 
 	this.groups = this.parent.groups;
 	this.users = this.parent.users;
 
 	/** @type {function(): void} */
-	this.destructor; // this function is called, when is thisElement removed from template
+	this.destructor; // this function is called, when is this.htmlElement removed from template
 </script>

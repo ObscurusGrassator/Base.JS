@@ -3,8 +3,9 @@
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="refresh" content="<!-- ${ write: eval(serverContent.config.client.refresh) } -->" />
 
-		<title><!-- ${ write: content.contentExample } --></title>
+		<title><!-- ${ write: serverContent.contentExample } --></title>
 		<meta name="author" content="Author..." />
 		<meta name="description" content="Description..." />
 		<meta name="keywords" content="keywordsA, keywordsB">
@@ -18,8 +19,9 @@
 		<link rel="icon" href="http://www.example.com/images/icon.jpg">
 	</head>
 	<body>
+		<script> /** @type { include("index_example.js") } */ var js; </script>
 
-		<div ID="template_example_example" onbase="({
+		<div ID="template_example_example" onbase="w({
 			template: '_example_/_example.html',
 			input: {indexTemplateVariable: 'indexTemplateVariableValue'},
 		})"></div>

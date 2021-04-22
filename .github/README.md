@@ -1,20 +1,22 @@
-**(Node.js backend/frontend) Framework `Base.JS v1.0.0`** is a simple base for your project. It's fast, focused and fully modular. It is very simple and intuitive, so it requires almost no study. As everybody has a different needs, we do not plan to include a lot of specialized features in the framework itself. Custom features can be installed as npm packages or added as a file into one of the `libs/`, `services/` or `utils/` directories. Thanks to the included basic project structure and a script for automatically creating index files, you're free to focus on the business logic and design side of your project (`src/`). The created `index.js` files copy their folder structure for clarity. With the client components, you can break up your site into a bunch of small recyclable, separate pieces, which communicate using events by default.  
+**(Node.js backend/frontend) Framework `Base.JS v2.0.0`** is a simple base for your project. It's fast, focused and fully modular. It is very simple and intuitive, so it requires almost no study. As everybody has a different needs, we do not plan to include a lot of specialized features in the framework itself. Custom features can be installed as npm packages or added as a file into one of the `libs/`, `services/` or `utils/` directories. Thanks to the included basic project structure and a script for automatically creating index files, you're free to focus on the business logic and design side of your project (`src/`). Automatically created `index.js` files copy their folder structure for clarity. With the client components, you can break up your site into a bunch of small recyclable, separate pieces, which communicate using events by default.  
   
-The client side looks like a Node.js application, which allows for any IDE autocomplete functionality. All framework functions are fully documented and allow for an optional type definitions. Every directory contains an `_example.js` file with working sample code.  
-
-The first run generates/updates a configuration file `jsconfig.json`, which allows you to configure the framework behavior and its `services/utils` functions. The `package.json` file is also updated with required dependencies and the `npm run start` and `npm run indexing` scripts.  
+The client side looks like a Node.js application, which allows full IDE autocomplete `JSDoc` hits. All framework functions are fully documented and allow for an optional type definitions. Every directory contains an `_example.js` file with working sample code.  
   
-**ALERT:** Framework does not and will not support outdated browsers.  
-**ALERT:** Framework now does not have reactive template editor. Template rendering is started manualy.  
-
+**ALERT:** Framework does not and will not support very outdated browsers.  
+**ALERT:** Framework now does not have reactive template editor. Template rendering is started manualy by css selectors.  
+  
+The first run generates/updates a configuration file `jsconfig.json`, which allows you to configure the framework behavior and its `services/utils` functions. The `package.json` file is also updated with required dependencies and controll scripts.  
+  
 # Download, Installation and First start
+  
 ```
 git clone https://github.com/ObscurusGrassator/Base.JS.git you_project_name
 cd you_project_name
 NODE_PATH=. node manager.js
 ```
+Most IDE editors do not yet support the use of hints, type check and autocomplete of `JSDoc`, so to use the full potential of Base.JS framework, I recommend using a free IDE [Visual Studio Code](https://code.visualstudio.com/).
   
-# Start
+### Start
 ```
 npm start
 
@@ -33,18 +35,73 @@ npm start refreshAfterChange
 npm start refresh toBrowser
 ```
   
-# Update
+### Update
 ```
 npm update
 ```
 
-# Uninstallation
+### Uninstallation
 Simply delete the whole directory
   
   
-# Client loading order
+# Generation client final HTML
+  
+In order for the IDE editor to use type checking and code hint, the frontend contains redundant code that the framework must delete. Identification of this code requires that it be written in a specific format. Gradually, the framework will support more formats.
+  
+### Import format
+```
+// new import format actual is not supported
+// let / var / const
+const get = require('client/util/get.js');
+require('client/util/get.js')
+```
+### Export format
+```
+// new export format actual is not supported
+module.exports = functionName;
+```
+### (Optional) Wrapping of HTML template modificator
+```
+<... onbase="w({ ... })" ...>
+```
+### (Optional) Wrapping of JS code template
+```
+module.exports = new function () { ... }
+```
+### (Optional) Wrapping of JS code template with extends of parrent template
+eg. `client/newTemplates/index.js`:
+```
+/** @typedef { function (this: import('client/templates/index.js') & {origin: import('client/templates/index.js')} & {[key: string]: any}): void } Component */
+module.exports = new /** @type { Component } */ function () { ... }
+```
+  
+If it is not necessary to change the component JS, the JS function or full file may not exist at all.
+After modifying an existing function, you can call the original function via `origin.functionName ()` instead of `super.functionName ()`.
+  
+**WARNING:** If the initial `b.templateeditor ()` placed in `index.html`/`index.js`, must be started with a delay `setTimeout(b.templateEditor, 0)`, to load changes from the new template before running.
+  
+  
+# Rules of use
+  
+The frontend has the global variable `serverContent` available from the beginning, which contains user data from the server, including the `config` property automatically added by the framework. Types are defined manually by user in `client/types/ServerContentType.js` .
+  
+Framework automatically creates `index.JS` files by setting in `jsconfig.json > utils._createIndex`. This index files copy their folder structure for clarity. Therefore, the functions and classes they index should have the same names as the files themselves.
+  
+**WARNING:** Frontend code using functionality from `utils/`|`services/`|`src/` should be wrapped in a function or via `window.afterLoadRequires.unshift(() => { ... });` so it is run only when all dependencies are loaded (`require()`).  
+For example in the case of shared functions: (eg: `shared/services/myService.js`)
+```
+let initializationCode = () => { ... };
 
-Initialization order of functions and classes in directories:
+if (typeof require === 'undefined') window.afterLoadRequires.unshift(initializationCode);
+else initializationCode();
+
+class myService { ... }
+module.exports = Testing;
+```
+  
+**NOTICE:** Code in `client/templates/` is already automatically wrapped in `window.addEventListener('load', async () => { ... }, false);`  
+  
+### Initialization order of functions and classes in directories:
 1. shared/utils/error.base.js
 2. shared/services/testing.base.js
 3. client/libs/**/*.js
@@ -53,15 +110,28 @@ Initialization order of functions and classes in directories:
 6. shared/services/**/*.js
 7. client/services/**/*.js
 8. client/src/**/*.js
-
-**WARNING:** Client code in `utils/`|`services/`|`src/` should be wrapped in a function or via `window.afterLoadRequires.unshift(() => { ... });` so it is run only when all dependencies are loaded (`require()`).  
-For example in the case of shared functions:
+  
+  
+# Project configuration
+  
+All properties configuring the behavior of the project, utilities, services and IDE editor are listed in the `jsconfig.json` file.
+Different configuration properties for the local environment can be specified in the `jsconfig.local.json` file. This file is ignored on the production server if a production domain is set in the `jsconfig.json` file (`server.productionDomain: "example.com"`).
+All properties can be modified via environmental variables. For example `export server_port = 5000` modifies the` server.port` property.
+Access to current configuration and set default configuration to `jsconfig.json`:
 ```
-let wrapper = () => { ... };
-// @ts-ignore // wrapped, if call in browser
-if (typeof require === 'undefined') window.afterLoadRequires.unshift(wrapper); else wrapper();
+// in the component and client/src/..., simply by using: b.serverContent.config
+const config = require('shared/services/jsconfig.base.js').value;
+const config = require('shared/services/jsconfig.base.js').update('utils.ifThisNotExists', {
+   utils: {
+      ifThisNotExists: {
+         public: 'abc',
+         _private: 'xyz'
+      }
+   }
+}).value;
 ```
-**NOTICE:** Code in `client/templates/` is already automatically wrapped in `window.addEventListener('load', async () => { ... }, false);`  
+The current configuration is also automatically sent to the frontend. Before that, all prefixed properties are filtered out "`_`".
+  
 
 # Template modificator
 Framework now does not have reactive template editor. Template rendering is started manualy:
@@ -69,40 +139,67 @@ Framework now does not have reactive template editor. Template rendering is star
 const templateEditor = require('client/utils/templateEditor.base.js');
 // OR
 const templateEditor = require('client/src/_index.js').templateEditor;
+// OR
+const templateEditor = b.templateEditor;
 
-templateEditor(/* 'css selector', DomElement */);
+templateEditor(/* 'css selector', startingDomElement, options */);
 ```
-A `this` used in attributes with the prefix `on` (eg: onclick, onchange) also contains the `this` properties of the component in the JS file. Be careful not to overwrite them.  
   
-**WARNING:** `onbase` supports only synchronous JavaScript so that it is not possible to change the variables used during the rendering of DOM Elements. Asynchronous functions can redraw the affected elements additionally.  
+`templateEditor()` return Promise because of `onbase="{priority:...` elements, whose rendering triggers delayed but self rendering HTML is synchronous. `onbase` therefore supports only synchronous JavaScript so that it is not possible to inconsistent change the variables used during the rendering of DOM Elements. Asynchronous functions can redraw the affected elements additionally.  
   
-**WARNING:** DOM properties (`onbase`) evaluate current content that can be changed interactively. In the case of `forIn`, it is possible to change the first` forIn` HTMLElement in the series (the others will be prefixed with `_`). For example, if you delete a class assigned to it and regenerate it (`templateEditor ()`), that class will no longer have any `forIn` HTMLElement.  
+**WARNING:** `onbase` properties evaluate current content that can be changed interactively. In the case of `forIn`, it is possible to change the first` forIn` HTMLElement in the series (others are cloned from it with the prefix "`_`"). For example, if you delete a class assigned to it and regenerate it (`templateEditor ()`), that class will no longer have any duplicated `forIn` HTMLElement.  
   
-### Supported properties in examples
- *   <... onbase="{ **if**: this.variableInTemplateJS }" ...> If false, it is not processed by this modifier and gets the css class `_BaseJS_class_hidden`. </...>
- *   <... onbase="{ **forIn**: this.arrayOrObjectFromTemplateJS, **key**: \'key\' }" ...> ... </...>
- *   <... onbase="{ **template**: \'_example_/sub-component_example.html\', **input**: this.arrayOrObjectFromTemplateJS[key] }" ...></...>
- *   <... onbase="{ **setHtml**: content.contentExample || 123 }" ...> ... </...>
- *   <... onbase="{ **setHtml**: this.variableInTemplateJS }" ...> ... </...>
- *   <... onbase="{ **setAttr**: {src: content.contentExample} }" ...> ... </...>
- *   <... onbase="{ **setClass**: {content.className: \'test\' == content.contentExample} }" ...> ... </...>
- *   <... onbase="{ **js**: console.log(\'loaded\', this.id) }" ...> ... </...>
- *   <... onbase="{ **priority**: 2 }" ...> Until the element is loaded in order of priority, it gets the css class `_BaseJS_class_loading`. </...>
-
-### Variables available in component
- * **content**
-   - user data from server (content.config)
-   - entering to function `htmlGenerator`
-   - types are defined in client/types/contentType.js
- * **this.input**
+If you need `index.html` to contain text generated by the server itself, use the following notation: `<!-- ${ write: serverContent... } -->`. Example:
+```
+<meta name="description" content="<!-- ${ write: serverContent.myHeads.description } -->" />
+<meta name="keywords"    content="<!-- ${ write: serverContent.myHeads.keywords } -->">
+```
+  
+### Supported modifier properties in examples
+ *   <... onbase="w({ **if**: js.variableInTemplateJS })" ...> If false, this HTMLElement and his content is not processed by this modifier and gets the css class `_BaseJS_class_hidden`. </...>
+ *   <... onbase="w({ **forIn**: js.arrayOrObjectFromTemplateJS, **key**: \'i\' })" ...> ... </...>
+ *   <... onbase="w({ **template**: \'_example_/sub-component_example.html\', **input**: js.arrayOrObjectFromTemplateJS[i] })" ...></...>
+ *   <... onbase="w({ **setHtml**: b.serverContent.contentExample || 123 })" ...> ... </...>
+ *   <... onbase="w({ **setAttr**: {src: b.serverContent.contentExample} })" ...> ... </...>
+ *   <... onbase="w({ **setClass**: {className: \'test\' == b.serverContent.contentExample} })" ...> ... </...>
+ *   <... onbase="w({ **js**: () => console.log(\'loaded\', this.id) })" ...> ... </...>
+ *   <... onbase="w({ **priority**: 2 })" ...> Loads HTMLElement late in priority order. Until then, he receives a temporary css class `_BaseJS_class_loading`. </...>
+   
+`onbase` properties can by comment with prefix "`_`" (`onbase="{ _setHtml: '...' }"`).
+   
+**WARNING:** JavaScript in `onbase` element property runs multiple times during a single render, except for code wrapped in a function `() => { return ...; }`.
+   
+**WARNING:** `this` in HTML component and this.htmlElement v JS contains during rendering only a fragment of DOM tree at the moment of startup. If you need eg. `parentElement`, you must start it:
+* with the delay through `setTimeout(() => console.log(this.parentElement), 0)`
+* through `onbase="{ js: () => console.log(this.parentElement) }`
+* or through any event `onclick="console.log(this.parentElement)"`
+   
+### Variables available in HTML template component
+ * **w()**
+   - this function does not perform any function except the create IDE editor hints (type check)
+   - `onbase="w({ ... })"` === `onbase="{ ... }"`
+ * **b.util, b.service, b.src, ...**
+ * **b.serverContent, serverContent** (b.serverContent.config)
+   - user data from server
+   - the server automatically stores the `config` property in it
+   - types are defined manually by user in `client/types/ServerContentType.js`
+ * **js.\***
+   - user variables/functions from component JS file
+ * **js.input**
    - contain context from parent: onbase="{{template: ..., **input**: ...}}"
- * **this.parent**
+ * **js.parent**
    - contain parent this
- * **this.***
-   - merge of HTMLElement this and user variable from component JS file
- * **\***
-   - objects and functions from `utils.*` and `services.*` (Eg.: `onbase="({ if: Storage.get(...`)
-   - variable defined via `window.* = ...;`
+ * **js.htmlElement**
+   - component HTMLElement
+ * **this**
+   - actual HTMLElement
+
+### JS component contains by default:
+ * **b.util, b.service, b.src, ...**
+ * **b.serverContent** (b.serverContent.config)
+ * **this.input**
+ * **this.parent**
+ * **this.htmlElement**
 
 ### Order to evaluate property 'onbase'
 1. if
@@ -113,7 +210,7 @@ A `this` used in attributes with the prefix `on` (eg: onclick, onchange) also co
 # File structure
 
 All framework files have a `.base` suffix. (Example: fileName.ignr.base.js)  
-All `index.js` files are automatically generated by the framework. These files index all `.js` files in the directories defined in jsconfig.json > utils._createIndex except files suffixed with `.ignr`.  
+All `index.js` files are automatically generated by the framework. These files index all `.js` files in the directories defined in `jsconfig.json > utils._createIndex` except files suffixed with `.ignr`.  
 Other framework generated files are suffixed with `.gen`.  
   
 ```
@@ -126,20 +223,20 @@ jsconfig.local.json  // configuration for local development extends/overrides js
 client/
    services/
       storage.base.js                   // (link to) saving/sharing variables/objects
-      event.base.js                     // communication of components through events
+      events.base.js                    // communication of components through events
    utils/
       browserTestCompatibility.base.js  // logic for detect old/incompatible browsers
-      getActualElement.ignr.base.js     // get parent DOM element in/of actual template
-      templateEditor.base.js            // function for generating HTML from template
+      templateEditor.base.js            // function for generating HTML from templates
    types/
-      events/        // types definition for effective work with events
-      storage/       // types definition for effective work with
-                     //   saving/sharing variables/objects
-      contentType.js // types definition for effective work with
-                     //   content send from server for client
+      events/              // types definition for effective work with events
+      storage/             // types definition for effective work with
+                           //   saving/sharing variables/objects
+      serverContentType.js // types definition for effective work with
+                           //   content send from server to client
+      global.base.js       // global types definition for effective work in templates
    src/
-      _index.js      // fast require() - libs, contain utils and services
-   libs/             // downloaded libraries. e.g.: jquery, lodash
+      _index.js      // quick access to libs, utils, services and src
+   libs/             // downloaded libraries. eg: jquery, lodash
    templates/        // one sandbox .html tmplate must have equal file name as
                      //   possible .js a .css extended files
    css/              // global styles
@@ -152,13 +249,13 @@ server/
       htmlGenerator.base.js         // creating one client html file
       indexCreate.base.js           // creating index.js of all folder files
    types/
-      storage/              // types definition for effective work with
-                            //   saving/sharing variables/objects
+      storage/       // types definition for effective work with
+                     //   saving/sharing variables/objects
    src/
-      _index.js             // fast require() contain utils and services
+      _index.js      // quick access to libs, utils, services
 shared/
    services/
-      jsconfig.base.js      // default configuration loader and configuration reader
+      jsconfig.base.js      // work with project configuration
       storage.ignr.base.js  // implementation of saving/sharing variables/objects
       testing.base.js       // testing biznis logic
    utils/
@@ -167,7 +264,8 @@ shared/
 ### shared/utils/
 ```
    console.base.js            // configure: color, log file
-   error.base.js              // better error message
+   error.base.js              // better error message with cause history
+                              //  - strongly recommended for use as wrapper for you Errors
 
    get.base.js                // (lodash) safely getting of object property
    set.base.js                // (lodash) safely setting of object property
@@ -185,7 +283,7 @@ shared/
 
 # Try it online:
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/login/?returnTo=https://gitpod.io/%23snapshot/410bff42-fba7-426c-a0dd-2dc4cdca01d3)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#snapshot/d11a5ed9-7a1e-44a1-876e-7930078094e5)
 
 The editor requires a github login, but also allows you to quickly create an anonymous account.  
 After open empty project you can set [Download, Installation and First start](#download-installation-and-first-start) commands to terminal.  
@@ -196,10 +294,8 @@ After server starting Gitpod show popup "A service is available on port 3000". Y
 - client/templates/\_example\_/\_example.html
 - app_example.js
 - jsconfig.json
-
-[The code screenshots are here](http://obsgrass.com/public/Base.JS_screenshots)   
-
-
+  
+  
 **Contact: obscurus.grassator@gmail.com**  
 
 [MIT License - Copyright (c) 2019 Obscurus Grassator](./LICENSE)  

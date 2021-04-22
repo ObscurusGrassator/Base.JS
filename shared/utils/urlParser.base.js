@@ -1,3 +1,5 @@
+/** @typedef {URL & {parts: String[], queries: {[key: string]: String}}} UrlParserReturn */
+
 /**
  * URL object extension
  * @param {String} [url] Examples: "http://example.com", "www.example.com", "/path/page.html"
@@ -8,7 +10,8 @@ function urlParser(url, options = {}) {
 	/** @type {UrlParserReturn} */
 	let result;
 
-	if (!url) return result;
+	if (!url && typeof location !== 'undefined') url = location.href;
+	else if (!url) return result;
 
 	if ((options.isExternal && !/^https?:\/\//.test(url)) || /^www\./.test(url)) url = 'https://' + url;
 
@@ -28,13 +31,11 @@ function urlParser(url, options = {}) {
 
 	result.queries = {};
 	result.search.replace(/[\?\&]([^=]+)=?([^\&$]*)/g, (all, a, b) => {
-		result.queries[a] = b || true;
+		result.queries[a] = b || '';
 		return all;
 	});
 
 	return result;
 };
-
-/** @typedef {URL & {parts: String[], queries: {[key: string]: String}}} UrlParserReturn */
 
 module.exports = urlParser;

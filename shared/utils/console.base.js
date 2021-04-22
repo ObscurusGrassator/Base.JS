@@ -7,7 +7,7 @@ const config = require('shared/services/jsconfig.base.js').update('utils.console
 	"utils": {
 		"console": {
 			"backupFilePath": "console.log",
-			"debugFileRegExp": "/err/i",
+			"debugFileRegExp": "",
 			"enableFileRegExp": "/.*/"
 		}
 	}
@@ -82,7 +82,7 @@ const setStream = (opt) => {
 
 const getMessage = (methodKey, tmp, ...inputs) => {
 	let paths = [];
-	if ((methodKey == 'debug' && console.debugFileRegExp != /.*/) || console.enableFileRegExp != /.*/) {
+	if ((methodKey == 'debug' && console.debugFileRegExp) || console.enableFileRegExp != /.*/) {
 		(new Error()).stack.toString().replace(
 			/\n.+?(\/.+?):[0-9]+:[0-9]+/g,
 			(all, path) => {
@@ -112,7 +112,7 @@ const getMessage = (methodKey, tmp, ...inputs) => {
 	if (console.enableFileRegExp !== /.*/ && !console.enableFileRegExp.test(paths.join()))
 		return;
 
-	if (methodKey == 'debug' && !console.debugFileRegExp.test(paths.join()))
+	if (methodKey == 'debug' && (!console.debugFileRegExp || !console.debugFileRegExp.test(paths.join())))
 		return;
 
 	if (methodKey == 'error') {
@@ -170,10 +170,10 @@ console.firstConfiguretion = true;
  * @property {function(...any): Error | String}
  *           [userErrorFunction = (message) => new Error(message)]
  *           Error modification function. Default is (message) => new Error(message) .
- * @property {null | RegExp} [debugFileRegExp = /err/i]
+ * @property {RegExp} [debugFileRegExp = /.*\/i]
  *           Disable or specify console.debug for files.
  *           Default from jsconfig.json:utils-console-debugFileRegExp.
- * @property {Boolean | RegExp} [enableFileRegExp = /.*\/]
+ * @property {RegExp} [enableFileRegExp = /.*\/i]
  *           Disable/enable/specify all console logs.
  *           Default from jsconfig.json:utils-console-enableFileRegExp.
  */
@@ -186,14 +186,14 @@ console.firstConfiguretion = true;
  */
 function configure(options = {}) {
 	if (console.firstConfiguretion) {
-		let debugFile = config.debugFileRegExp.match(/^\/(.*?)\/([gimy]*)$/);
-		let enableFile = config.enableFileRegExp.match(/^\/(.*?)\/([gimy]*)$/);
+		let debugFile = config.debugFileRegExp.match(/^\/(.*?)\/(.*)$/);
+		let enableFile = config.enableFileRegExp.match(/^\/(.*?)\/(.*)$/);
 
 		console.optionsDefault = {
 			backupFilePath: config.backupFilePath,
 			userErrorFunction: (message) => (message instanceof Error ? message : new Error(message)).stack,
-			debugFileRegExp: new RegExp(debugFile[1], debugFile[2]) || /.*/i,
-			enableFileRegExp: new RegExp(enableFile[1], enableFile[2]) || /.*/,
+			debugFileRegExp: debugFile && new RegExp(debugFile[1], debugFile[2]),
+			enableFileRegExp: new RegExp(enableFile[1], enableFile[2]) || /.*/i,
 		};
 
 		console.firstConfiguretion = false;

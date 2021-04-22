@@ -1,4 +1,4 @@
-const s = require('server/src/_index.js');
+const b = require('server/src/_index.js');
 
 /** @example link: "/api/_example_/Thomas" */
 module.exports = (

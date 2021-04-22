@@ -48,21 +48,21 @@ const config = require('shared/services/jsconfig.base.js').update('utils._create
 async function indexCreate(destinationPath = null, dirPathsSource = [], type = 'utils', objectPathsSource = null) {
 	try {
 		if (!destinationPath && dirPathsSource.length === 0) {
-			let contentType = '/**'
-				+ ' * @typedef {Object} ContentType'
+			let serverContentType = '/**'
+				+ ' * @typedef {Object} ServerContentType'
 				+ ' * @property {typeof import(\'jsconfig.json\')} config'
 				+ ' * @property {string} contentExample'
-				+ ' * @property {string} pathVariables'
+				+ ' * @property {{[key: string]: string}} pathVariables'
 				+ ' */'
 				+ 'export {}';
 
 			if (!fs.existsSync('client/libs/')) fs.mkdirSync('client/libs/');
-			if (!fs.existsSync('client/types/contentType.js')) {
-				await promisify(fs.writeFile, 'client/types/contentType.js', contentType);
+			if (!fs.existsSync('client/types/serverContentType.js')) {
+				await promisify(fs.writeFile, 'client/types/serverContentType.js', serverContentType);
 			}
 
-			if (await fs.readFileSync('client/types/contentType.js', 'utf8') == contentType) {
-				console.info('In "client/types/contentType.js" file you can specify object type sended from server to client.');
+			if (await fs.readFileSync('client/types/serverContentType.js', 'utf8') == serverContentType) {
+				console.info('In "client/types/serverContentType.js" file you can specify object type sended from server to client.');
 			}
 
 			let proms = [];
@@ -77,11 +77,31 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 
 			await Promise.all(proms);
 
-			let js = `module.exports = {
-				http: require('http'),
-				path: require('path'),
+			let js = `var modules = []; module.exports = {
+				assert: require('assert'),
+				buffer: require('buffer'),
+				child_process: require('child_process'),
+				cluster: require('cluster'),
+				crypto: require('crypto'),
+				dgram: require('dgram'),
+				dns: require('dns'),
+				domain: require('domain'),
+				events: require('events'),
 				fs: require('fs'),
-				readline: require('readline'),\n\n`;
+				http: require('http'),
+				https: require('https'),
+				net: require('net'),
+				path: require('path'),
+				process: require('process'),
+				querystring: require('querystring'),
+				readline: require('readline'),
+				stream: require('stream'),
+				tls: require('tls'),
+				tty: require('tty'),
+				url: require('url'),
+				util: require('util'),
+				zlib: require('zlib'),
+			\n`;
 			for (let i in package.dependencies) {
 				js += `\t\t\t\t'${i}': require('${i}'),\n`;
 			}
