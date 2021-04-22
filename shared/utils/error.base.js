@@ -17,19 +17,31 @@ const config = require('shared/services/jsconfig.base.js').update('utils._error'
 
 /**
  * Return string of better error trace
+ * If input contains Promise, function return Promise with his result and is throwed, when error is detected.
  * 
  * @param  {...any} [err] console.log content
  * @returns {String | Error} Error for client and String for server
+ * 
+ * @example try { await asyncFunction(); } catch (err) { throw error(err); }
  */
 function error(...err) {
 	let inputError = false;
+	// let proms = [];
+	// let isAsync = false;
 
 	for (let i in err) {
 		if (err[i] instanceof Error) {
 			err[i] = err[i].stack.toString() + '\n';
 			inputError = true;
 		}
+		else if (typeof err[i] == 'object') {
+			err[i] = JSON.stringify(err[i]);
+		}
+		// if (err[i] instanceof Promise) isAsync = true;
+		// proms.push(err[i] instanceof Promise ? err[i] : Promise.resolve(err[i]));
 	}
+
+	// if (isAsync) return Promise.all(proms).then(res => res[res.length-1]).catch(res => { throw error(res); });
 
 	if (!inputError) err.push(new Error().stack.toString());
 	else err.push(new Error('Cause:').stack.toString());

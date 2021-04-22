@@ -1,16 +1,32 @@
 const fs = require('fs');
+const child_process = require('child_process');
 
 const get = require('shared/utils/get.base.js');
+const set = require('shared/utils/set.base.js');
+const merge = require('shared/utils/merge.base.js');
 const defaults = require('shared/utils/defaults.base.js');
 const jsonStringify = require('shared/utils/jsonStringify.base.js');
 const confBase = require('jsconfig.json');
 
-var local = {};
+let local = {};
 try {
-	// @ts-ignore
-	local = require('jsconfig.local.json');
+	let isProduction = +child_process.execSync(
+		`host ${confBase.server.productionDomain} | grep $(dig +short myip.opendns.com @resolver1.opendns.com) | wc -l`
+	).toString();
+
+	if (!isProduction) {
+		// @ts-ignore
+		local = require('jsconfig.local.json');
+	}
 } catch (err) {}
 
+let envs = {};
+if (typeof require !== 'undefined') { for (let i in process.env) {
+	if (!/[a-z]/.test(i)) continue;
+	set(envs, i.replace(/_/g, '.'), process.env[i], {unsetEmptyArrayParentsDeep: true, unsetEmptyObjectParentsDeep: true});
+} }
+
+/** @type {typeof confBase} */
 var conf;
 
 /**
@@ -21,8 +37,9 @@ class Config {
 	/** @type {typeof confBase} */
 	static get value() {
 		if (!conf) {
-			// @ts-ignore
-			conf = window.requires['client/types/contentType.js'].config;
+			if (typeof require === 'undefined') {
+				conf = serverContent.config;
+			} else conf = merge(defaults(local, confBase), envs);
 		}
 		return conf;
 	}
@@ -36,30 +53,29 @@ class Config {
 	 * @returns Config
 	 */
 	static update(ifThisPathNotExists, value) {
-		if (typeof require !== 'undefined' && typeof jsonStringify == 'function') {
-			if (get(conf, ifThisPathNotExists, undefined) === undefined) {
-				let jsconfigObj = {};
-				let jsconfigSpace = '\t';
-				let jsconfigString = fs.readFileSync('jsconfig.json', {encoding: 'utf8'});
-				let jsconfigSpaceMatch = jsconfigString.match(/\n([ \t]+)[^ \t]/);
-				if (jsconfigSpaceMatch && jsconfigSpaceMatch[1]) jsconfigSpace = jsconfigSpaceMatch[1];
-				try {
-					jsconfigObj = JSON.parse(jsconfigString);
-				} catch (err) { console.error(require('shared/utils/error.base.js')(err)); }
-				// obalené v errore pre prípad, že error v console ešte nie je nastavený
-				// error volá ciklicky tento jsconfig.base.js, preto sa nemôźe deklarovať na začiatku súboru
+		if (typeof require !== 'undefined' && typeof jsonStringify == 'function'
+		 && get(conf, ifThisPathNotExists, undefined) === undefined) {
+			let jsconfigObj = {};
+			let jsconfigSpace = '\t';
+			let jsconfigString = fs.readFileSync('jsconfig.json', {encoding: 'utf8'});
+			let jsconfigSpaceMatch = jsconfigString.match(/\n([ \t]+)[^ \t]/);
+			if (jsconfigSpaceMatch && jsconfigSpaceMatch[1]) jsconfigSpace = jsconfigSpaceMatch[1];
+			try {
+				jsconfigObj = JSON.parse(jsconfigString);
+			} catch (err) { console.error(require('shared/utils/error.base.js')(err)); }
+			// obalené v errore pre prípad, že error v console ešte nie je nastavený
+			// error volá ciklicky tento jsconfig.base.js, preto sa nemôźe deklarovať na začiatku súboru
 
-				conf = defaults(jsconfigObj, value);
-				let jsconfigStr = jsonStringify(conf, jsconfigSpace);
-				conf = defaults(local, conf);
-				if (jsconfigString.replace(/\n$/, '') != jsconfigStr) {
-					fs.writeFileSync('jsconfig.json', jsconfigStr);
-					fs.writeFileSync('shared/services/jsconfig', "module.exports = " + jsconfigStr);
-				}
+			let newConf = defaults(jsconfigObj, value);
+			let jsconfigStr = jsonStringify(newConf, jsconfigSpace);
+			if (jsconfigString.replace(/\n$/, '') != jsconfigStr) {
+				fs.writeFileSync('jsconfig.json', jsconfigStr);
+				// fs.writeFileSync('shared/services/jsconfig', "module.exports = " + jsconfigStr);
+				conf = merge(defaults(local, newConf), envs);
 			}
+		}
 
-			return Config;
-		} else return {value: value};
+		return Config;
 	};
 };
 

@@ -21,7 +21,7 @@ function objectClone(obj, opt) {
 		let obj = Array.isArray(orig) ? [] : {};
 
 		for (let i in orig) {
-			if (orig[i] === null) {
+			if (orig[i] === null || orig[i] === undefined) {
 				obj[i] = orig[i];
 				continue;
 			}
@@ -51,7 +51,7 @@ function objectClone(obj, opt) {
 		if (typeof obj !== 'object') return obj;
 
 		for (let i in obj) {
-			if (orig[i] !== null && obj[i]._Base_objectClone_) {
+			if (orig[i] && orig[i] !== null && obj[i]._Base_objectClone_) {
 				if (shared[obj[i]._Base_objectClone_]) {
 					if (typeof shared[obj[i]._Base_objectClone_] === 'boolean') {
 						shared[obj[i]._Base_objectClone_] = opt.createNewShareObjects ? obj[i] : orig[i];

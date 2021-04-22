@@ -1,22 +1,23 @@
 <span name="ID"></span>
-<span onbase="({ forIn: this.array, key: 'a' })">
-	<span onbase="({ setHtml: this.array[a] })"></span>
+<span onbase="({ forIn: js.array, key: 'a' })">
+	<span onbase="({ setHtml: js.array[a] })"></span>
 </span>
 
 <script>
-	const thisElement = require('client/utils/getActualElement.ignr.base.js');
-	const s = require('client/src/_index.js');
+	const b = require('client/src/_index.js');
 
 	/** @type {any} */
 	this.input; // contain context from parent: onbase="{{template: ..., input: ...}}"
 	/** @type {any} */
 	this.parent; // contain parent this
+	/** @type {HTMLElement} */
+	this.htmlElement; // contain HTMLElement of this template
 
 	let id = 0; // Each component has its own JS
 	this.array = [1, 2, 3];
 
-	thisElement.querySelector('[name="ID"]').innerHTML = ++id + ' -';
+	this.htmlElement.querySelector('[name="ID"]').innerHTML = ++id + ' -';
 
 	/** @type {function(): void} */
-	this.destructor; // this function is called, when is thisElement removed from template
+	this.destructor; // this function is called, when is this.htmlElement removed from template
 </script>

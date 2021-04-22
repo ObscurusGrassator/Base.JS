@@ -9,18 +9,18 @@ const urlParser = require('shared/utils/urlParser.base.js');
  * 
  * @param {String} [path = 'index.html']
  * @param {String} [defaultPath = 'notFounds.html']
- * @param {String} [pathPrefix = 'client/templates']
+ * @param {String} [pathPrefix = '']
  * 
  * @returns {Promise<{path: String, variables: {[key: string]: string}}>}
  * 
- * @example getRealTemplatePath('/article/12345');
- *   // return: {path: 'client/templates/article/<id>/index.html', variables: {id: '12345'}}
- *   // or: {path: 'client/templates/article/<id>.html', variables: {id: '12345'}}
- *   // or: {path: 'client/templates/article/12345/index.html', variables: {}}
- *   // or: {path: 'client/templates/article/12345.html', variables: {}}
+ * @example getRealTemplatePath('article/12345?prem=xy');
+ *   // return: {path: 'article/<id>/index.html', variables: {id: '12345'}}
+ *   // or: {path: 'article/<id>.html', variables: {id: '12345'}}
+ *   // or: {path: 'article/12345/index.html', variables: {}}
+ *   // or: {path: 'article/12345.html', variables: {}}
  */
-async function getRealTemplatePath(path = '/index.html', defaultPath = 'notFounds.html', pathPrefix = 'client/templates') {
-	path = pathLib.join(pathPrefix, path.replace(/\/$/, ''));
+async function getRealTemplatePath(path = '/index.html', defaultPath = 'notFounds.html', pathPrefix = '') {
+	path = pathLib.join(pathPrefix, path.replace(/\/$|\?.*$/, ''));
 	let lastPathPart = (path) => {
 		if (fs.existsSync(pathLib.join(path, 'index.html'))) return {path: pathLib.join(path, 'index.html'), variables: {}};
 		else if (fs.existsSync(pathLib.join(path, 'index.js'))) return {path: pathLib.join(path, 'index.js'), variables: {}};

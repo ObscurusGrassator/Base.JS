@@ -48,12 +48,12 @@ const proxy = {_BaseJS_root: true};
  * @type {DeepAnyJoinObjRead<import('client/types/events').Type, EventType<any>>}
  * 
  * @example
- *   let listen = event.userPath.eventName.listen(
+ *   let listen = events.userPath.eventName.listen(
  *      (event, properties) => { ... properties.example ... }
  *   );
- *   event.userPath.eventName.send({example: 123}));
+ *   events.userPath.eventName.send({example: 123}));
  *   listen.removeListen();
  */
-const event = new Proxy(proxy, handler);
+const events = new Proxy(proxy, handler);
 
-module.exports = event;
+module.exports = events;

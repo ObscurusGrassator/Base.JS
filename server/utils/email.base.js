@@ -1,20 +1,18 @@
 const nodemailer = require('nodemailer');
+
+const arraysDiff = require('shared/utils/arraysDiff.base.js');
 const config = require('shared/services/jsconfig.base.js').update('utils.email', {
 	"utils": {
-		"email": {
+		"email": [{
 			"service": "gmail",
 			"_auth": {
 				"user": "example@gmail.com",
 				"pass": ""
 			},
 			"to": "example@gmail.com",
-			"subject": "info",
-
-			"sendEmailAfter": {
-				"error": true,
-				"fatalError": true
-			}
-		}
+			"subject": "Info",
+			"group": ["sendEmailAfterError", "sendEmailAfterFatalError"]
+		}]
 	}
 }).value;
 
@@ -31,31 +29,56 @@ const other = {
  * Send email
  * 
  * @param {String} message 
- * @param {{[key: string]: any}} [configuration = {}] Default configuration is in jsconfig.json/util.email
+ * @param {{group?: String | String[], service?: 'gmail', _auth?: {user: String, pass: String} & {[key: string]: any}}
+ *   & {[key: string]: any}
+ *   & Partial<nodemailer.Transport & nodemailer.SendMailOptions>}
+ *     [configuration = {}] Default configuration is in jsconfig.json/util.email[0]
  * 
- * @returns {Promise<Object>}
+ * @returns {Promise<Object[] | false>}
  */
 async function email(message, configuration = {}) {
-	if (config.utils.email && config.utils.email._auth && config.utils.email._auth.pass === '') {
-		console.debug('jsconfig.json - utils.email._auth.pass is empty.');
-		return false;
+	if (typeof configuration.to == 'string') configuration.to = [configuration.to];
+	if (Array.isArray(configuration.to)) {
+		// @ts-ignore
+		configuration.to = configuration.to.filter(item => item);
+		// @ts-ignore
+		if (configuration.to.length === 0) return Promise.resolve(false);
 	}
 
-	configuration = {
-		...(config.utils.email || {}),
-		...(config.utils.email && config.utils.email._auth && {auth: config.utils.email._auth}),
-		...configuration
-	};
+	let proms = [];
 
-	// @ts-ignore
-	return nodemailer.createTransport({
-		...configuration,
-		...other[configuration.service || 'gmail'],
-		from: ((configuration._auth && configuration._auth.user) || 'anonim'),
-	}).sendMail({
-		...configuration,
-		text: message
-	})
+	if (typeof configuration.group == 'string') configuration.group = [configuration.group];
+
+	for (let i in config.utils.email || []) {
+		if ((!configuration.group && +i > 0) || (configuration.group
+				&& !arraysDiff(config.utils.email[i].group || [], configuration.group).intersection.length))
+			continue;
+
+		/** @type { {group?: String | String[], service?: String,
+		 * 		auth?: {user: String, pass: String},
+		 * 		_auth?: {user: String, pass: String},
+		 *	} & Partial<nodemailer.Transport & nodemailer.SendMailOptions> } */
+		let emailConf = {
+			...(config.utils.email[i] || {}),
+			...configuration,
+		};
+		emailConf = {
+			...emailConf,
+			...other[emailConf.service || 'gmail'],
+			auth: emailConf._auth,
+			from: emailConf._auth && emailConf._auth.user,
+		};
+		if (message.indexOf('</') > -1) emailConf.html = message; else emailConf.text = message;
+
+		if (emailConf._auth && emailConf._auth.pass === '') {
+			let problem = `jsconfig.json - utils.email[${i}]._auth.pass (group: ${configuration.group}) is empty.`;
+			console.debug(problem, emailConf);
+			proms.push({problem});
+		} else {
+			proms.push(nodemailer.createTransport(emailConf).sendMail(emailConf).catch(err => Promise.reject({err, emailConf}) ));
+		}
+	}
+	return Promise.all(proms);
 };
 
 module.exports = email

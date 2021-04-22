@@ -1,9 +1,10 @@
-/** @type {import('client/types/contentType.js').ContentType} */
-// @ts-ignore
-let content = window.content;
+/** @type {import('client/types/serverContentType.js').ServerContentType} */
+let serverContent = window.serverContent;
 
 module.exports = {
 	error: require('shared/utils/error.base.js'),
+	get: require('shared/utils/get.base.js'),
+	set: require('shared/utils/set.base.js'),
 	console: require('shared/utils/console.base.js'),
 	storage: require('client/services/storage.base.js'),
 	config: require('shared/services/jsconfig.base.js').value,
@@ -13,6 +14,6 @@ module.exports = {
 	service: require('client/services/'),
 	src: require('client/src/'),
 
-	content,
-	event: require('client/services/event.base.js'),
+	serverContent,
+	events: require('client/services/events.base.js'),
 };

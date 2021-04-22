@@ -1,5 +1,4 @@
 const util = require('client/utils');
-const service = require('client/services');
 
 /**
  * All service class properties and methods are static

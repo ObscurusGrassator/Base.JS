@@ -30,11 +30,18 @@ const handler = {
 		let prop = path[path.length-1];
 		let result;
 
-// console.log(555, obj, path, orig);
 		if (prop == 'get') {
 			result = util.get.apply(orig, [orig].concat(argumentsList));
 		} else if (prop == 'set') {
 			result = util.set.apply(orig, [orig].concat(argumentsList));
+		} else if (prop == 'update') {
+			let objPart = util.get(orig, argumentsList[0]);
+			if (typeof objPart != 'object') {
+				result = util.set(orig, argumentsList[0], util.objectClone(argumentsList[1]));
+			} else {
+				util.merge(objPart, argumentsList[1], {modifyInputObject: true});
+				result = orig;
+			}
 		} else {
 			result = orig[prop].apply(orig, argumentsList);
 		}
@@ -87,6 +94,9 @@ const handler = {
 		}
 		else if (value && !value[prop] && prop == 'set') {
 			return new Proxy((path, value) => util.set(value, path, value), handler); // tu vstupuje do proxy funkcia, nie objekt
+		}
+		else if (value && !value[prop] && prop == 'update') {
+			return new Proxy((path, reqObject) => util.update(value, path, reqObject), handler); // tu vstupuje do proxy funkcia, nie objekt
 		}
 		else if (value && typeof value[prop] == 'function') {
 			return new Proxy(value[prop], handler); // tu vstupuje do proxy funkcia, nie objekt
@@ -151,9 +161,13 @@ function setCookies(obj) {
 	}
 
 	let cookie = `storage=${JSON.stringify(obj)}; max-age=${expires}; path=${path};`; // encodeURIComponent()
+	// @ts-ignore
 	if (config && config.cookies && config.cookies.domain)   cookie += ` domain=${config.cookies.domain};`;
+	// @ts-ignore
 	if (config && config.cookies && config.cookies.samesite) cookie += ` samesite=${config.cookies.samesite};`;
+	// @ts-ignore
 	if (config && config.cookies && config.cookies.secure)   cookie += ` secure;`;
+	// @ts-ignore
 	if (config && config.cookies && config.cookies.httpOnly) cookie += ` httpOnly;`;
 
 	if (typeof require === 'undefined') document.cookie = cookie;
@@ -179,7 +193,7 @@ class Storage {
 	 * 
 	 * WARNING: Special storage properties (cookie, session, local) cannot be selected !!
 	 * 
-	 * @param {String | Array<String, Number>} [path = '']
+	 * @param {String | Array<String | Number>} [path = '']
 	 * @param {any} [defautValue]
 	 */
 	static get(path, defautValue) {
@@ -191,11 +205,31 @@ class Storage {
 	 * 
 	 * WARNING: Special storage properties (cookie, session, local) cannot be edited !!
 	 * 
-	 * @param {String | Array<String, Number>} path
-	 * @param {any} value
+	 * @param {String | Array<String | Number>} path
+	 * @param {any} [value] If is not defined, value in path is removed
+	 * @param {{unsetEmptyArrayParentsDeep?: Boolean,
+	 * 			unsetEmptyObjectParentsDeep?: Boolean,
+	 * 			unsetParentsDeepIf?: (parentObject: any) => Boolean,
+	 * }} [options = {}]
 	 */
-	static set(path, value) {
+	static set(path, value, options = {}) {
 		return util.set(data, path, value);
+	}
+	/**
+	 * Merging storaged objec object with second object properties, if they not exists in first object.
+	 * Storaged object is updated with second object.
+	 * Result is saved and returned;
+	 * 
+	 * @param {String | Array<String | Number>} path
+	 * @param {{[key: string]: any}} reqObject Object with required properties
+	 * 
+	 * @example Storage.update('path', {a: {b: 12}}); // {a: {b: 13, c: 1}} => {a: {b: 12, c: 1}}
+	 */
+	static update(path, reqObject) {
+		let objPart = util.get(data, path);
+		if (typeof objPart != 'object') return util.set(data, path, util.objectClone(reqObject));
+		util.merge(objPart, reqObject, {modifyInputObject: true});
+		return data;
 	}
 	/**
 	 * Type-safe property editing of user object or array.
@@ -222,7 +256,7 @@ class StorageClient extends Storage {
 	 * 
 	 * Special storage properties: storage.cookie, storage.session, storage.local
 	 * 
-	 * @param {function(DeepAnyJoinObjRead<import('client/types/storage').Type, {set: typeof Storage.set}>): any} selectFunction
+	 * @param {function(DeepAnyJoinObjRead<import('client/types/storage').Type, {get: typeof Storage.get, set: typeof Storage.set, update: typeof Storage.update}>): any} selectFunction
 	 * 
 	 * @example Storage.edit(storage => storage.a.b.c);
 	 * @example Storage.edit(storage => storage.a.b.d = 'test');
@@ -239,7 +273,7 @@ class StorageClient extends Storage {
 	 * 
 	 * Special storage properties: storage.cookie, storage.session, storage.local
 	 * 
-	 * @param {function(DeepAnyJoinObjWrite<import('client/types/storage').Type, {set: typeof Storage.set}>): any} selectFunction
+	 * @param {function(DeepAnyJoinObjWrite<import('client/types/storage').Type, {get: typeof Storage.get, set: typeof Storage.set, update: typeof Storage.update}>): any} selectFunction
 	 * 
 	 * @example Storage.edit(storage => storage.a.b.c);
 	 * @example Storage.edit(storage => storage.a.b.d = 'test');
@@ -257,7 +291,7 @@ class StorageServer extends Storage {
 	 * 
 	 * Special storage properties: storage.cookie
 	 * 
-	 * @param {function(DeepAnyJoinObjRead<import('server/types/storage').Type, {get: typeof Storage.get}>): any} selectFunction
+	 * @param {function(DeepAnyJoinObjRead<import('server/types/storage').Type, {get: typeof Storage.get, set: typeof Storage.set, update: typeof Storage.update}>): any} selectFunction
 	 * 
 	 * @example Storage.edit(storage => storage.a.b.c);
 	 * @example Storage.edit(storage => storage.a.b.d = 'test');
@@ -273,7 +307,7 @@ class StorageServer extends Storage {
 	 * 
 	 * Special storage properties: storage.cookie
 	 * 
-	 * @param {function(DeepAnyJoinObjWrite<import('server/types/storage').Type, {get: typeof Storage.get}>): any} selectFunction
+	 * @param {function(DeepAnyJoinObjWrite<import('server/types/storage').Type, {get: typeof Storage.get, set: typeof Storage.set, update: typeof Storage.update}>): any} selectFunction
 	 * 
 	 * @example Storage.edit(storage => storage.a.b.c);
 	 * @example Storage.edit(storage => storage.a.b.d = 'test');

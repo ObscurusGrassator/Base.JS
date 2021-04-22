@@ -20,7 +20,7 @@ function defaults(object, defObject) {
 	let loop = (object, defObject) => {
 		if (object && typeof object === 'object' && defObject) {
 			for (let i in defObject) {
-				if (!object[i] && object[i] !== 0 && object[i] !== false) {
+				if (!object[i] && object[i] !== '' && object[i] !== 0 && object[i] !== false) {
 					object[i] = defObject[i];
 				} else {
 					loop(object[i], defObject[i]);

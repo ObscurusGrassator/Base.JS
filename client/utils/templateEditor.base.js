@@ -1,11 +1,13 @@
-const arraysDiff = require('shared/utils/arraysDiff.base.js');
 const promisify = require('shared/utils/promisify.base.js');
+const error = require('shared/utils/error.base.js');
 
 let commands = [/^if$/i, /^setHtml$/i, /^setAttr$/i, /^setClass$/i, /^js$/i, /^priority$/i,
 	/^template$/i, /^input$/i, /^_BaseJS_ComponentId_$/i,
 	/^forIn$/i, /^_forIn$/i, /^key$/i, /^_BaseJS_ForEachKey_\S+$/i];
-let _BaseJS_EditorGroupClass_ = 0;
 let _BaseJS_ComponentId_counter = 0;
+let renderTimeSum = 0;
+
+let templates = serverContent.config.client.templates[serverContent.config.client.template];
 
 /**
  * Template elements can contains JS modifications.
@@ -19,7 +21,7 @@ let _BaseJS_ComponentId_counter = 0;
  * 
  * @param {String} [cssSelector = ''] Specific element selector for modification
  * @param {HTMLElement} [startElement = ducument.body] Specific element for modification
- * @param {{ ignoreIfInElements?: HTMLElement[], ignoreIfInSelectors?: String[] }} [options = {}] Options
+ * @param {{ ignoreRootIf?: Boolean }} [options = {}] Options
  * @returns Promise
  *
  * @example of transformed html "onbase" atribute:
@@ -53,26 +55,40 @@ let _BaseJS_ComponentId_counter = 0;
  *   2. forIn, key
  *   3. others
  */
-function templateEditor(cssSelector = '', startElement = document.body.parentElement, options = {}) {
-	return templateEditorSystem(cssSelector, startElement, options);
+async function templateEditor(cssSelector = '', startElement = document.body.parentElement, options = {}) {
+	let startTime = new Date().getTime();
+	return Promise.all(Array.from(/** @type { NodeListOf<HTMLElement> } */ (cssSelector ? startElement.querySelectorAll(cssSelector) : [startElement]))
+		.map(startElement => templateEditorSystem(startElement, options, [], true)))
+	.then(data => {
+		let renderTime = new Date().getTime() - startTime;
+		renderTimeSum += renderTime;
+		console.debug(`renderTimeSum: ${renderTimeSum} = ... + ${renderTime} (${startElement.id || ''} ${cssSelector})`);
+		return data;
+	});
 }
 
 /**
- * @param {String} [selector = ''] Specific element selector for modification
- * @param {HTMLElement} [startElement = ducument.body] Specific element for modification
- * @param {{ ignoreIfInElements?: HTMLElement[],
- *           ignoreIfInSelectors?: String[],
- *           origStartElement?: HTMLElement,
- *           origSelector?: String
- * }} [options = {}] Options
- * @param {Object} [input = {}] Input object from template
- * @param {Object} [parent = {}] Parent this
+ * @param {HTMLElement} [startElement0 = document.body.parentElement] Specific element for modification
+ * @param {{ ignoreRootIf?: Boolean, ignoreRootPriority?: Boolean }} [options = {}] Options
  * @param { { priority: Number, element: HTMLElement }[] } [priorityElementStack = []] Elements for rendering with priority
+ * @param {Boolean} [isStartRenderElement]
  * @returns Promise
  */
-function templateEditorSystem(selector = '', startElement = document.body.parentElement, options = {}, input = {}, parent = {base__root: true}, priorityElementStack = []) {
-let ttt = (new Date()).getTime();
-	// console.log('CCC', selector, startElement, input, parent);
+async function templateEditorSystem(
+	startElement0 = document.body.parentElement,
+	options = {},
+	priorityElementStack = [],
+	isStartRenderElement = false,
+) {
+	/** @type { HTMLElement } */ let startElement = startElement0;
+	if (startElement0 !== document.body.parentElement) { // DOM optimalization
+		// @ts-ignore
+		startElement = document.createDocumentFragment();
+		startElement.appendChild(/** @type { HTMLElement } */ (startElement0.cloneNode(true)));
+	}
+
+	let ttt = (new Date()).getTime();
+	// console.log('CCC', startElement);
 	// @ts-ignore
 	let templateHTML = window.templateHTML || {};
 	// @ts-ignore
@@ -80,104 +96,95 @@ let ttt = (new Date()).getTime();
 	// @ts-ignore
 	let templateJsThis = window.templateJsThis || {};
 
-	options.origStartElement = options.origStartElement || startElement;
-	options.origSelector = options.origSelector || selector;
-
-	let _BaseJS_ComponentId_ = '_BaseJS_ComponentId_'; // default ID in index.html
-	let allOnbase = querySelectorAll2(startElement, selector, '[onbase]');
+	let allOnbase = startElement.querySelectorAll('[onbase]');
 	if (!allOnbase.length) return;
-	if (!document.body.parentElement.contains(startElement)) return; // spustenie templateEditora so starým už prerenderovaným elementom
+	if (isStartRenderElement && !document.body.parentElement.contains(startElement0)) return; // spustenie templateEditora so starým už prerenderovaným elementom
 
 	let oldIDs = new Set();
 	allOnbase.forEach(e => oldIDs.add(e.getAttribute('_BaseJS_ComponentId_')));
 
-	querySelectorAll2(startElement, selector, '[onbase*="template"]').forEach(e => e.innerHTML = '');
-	querySelectorAll2(startElement, selector, '[onbase*="_template"]').forEach(e => e.innerHTML = '');
-	querySelectorAll2(startElement, selector, '[onbase]').forEach(e =>
-		e.setAttribute('onbase', e.getAttribute('onbase').replace(/^(\{\{)?\s*\(?|\)?\s*(\}\})?$/g, ''))
-	);
-	querySelectorAll2(startElement, selector, '[onbase*="forIn"]').forEach(e => e.classList.add('_BaseJS_class_forIn'));
-	querySelectorAll2(startElement, selector, '._BaseJS_class__forIn').forEach(e => e.parentNode.removeChild(e));
-	querySelectorAll2(startElement, selector, '._BaseJS_class_hidden').forEach(e => e.classList.remove('_BaseJS_class_hidden'));
-	querySelectorAll2(startElement, selector, '._BaseJS_class_loading').forEach(e => e.classList.remove('_BaseJS_class_loading'));
+	// startElement.querySelectorAll('[onbase]').forEach(e =>
+	// 	e.setAttribute('onbase', e.getAttribute('onbase').replace(/^(\{\{)?\s*\(?|\)?\s*(\}\})?$/g, ''))
+	// );
+	startElement.querySelectorAll('[onbase]').forEach(e => e.setAttribute('onbase',
+		e.getAttribute('onbase').replace(/^w?\(?\{?\{/g, 'return ({').replace(/\}\}?\)?$/g, '})')
+	));
+	startElement.querySelectorAll('._BaseJS_class__forIn').forEach(e => e.parentNode.removeChild(e));
+	startElement.querySelectorAll('._BaseJS_class_template').forEach(e => e.innerHTML = '');
+	startElement.querySelectorAll('._BaseJS_class_hidden').forEach(e => e.classList.remove('_BaseJS_class_hidden'));
+	startElement.querySelectorAll('._BaseJS_class_loading').forEach(e => e.classList.remove('_BaseJS_class_loading'));
 
-	allOnbase = querySelectorAll2(startElement, selector, '[onbase]');
-	let firstInsetOnbase = startElement.querySelector(`${selector}[onbase]`);
-	let templateName = firstInsetOnbase && firstInsetOnbase.getAttribute('_basejs_templatename_');
-	if (templateName && !firstInsetOnbase.hasAttribute('_BaseJS_ComponentId_')) {
-		_BaseJS_ComponentId_ = '_BaseJS_ComponentId_' + (++_BaseJS_ComponentId_counter);
-		firstInsetOnbase.id = _BaseJS_ComponentId_;
-		templateJS[templateName].call(new function() {
-			this.input = input;
-			this.parent = parent;
-		}, _BaseJS_ComponentId_);
+	let firstOnbase = startElement.querySelector('[onbase]');
 
-		allOnbase.forEach(e => e.setAttribute('_BaseJS_ComponentId_', _BaseJS_ComponentId_) );
-	} else {
-		// POZOR: _BaseJS_ComponentId_ sa odvýja od selectora, ktorý môže vchádzať do rôznych templatov
-		_BaseJS_ComponentId_ = allOnbase[0].getAttribute('_BaseJS_ComponentId_') || _BaseJS_ComponentId_;
-		if (_BaseJS_ComponentId_ != '_BaseJS_ComponentId_') {
-			templateName = document.getElementById(_BaseJS_ComponentId_).getAttribute('_basejs_templatename_');
+	let _BaseJS_ComponentId_ = firstOnbase.getAttribute('_BaseJS_ComponentId_') || '_BaseJS_ComponentId_';
+	let templateName = firstOnbase.getAttribute('_BaseJS_TemplateName_') || 'index';
+
+	// Wrapping event atributes ("on...") to onbase this object
+	for (let i in document) {
+		if (i.substr(0, 2) == 'on') {
+			startElement.querySelectorAll(`[${i}]:not([${i}^="return window.baseEval"])`).forEach((/** @type { HTMLElement } */ element) => {
+				if (element.classList.contains('_BaseJS_class_hidden') || element.classList.contains('_BaseJS_class_loading')) return;
+				element.setAttribute('_BaseJS_ComponentId_', _BaseJS_ComponentId_);
+				element.setAttribute('_BaseJS_TemplateName_', templateName);
+				element.setAttribute(i, `return window.baseEval(() => {${element.getAttribute(i)}}, this === window ? document.body : this);`);
+			});
 		}
-	}
-
-	let ignoreIfInElements = (options.ignoreIfInElements || []).slice(0);
-	for (let i in options.ignoreIfInSelectors || []) {
-		let slct2 = options.ignoreIfInSelectors[i];
-		if (options.origSelector) {
-			if (slct2.substr(0, 6) == ':scope') slct2 = slct2.substr(6);
-			else slct2 = ' ' + slct2;
-		}
-		if (options.origSelector + slct2 == ':scope') ignoreIfInElements.push(options.origStartElement);
-		else ignoreIfInElements = ignoreIfInElements.concat(Array.from(options.origStartElement.querySelectorAll(options.origSelector + slct2)));
 	}
 
 	/** @type { HTMLElement[] } */ let bases = [];
-	let count = 0;
-	let rootEditorGroupClass = '';
-	while(count <= 10) {
+	for (let count = 0; count < 10; count++) {
 		let newFindedBase = false;
-		querySelectorAll2(startElement, selector, '[onbase]').forEach((/** @type { HTMLElement } */ element) => {
+
+		startElement.querySelectorAll('[onbase]').forEach((/** @type { HTMLElement } */ element) => {
 			if (element.classList.contains('_BaseJS_class_hidden') || element.classList.contains('_BaseJS_class_loading')) return;
 
 			let evalValue = element.getAttribute('onbase');
 
+			let ifReturn = false;
 			// Deep hidden all negativ onbase IF
-			if (/[\{\s,'"]if['"]?\s*:/i.test(evalValue) && !ignoreIfInElements.find(e => e === element)) {
+			if (/[\{\s,'"]if['"]?\s*:/i.test(evalValue)
+			 && (!isStartRenderElement || startElement !== element.parentNode || !options.ignoreRootIf)) {
 				let evalValueIf = evalValue;
 				for (let i in commands) {
 					if (/^if$/i.source !== commands[i].source) {
-						evalValueIf = evalValueIf.replace(new RegExp('([\{\t ]' + commands[i].source.substring(1, -1) + ':)'), '$1 true ||');
+						evalValueIf = evalValueIf.replace(new RegExp('([\\{\\t ]' + commands[i].source.substring(1, -1) + ':(?! *\\t*\\( *\\t*\\) *\\t*=\\>))'), '$1 true ||');
 					}
 				}
 
-				if (!baseEval(evalValueIf, element).if) {
+				let iff = baseEval(evalValueIf, element).if;
+				iff = typeof iff == 'function' ? iff() : iff;
+				if (!iff) {
 					element.classList.add('_BaseJS_class_hidden');
 					element.querySelectorAll('[onbase]').forEach(e => e.classList.add('_BaseJS_class_hidden')); // skip deep onbase
-					return;
+					ifReturn = true;
 				}
 			}
 
 			// if priority exists, push it to stack
-			if (/[\{\s,'"]priority['"]?\s*:/i.test(evalValue) && element !== startElement) {
+			if (/[\{\s,'"]priority['"]?\s*:/i.test(evalValue)
+			 && (!isStartRenderElement || startElement !== element.parentNode || !options.ignoreRootPriority)) {
 				let evalValuePriority = evalValue;
 				for (let i in commands) {
 					if (/^priority$/i.source !== commands[i].source) {
-						evalValuePriority = evalValuePriority.replace(new RegExp('([\{\t ]' + commands[i].source.substring(1, -1) + ':)'), '$1 true ||');
+						evalValuePriority = evalValuePriority.replace(new RegExp('([\\{\\t ]' + commands[i].source.substring(1, -1) + ':(?! *\\t*\\( *\\t*\\) *\\t*=\\>))'), '$1 true ||');
 					}
 				}
 
-				let priority = +baseEval(evalValuePriority, element).priority;
+				let priority = baseEval(evalValuePriority, element).priority;
+				priority = typeof priority == 'function' ? +priority() : +priority;
 				if (priority > 0) {
-					priorityElementStack.push({priority, element});
 					element.classList.add('_BaseJS_class_loading');
 					element.querySelectorAll('[onbase]').forEach(e => e.classList.add('_BaseJS_class_hidden')); // skip deep onbase
+
+					!ifReturn && priorityElementStack.push({priority, element});
+
 					return;
 				}
 			}
 
-			// onbase forIn:
-			if (!element.classList.contains('_BaseJS_class_forIn')) return;
+			if (ifReturn) return; // delay return to be able to set class "_BaseJS_class_loading"
+
+			if (!element.matches('[onbase*="forIn"]') || element.classList.contains('_BaseJS_class__forIn')) return;
 
 			if (bases.includes(element)) return;
 			else {
@@ -187,34 +194,22 @@ let ttt = (new Date()).getTime();
 
 			for (let i in commands) {
 				if ([/^forIn$/i, /^_forIn$/i, /^key$/i, /^_BaseJS_ForEachKey_\S+$/i, /^_BaseJS_ComponentId_$/i].map(a => a.source).includes(commands[i].source)) continue;
-				evalValue = evalValue.replace(new RegExp('([\{\t ]' + commands[i].source.substring(1, -1) + ':)'), '$1 true ? true : true ||');
+				evalValue = evalValue
+				.replace(new RegExp('([\\{\\s]_?' + commands[i].source.substring(1, -1) + ':)'), '$1 true ? "" : ')
+				// .replace(new RegExp('([\\{\\s]_?' + commands[i].source.substring(1, -1) + ':(?!\\s*\\(\\s*\\)\\s*=\\>))'), '$1 true || ') 	// nefunguje pre inline IF
+				// .replace(new RegExp('([\\{\\s]_?' + commands[i].source.substring(1, -1) + ':)'), '$1 true || ')
 			}
 			try { var obj = baseEval(evalValue, element); } catch (err) { return; }
 
 			for (let i in obj) {
 				if (commands.find(c => c.test(i))) {
 					if (i == 'forIn') {
-						let classId;
-						element.classList.forEach((v, k) => {
-							if (v.substr(0, 25) == '_BaseJS_EditorGroupClass_') classId = v;
-						});
-						if (!classId) {
-							classId = classId || ('_BaseJS_EditorGroupClass_' + (_BaseJS_EditorGroupClass_++));
-							element.classList.add(classId);
-						}
-						if (startElement === element) rootEditorGroupClass = classId;
-
-						// remove _BaseJS_EditorGroupClass_ in deep child forIn
-						startElement.querySelectorAll('.' + classId + ' ._BaseJS_class_forIn').forEach(e => {
-							e.classList.forEach((v, k) => {
-								if (v.substr(0, 25) == '_BaseJS_EditorGroupClass_') e.classList.remove(v);
-							});
-						});
-
 						let skipFirst = true;
 						let lastElement = element;
-						if (typeof obj.forIn === 'object') {
-							for (let e in obj.forIn) {
+						let forIn = typeof obj.forIn == 'function' ? obj.forIn() : obj.forIn;
+
+						if (typeof forIn === 'object') {
+							for (let e in forIn) {
 								let key = `_BaseJS_ForEachKey_${obj.key || 'key'}`;
 
 								if (skipFirst) {
@@ -229,11 +224,8 @@ let ttt = (new Date()).getTime();
 									continue;
 								}
 
-								/** @type {HTMLElement} */
-								// @ts-ignore
-								let clone = element.cloneNode(true);
+								let clone = /** @type {HTMLElement} */ (element.cloneNode(true));
 								clone.id = "";
-								clone.classList.remove('_BaseJS_class_forIn')
 								clone.classList.add('_BaseJS_class__forIn')
 								clone.setAttribute('onbase', clone.getAttribute('onbase').replace(/([\{, '"])(forIn['"]?:)/, "$1_$2"));
 								clone.setAttribute(key, e);
@@ -253,63 +245,86 @@ let ttt = (new Date()).getTime();
 		});
 
 		if (!newFindedBase) break;
-		count++;
 	}
 
-	if (rootEditorGroupClass) {
-		startElement = startElement.parentElement;
-		selector = `.${rootEditorGroupClass}${selector ? ' ' : ''}${selector}`;
-	}
-
-	querySelectorAll2(startElement, selector, '[onbase]')
-	.forEach((/** @type { HTMLElement } */ element) => {
+	startElement.querySelectorAll('[onbase]').forEach(async (/** @type { HTMLElement } */ element) => {
 		let _BaseJS_ComponentId_ = element.getAttribute('_BaseJS_ComponentId_') || '_BaseJS_ComponentId_';
 
 		if (element.classList.contains('_BaseJS_class_hidden') || element.classList.contains('_BaseJS_class_loading')) return;
 
 		try { var obj = baseEval(element.getAttribute('onbase'), element); } catch (err) { return; }
 
+		let input = typeof obj['input'] == 'function' ? obj['input']() : obj['input'];
 		for (let i in obj) {
-			if (commands.find(c => c.test(i))) {
-				if (obj[i] || obj[i] === 0 || obj[i] === false) {
-					if (Array.isArray(obj[i])) { obj[i] = obj[i].filter(o => o); }
+			if (commands.find(c => c.test(i)) && i !== 'input') {
+				if (i == 'js') {
+					setTimeout(() => typeof obj[i] == 'function' ? obj[i]() : obj[i], 0);
+					continue;
+				}
+				let value = typeof obj[i] == 'function' ? obj[i]() : obj[i];
+				if (value != null && value != undefined) {
+					if (Array.isArray(value)) value = value.filter(o => typeof o == 'function' ? o() : o);
 
 					if (i == 'template' && templateHTML) {
-						let templateName = templateHTML[obj[i].replace('.html', '')];
-						if (!templateName) console.error(`Template "${obj[i]}" is not exists`);
-						element.innerHTML = decodeURI(window.atob(templateName)); // async operation
-						templateEditorSystem(':scope *', element, options, obj['input'] || {}, templateJsThis[_BaseJS_ComponentId_], priorityElementStack);
+						let templateName = value.replace('.html', '');
+						let template = templateHTML[templateName];
+						if (!template) console.error(`Template "${value}" is not exists`);
+
+						element.classList.add('_BaseJS_class_template');
+						element.innerHTML = decodeURI(window.atob(template)); // async operation
+
+						let new_BaseJS_ComponentId_ = '_BaseJS_ComponentId_' + (++_BaseJS_ComponentId_counter);
+
+						let defThis = new function() {
+							this.input = input || {};
+							this.parent = templateJsThis[_BaseJS_ComponentId_];
+							this.htmlElement = element;
+						};
+						if (templateJS[templateName + '__Super']) {
+							defThis = templateJS[templateName + '__Super'].call(defThis);
+							let origin = {};
+							for (let i in defThis) {
+								if (typeof defThis[i] === 'function') origin[i] = defThis[i].bind();
+							}
+							// @ts-ignore
+							defThis.origin = origin;
+						}
+						templateJsThis[new_BaseJS_ComponentId_] = templateJS[templateName].call(defThis);
+
+						element.querySelectorAll('[onbase]').forEach(e => {
+							e.setAttribute('_BaseJS_ComponentId_', new_BaseJS_ComponentId_);
+							e.setAttribute('_BaseJS_TemplateName_', templateName);
+						});
+
+						for (let child of element.children) {
+							await templateEditorSystem(/** @type { HTMLElement } */ (child), options, priorityElementStack);
+						}
 					}
-					if (i == 'setHtml') element.innerHTML = obj[i];
+					if (i == 'setHtml') element.innerHTML = value;
 					if (i == 'setAttr') {
-						for (let a in obj[i]) {
-							element.setAttribute(a, obj[i][a]);
+						for (let a in value) {
+							let subValue = typeof value[a] == 'function' ? value[a]() : value[a];
+							if (subValue === undefined) element.removeAttribute(a);
+							else {
+								element.setAttribute(a, subValue);
+								// @ts-ignore // Fix of Safari bug:
+								if (a.toLocaleLowerCase() == 'selected') element.parentElement.value = element.value;
+							}
 						}
 					}
 					if (i == 'setClass') {
-						for (let a in obj[i]) {
-							element.classList[obj[i][a] ? 'add' : 'remove'](a);
+						for (let a in value) {
+							let subValue = typeof value[a] == 'function' ? value[a]() : value[a];
+							element.classList[subValue ? 'add' : 'remove'](a);
 						}
 					}
 				}
-			} else {
-				console.error(`Property ${i} in "onbase" element property is not supported`);
+			}
+			else if (!commands.find(c => c.test(i.substr(0, 1) == '_' ? i.substr(1) : i))) {
+				console.error(`Property ${i} in "onbase" element property is not supported \n - template: "${templateName}"`);
 			}
 		}
 	});
-
-	// Wrapping event atributes ("on...") to onbase this object
-	for (let i in document) {
-		if (i.substr(0, 2) == 'on') {
-			startElement.querySelectorAll(`${selector} [${i}]:not([${i}^="onFunctionWrapper"])`).forEach((/** @type { HTMLElement } */ element) => {
-				if (element.classList.contains('_BaseJS_class_hidden') || element.classList.contains('_BaseJS_class_loading')) return;
-
-				try { var body = baseEval(element.getAttribute(i), element, true); } catch (err) { return; }
-				element.setAttribute('_BaseJS_ComponentId_', _BaseJS_ComponentId_)
-				element.setAttribute(i, `onFunctionWrapper(this, '${_BaseJS_ComponentId_}', function() {${body}});`);
-			});
-		}
-	}
 
 	Array.from(oldIDs).forEach(id => {
 		if (id && id !== _BaseJS_ComponentId_ && typeof templateJsThis[id].destructor == 'function') {
@@ -317,38 +332,33 @@ let ttt = (new Date()).getTime();
 		}
 	});
 
-	if (parent.base__root) {
+	if (startElement0 !== document.body.parentElement) {
+		// console.log(111, startElement0, a);
+		// let a = startElement.firstChild;
+		startElement0.replaceWith(startElement);
+	}
+
+	if (isStartRenderElement) {
 		return new Promise(async (res, rej) => {
+			await promisify(setTimeout, () => {}, 200); // 0 is not enough to render the loading animation
 			priorityElementStack.sort((a, b) => a.priority - b.priority);
-			await promisify(setTimeout, () => {}, 100); // 0 is not enough to render the loading animation
+
 			for (let i in priorityElementStack) {
-				// selector is empty, because this full element and its interior is to be rendered
-				await templateEditorSystem('', priorityElementStack[i].element, options);
+				await promisify(setTimeout, () => {}, 10); // for applying event between rendering
+				await templateEditorSystem(priorityElementStack[i].element, {...options, ignoreRootPriority: true}, [], true);
 			}
 			res();
-		});
+		}).catch((err) => { return Promise.reject(error(err)); });
 	} else return Promise.resolve();
 };
 
-/**
- * @param { HTMLElement } startElement
- * @param { String } selector1
- * @param { String } [selector2='']
- * @returns { HTMLElement[] }
- */
-function querySelectorAll2(startElement, selector1, selector2 = '') {
-	let array = Array.from(startElement.querySelectorAll(`${selector1}${selector2}, ${selector1} ${selector2}`));
-	if (startElement.matches(selector1 + selector2)) array.push(startElement);
-	// @ts-ignore
-	return array;
-}
-
 function baseEval(baseAttribute, /** @type { HTMLElement } */ element, notEval = false) {
+	let templateName = element.getAttribute('_BaseJS_TemplateName_') || 'index';
 	let _BaseJS_ComponentId_ = element.getAttribute('_BaseJS_ComponentId_') || '_BaseJS_ComponentId_';
+	baseAttribute = typeof baseAttribute == 'string' ? baseAttribute : `return (${baseAttribute.toString()})()`;
+
 	return (function() {
-		let templateName = _BaseJS_ComponentId_ == '_BaseJS_ComponentId_' ? 'index'
-			: document.getElementById(_BaseJS_ComponentId_).getAttribute('_basejs_templatename_');
-		let lett = '';
+		let lett = `let js = templateJsThis['${_BaseJS_ComponentId_}']; `;
 
 		let forVariable = Array.from(element.attributes)
 			.filter(a => a.name.substr(0, 19).toLowerCase() == '_BaseJS_ForEachKey_'.toLowerCase())
@@ -361,13 +371,19 @@ function baseEval(baseAttribute, /** @type { HTMLElement } */ element, notEval =
 
 		try {
 			if (notEval) return `${lett} ${baseAttribute};`;
-			else return eval(`${lett} new Object(${baseAttribute});`);
+			else return eval(`(()=>{${lett} ${baseAttribute}})()`);
 		} catch (err) {
-			console.error(this, `_BaseJS_ComponentId_: ${_BaseJS_ComponentId_}; \n- Template: client/templates/${templateName}.html; \n- Bad JavaScript in "onbase" element property: \n- ${lett} \n- ${baseAttribute} \n-`, err);
-			throw err;
+			let msg = `_BaseJS_ComponentId_: ${_BaseJS_ComponentId_
+				}; \n- Template: ${(templates.path + '/' + templateName).replace(/\/+/g, '/')
+				}.html; \n- Bad JavaScript in "on${event && event.type ? event.type : 'base'
+				}" element property: \n- ${lett} \n- ${baseAttribute} \n-`;
+			console.error(this, msg, err);
+			window.onerror(msg + err.message + err.stack);
+			throw error(msg, err);
 		}
-	// @ts-ignore
-	}).call(Object.assign(element, templateJsThis[_BaseJS_ComponentId_]));
+	}).call(element);
 }
+// @ts-ignore
+window.baseEval = baseEval;
 
 module.exports = templateEditor;

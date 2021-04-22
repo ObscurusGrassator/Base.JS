@@ -2,20 +2,24 @@ const objectClone = require('shared/utils/objectClone.base.js');
 
 /**
  * Merging first object with second object properties, if they not exists in first object.
+ * First object is updated with second object.
  * 
  * @template {Array | {[key: string]: any}} T1
  * @template {Array | {[key: string]: any}} T2
  * 
  * @param {T1} object Input/output object
  * @param {T2} reqObject Object with required properties
+ * @param {{modifyInputObject: Boolean}} [options = {modifyInputObject: false}]
  * 
  * @return {T1 & T2}
  * 
  * @example merge({a: {b: 13, c: 1}}, {a: {b: 12}}) // {a: {b: 12, c: 1}}
  */
-function merge(object, reqObject) {
-	object = objectClone(object);
-	reqObject = objectClone(reqObject);
+function merge(object, reqObject, options = {modifyInputObject: false}) {
+	if (!options.modifyInputObject) {
+		object = objectClone(object);
+		reqObject = objectClone(reqObject);
+	}
 
 	let loop = (object, reqObject) => {
 		if (object && typeof object === 'object' && reqObject) {

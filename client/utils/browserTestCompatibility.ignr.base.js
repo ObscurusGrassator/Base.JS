@@ -1,4 +1,4 @@
-// If browser is not compatibled, is showed page defined in content.config.templates.notSupportedBrowser
+// If browser is not compatibled, is showed page defined in serverContent.config.client.templatesNotSupportedBrowser
 
 let language = 'EN'
 let languages = ['EN', 'SK'];
@@ -66,6 +66,13 @@ try {
 } catch(err) {}
 
 
+// This will enabling in future
+// try {
+// 	supportTest['optional-chaining'] = true;
+// 	eval('let a = {}; if (a?.b?.c === undefined) delete supportTest["optional-chaining"];');
+// } catch(err) {}
+
+
 try {
 	supportTest['spread-syntax'] = true;
 	eval(`
@@ -90,9 +97,12 @@ setTimeout(() => {
 
 	window.addEventListener('load', async () => {
 		if (!doNotSupported.length) return;
+		else var notSupportedBrowserTechnologies = doNotSupported; // expected in eval()
+
+		let notSupportedBrowser = serverContent.config.client.templateNotSupportedBrowser;
+		let template = serverContent.config.client.templates[serverContent.config.client.template];
+		let path = (template.path + '/' + notSupportedBrowser).replace(/\/+/g, '\/');
 		// @ts-ignore
-		else window.notSupportedBrowserTechnologies = doNotSupported;
-		// @ts-ignore
-		document.write(decodeURI(window.atob(window.templateHTML[content.config.templates.notSupportedBrowser])));
+		document.write(eval('`' + decodeURI(window.atob(window.templateHTML[path])) + '`'));
 	}, false);
 }, 1);

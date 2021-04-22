@@ -1,10 +1,11 @@
-const thisElement = require('client/utils/getActualElement.ignr.base.js');
-const s = require('client/src/_index.js');
+// The format of the next line must be preserved for correct parsing of the Base.js framework
+module.exports = new function () {
+	const b = require('client/src/_index.js');
 
-// 'content.pathVariables' see app_example.js
-// 'content' is global variable, but 's.content' is typing
+	// 'b.serverContent.pathVariables' see app_example.js
 
-s.templateEditor();
+	b.templateEditor();
 
-/** @type {function(): void} */
-this.destructor; // this function is called, when is thisElement removed from template
+	/** @type {function(): void} */
+	this.destructor; // this function is called, when is this.htmlElement removed from template
+};
