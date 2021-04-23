@@ -1,6 +1,7 @@
 const fs = require('fs');
 const child_process = require('child_process');
 
+const error = require('shared/utils/error.base.js') || (msg => msg instanceof Error ? msg : new Error(msg));
 const get = require('shared/utils/get.base.js');
 const set = require('shared/utils/set.base.js');
 const merge = require('shared/utils/merge.base.js');
@@ -62,9 +63,7 @@ class Config {
 			if (jsconfigSpaceMatch && jsconfigSpaceMatch[1]) jsconfigSpace = jsconfigSpaceMatch[1];
 			try {
 				jsconfigObj = JSON.parse(jsconfigString);
-			} catch (err) { console.error(require('shared/utils/error.base.js')(err)); }
-			// obalené v errore pre prípad, že error v console ešte nie je nastavený
-			// error volá ciklicky tento jsconfig.base.js, preto sa nemôźe deklarovať na začiatku súboru
+			} catch (err) { throw error(err); }
 
 			let newConf = defaults(jsconfigObj, value);
 			let jsconfigStr = jsonStringify(newConf, jsconfigSpace);
