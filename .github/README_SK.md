@@ -12,6 +12,7 @@ Po prvom spustení sa vygeneruje/upravý konfiguračný súbor `jsconfig.json`, 
 ```
 git clone https://github.com/ObscurusGrassator/Base.JS.git you_project_name
 cd you_project_name
+npm install
 NODE_PATH=. node manager.js
 ```
 Väčšina IDE editorov zatiaľ neumožňuje používať nápovedy a typovú kontrolu `JSDoc`, preto pre využitie plného potenciálu Base.JS frameworku odporúčam používať free IDE [Visual Studio Code] (https://code.visualstudio.com/).

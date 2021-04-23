@@ -1,7 +1,7 @@
 const fs = require('fs');
 const child_process = require('child_process');
 
-const error = require('shared/utils/error.base.js') || (msg => msg instanceof Error ? msg : new Error(msg));
+const error = require('shared/utils/error.base.js');
 const get = require('shared/utils/get.base.js');
 const set = require('shared/utils/set.base.js');
 const merge = require('shared/utils/merge.base.js');

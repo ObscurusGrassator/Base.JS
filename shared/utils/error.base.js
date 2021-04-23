@@ -1,22 +1,5 @@
 const pathLib = typeof require !== 'undefined' ? require('path') : {resolve: () => ''};
-const Config = require('shared/services/jsconfig.base.js');
-var config;
-if (Config && Config.update) config = Config.update('utils._error', {
-	"utils": {
-		"_error": {
-			"errorStackStringRemove": [
-				"/.*? \\(.*?\\/utils\\/console\\.base\\.js.+?(\\n|$)/ig",
-				"/.*? \\(.*?\\/utils\\/error\\.base\\.js.+?(\\n|$)/ig",
-				"/.*? \\(internal\\/process\\/.+?(\\n|$)/ig",
-				"/.*? \\(internal\\/modules\\/.+?(\\n|$)/ig",
-				"/.*? \\(index 0\\)(\\n|$)/ig",
-				"/.*? \\(\\<anonymous\\>\\)(\\n|$)/ig",
-				"/.*?at internal\\/main\\/run_main_module\\.js.+?(\\n|$)/ig"
-			]
-		}
-	}
-}).value.utils._error;
-
+let config;
 /**
  * Return string of better error trace
  * If input contains Promise, function return Promise with his result and is throwed, when error is detected.
@@ -27,6 +10,23 @@ if (Config && Config.update) config = Config.update('utils._error', {
  * @example try { await asyncFunction(); } catch (err) { throw error(err); }
  */
 function error(...err) {
+	// prevent of circular dependency
+	if (!config) config = require('shared/services/jsconfig.base.js').update('utils._error', {
+		"utils": {
+			"_error": {
+				"errorStackStringRemove": [
+					"/.*? \\(.*?\\/utils\\/console\\.base\\.js.+?(\\n|$)/ig",
+					"/.*? \\(.*?\\/utils\\/error\\.base\\.js.+?(\\n|$)/ig",
+					"/.*? \\(internal\\/process\\/.+?(\\n|$)/ig",
+					"/.*? \\(internal\\/modules\\/.+?(\\n|$)/ig",
+					"/.*? \\(index 0\\)(\\n|$)/ig",
+					"/.*? \\(\\<anonymous\\>\\)(\\n|$)/ig",
+					"/.*?at internal\\/main\\/run_main_module\\.js.+?(\\n|$)/ig"
+				]
+			}
+		}
+	}).value.utils._error;
+
 	let inputError = false;
 	// let proms = [];
 	// let isAsync = false;
