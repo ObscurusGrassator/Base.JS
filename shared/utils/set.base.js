@@ -15,6 +15,7 @@ const Testing = require('shared/services/testing.base.js');
  * @param {{unsetEmptyArrayParentsDeep?: Boolean,
  * 			unsetEmptyObjectParentsDeep?: Boolean,
  * 			unsetParentsDeepIf?: (parentObject: any) => Boolean,
+ *          errorObjectDisable?: Boolean,
  * }} [options = {}]
  * 
  * @returns {T}
@@ -59,8 +60,10 @@ function set(object, path, value, options = {}) {
 			else return true;
 		}
 		else if (typeof obj[path[+i]] != 'object') {
-			// @ts-ignore
-			throw error(`Path ${path.join('.')} not exist, because ${path[+i]} is ${typeof obj[path[+i]]}`);
+			if (!options.errorObjectDisable) {
+				// @ts-ignore
+				throw error(`Path ${path.join('.')} not exist, because ${path[+i]} is ${typeof obj[path[+i]]}`);
+			} else return false;
 		}
 		else if (deep(obj[path[+i]], i+1)) return remove(obj, i);
 	};

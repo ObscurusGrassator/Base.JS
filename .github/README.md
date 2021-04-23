@@ -12,7 +12,6 @@ The first run generates/updates a configuration file `jsconfig.json`, which allo
 ```
 git clone https://github.com/ObscurusGrassator/Base.JS.git you_project_name
 cd you_project_name
-npm install
 NODE_PATH=. node manager.js
 ```
 Most IDE editors do not yet support the use of hints, type check and autocomplete of `JSDoc`, so to use the full potential of Base.JS framework, I recommend using a free IDE [Visual Studio Code](https://code.visualstudio.com/).
