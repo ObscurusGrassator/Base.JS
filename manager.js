@@ -236,5 +236,5 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 		}
 	};
 
-	app();
+	setTimeout(app, 1000); // Error: Cannot find module 'nodemailer'
 /**************************************************************/
