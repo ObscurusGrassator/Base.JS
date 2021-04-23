@@ -1,7 +1,7 @@
 const pathLib = typeof require !== 'undefined' ? require('path') : {resolve: () => ''};
 const Config = require('shared/services/jsconfig.base.js');
 var config;
-if (Config) config = Config.update('utils._error', {
+if (Config && Config.update) config = Config.update('utils._error', {
 	"utils": {
 		"_error": {
 			"errorStackStringRemove": [
