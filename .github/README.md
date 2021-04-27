@@ -20,18 +20,18 @@ Most IDE editors do not yet support the use of hints, type check and autocomplet
 ```
 npm start
 
-# Application's tests (shared/services/testing.base.js) can by run with:
+# Start server with run application unit tests (shared/services/testing.base.js):
 npm start testing
 npm start testing=/fileWithTests/i
 
-# Show console.debug
+# Start server with showing console.debug
 npm start debuging
 npm start debuging=/fileWithTests/i
 
-# Restart node server after project file change
+# Start server with automatic restarting after project file change
 npm start refreshAfterChange
 
-# (MacOS only) Refresh web page and go to browser web page after start/restart node server:
+# (`MacOS only`) Automatic refresh web page and going to browser web page after server start/restart
 npm start refresh toBrowser
 ```
   
@@ -44,7 +44,7 @@ npm update
 Simply delete the whole directory
   
   
-# Generation client final HTML
+# Generation of final HTML code
   
 In order for the IDE editor to use type checking and code hint, the frontend contains redundant code that the framework must delete. Identification of this code requires that it be written in a specific format. Gradually, the framework will support more formats.
   
@@ -63,6 +63,7 @@ module.exports = functionName;
 ### (Optional) Wrapping of HTML template modificator
 ```
 <... onbase="w({ ... })" ...>
+<div onbase="w({ ... })">...</div>
 ```
 ### (Optional) Wrapping of JS code template
 ```
@@ -85,18 +86,24 @@ After modifying an existing function, you can call the original function via `or
   
 The frontend has the global variable `serverContent` available from the beginning, which contains user data from the server, including the `config` property automatically added by the framework. Types are defined manually by user in `client/types/ServerContentType.js` .
   
-Framework automatically creates `index.JS` files by setting in `jsconfig.json > utils._createIndex`. This index files copy their folder structure for clarity. Therefore, the functions and classes they index should have the same names as the files themselves.
+Framework automatically creates `index.JS` files by actual configuration in `jsconfig.json > utils._createIndex`. This index files copy their folder structure for clarity. Therefore, the functions and classes they index should have the same names as the files themselves.
   
 **WARNING:** Frontend code using functionality from `utils/`|`services/`|`src/` should be wrapped in a function or via `window.afterLoadRequires.unshift(() => { ... });` so it is run only when all dependencies are loaded (`require()`).  
-For example in the case of shared functions: (eg: `shared/services/myService.js`)
+For example in the case of shared functions: (eg: `shared/utils/myFunction.js`)
 ```
-let initializationCode = () => { ... };
+let staticObject = {};
 
+// require('client/util/set.js') may not yet exist
+let initializationCode = () => { const set = require('client/util/set.js'); set(staticObject, 'a.b', 'c'); };
+
+// the exported function or class does not need to be wrapped
+let myFunction = () => { const set = require('client/util/set.js'); set(staticObject, 'x.y', 'z'); };
+
+// if (browser-frontend) wrapping the immediately executed code
 if (typeof require === 'undefined') window.afterLoadRequires.unshift(initializationCode);
 else initializationCode();
 
-class myService { ... }
-module.exports = Testing;
+module.exports = myFunction;
 ```
   
 **NOTICE:** Code in `client/templates/` is already automatically wrapped in `window.addEventListener('load', async () => { ... }, false);`  
@@ -111,13 +118,15 @@ module.exports = Testing;
 7. client/services/**/*.js
 8. client/src/**/*.js
   
+**WARNING:** If you choose to load a higher layer file in a lower layer, a circular dependency can occur.  
   
+
 # Project configuration
   
 All properties configuring the behavior of the project, utilities, services and IDE editor are listed in the `jsconfig.json` file.
 Different configuration properties for the local environment can be specified in the `jsconfig.local.json` file. This file is ignored on the production server if a production domain is set in the `jsconfig.json` file (`server.productionDomain: "example.com"`).
 All properties can be modified via environmental variables. For example `export server_port = 5000` modifies the` server.port` property.
-Access to current configuration and set default configuration to `jsconfig.json`:
+Access to current configuration and set default configuration to `jsconfig.json`, if it does not already exist (`update()`):
 ```
 // in the component and client/src/..., simply by using: b.serverContent.config
 const config = require('shared/services/jsconfig.base.js').value;
@@ -132,7 +141,7 @@ const config = require('shared/services/jsconfig.base.js').update('utils.ifThisN
 ```
 The current configuration is also automatically sent to the frontend. Before that, all prefixed properties are filtered out "`_`".
   
-
+  
 # Template modificator
 Framework now does not have reactive template editor. Template rendering is started manualy:
 ```
@@ -156,16 +165,16 @@ If you need `index.html` to contain text generated by the server itself, use the
 ```
   
 ### Supported modifier properties in examples
- *   <... onbase="w({ **if**: js.variableInTemplateJS })" ...> If false, this HTMLElement and his content is not processed by this modifier and gets the css class `_BaseJS_class_hidden`. </...>
- *   <... onbase="w({ **forIn**: js.arrayOrObjectFromTemplateJS, **key**: \'i\' })" ...> ... </...>
- *   <... onbase="w({ **template**: \'_example_/sub-component_example.html\', **input**: js.arrayOrObjectFromTemplateJS[i] })" ...></...>
- *   <... onbase="w({ **setHtml**: b.serverContent.contentExample || 123 })" ...> ... </...>
- *   <... onbase="w({ **setAttr**: {src: b.serverContent.contentExample} })" ...> ... </...>
- *   <... onbase="w({ **setClass**: {className: \'test\' == b.serverContent.contentExample} })" ...> ... </...>
- *   <... onbase="w({ **js**: () => console.log(\'loaded\', this.id) })" ...> ... </...>
- *   <... onbase="w({ **priority**: 2 })" ...> Loads HTMLElement late in priority order. Until then, he receives a temporary css class `_BaseJS_class_loading`. </...>
+ *   <span onbase="w({ **if**: js.variableInTemplateJS })"> If false, this HTMLElement and his content is not processed by this modifier and gets the css class `_BaseJS_class_hidden`. </span>
+ *   <li   onbase="w({ **forIn**: js.arrayOrObjectFromTemplateJS, **key**: \'i\' })"> ... </li>
+ *   <div  onbase="w({ **template**: \'_example_/sub-component_example.html\', **input**: js.arrayOrObjectFromTemplateJS[i] })"></div>
+ *   <a    onbase="w({ **setHtml**: b.serverContent.contentExample || 123 })"> ... </a>
+ *   <img  onbase="w({ **setAttr**: {src: b.serverContent.contentExample} })">
+ *   <div  onbase="w({ **setClass**: {className: \'test\' == b.serverContent.contentExample} })"> ... </div>
+ *   <body onbase="w({ **js**: () => console.log(\'loaded\', this.id) })"> ... </body>
+ *   <div  onbase="w({ **priority**: 2 })" ...> Loads HTMLElement late in priority order. Until then, he receives a temporary css class `_BaseJS_class_loading`. </div>
    
-`onbase` properties can by comment with prefix "`_`" (`onbase="{ _setHtml: '...' }"`).
+`onbase` properties can be disabled with prefix "`_`" (`onbase="{ _setHtml: '...' }"`).
    
 **WARNING:** JavaScript in `onbase` element property runs multiple times during a single render, except for code wrapped in a function `() => { return ...; }`.
    

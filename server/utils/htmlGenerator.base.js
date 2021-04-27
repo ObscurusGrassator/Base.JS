@@ -42,7 +42,7 @@ async function readFile(
 					js !== false ? '' : '; window.afterLoadRequires.push(() => { ' + prem
 						} = (window.requires[${req.replace(/\/$/, '')}] || {})${
 					after} ${js !== false ? '' : '});'}`)
-			.replace(/require\(["']((client|shared)\/[a-zA-Z0-9_\-\/\.]*)["']\)/gi, (all, path) => `window.requires["${path.replace(/\/$/, '')}"]`)
+			.replace(/require\(["']((client|shared)\/[a-zA-Z0-9_\-\/\.]*)["']\)/gi, (all, path) => `window.requires['${path.replace(/\/$/, '')}']`)
 			.replace(/require\(['"][^\)\/]+['"]\)/gi, 'undefined') // require('fs'); v shared/services/jsconfig.base.js
 			.replace(/export\s*\{\};/gi, '')
 			.replace(/(const|var|let)\s*[a-zA-Z0-9_\-]+\s*=\s*require\([\s\S]+?(;;|; |;\n| else)/gi,
@@ -229,7 +229,7 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 								(await indexCreate(null, [path], 'utils', 'window.requires')).substring(18);
 						}
 	
-						utilsJs.push(index + '\n//# sourceURL=BaseJS-framework\n</script>\n');
+						utilsJs.push(index + `\n//# sourceURL=BaseJS-framework-index_${path.replace(/\//g, '_')}\n</script>\n`);
 						// jsAndCss.push(index + '\n//# sourceURL=' + name0 + '/index.js\n</script>\n');
 					}
 					if (_index) utilsJs.push(_index);
@@ -254,7 +254,7 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 					window.templateHTML['${notSuppTempl}'] = \`
 						${fs.existsSync(notSuppTempl) ? encode(await promisify(fs.readFile, notSuppTempl, 'utf8')) : ''}\`;
 					${fs.existsSync(notSuppTempl) ? await promisify(fs.readFile, 'client/utils/browserTestCompatibility.ignr.base.js', 'utf8') : ''}
-					//# sourceURL=BaseJS-framework
+					//# sourceURL=BaseJS-framework-initialization
 				</script>
 				${css.join('\n')}
 				${utilsJs.join('\n')}
@@ -274,7 +274,7 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 						});
 					}
 					window.afterLoadRequires = [];
-					//# sourceURL=BaseJS-framework
+					//# sourceURL=BaseJS-framework-loadRequires
 				</script>
 			`);
 
@@ -294,7 +294,7 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 					}
 					templateJsThis['_BaseJS_ComponentId_'] = templateJS['${template}'].call(defThis);
 				}, false);
-				//# sourceURL=BaseJS-framework
+				//# sourceURL=BaseJS-framework-startIndex
 			</script>`);
 
 			for (let i in process.argv) {
@@ -306,7 +306,7 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 									.catch((err) => { console.error(err); });
 							}, 100);
 						}, false);
-						//# sourceURL=BaseJS-framework
+						//# sourceURL=BaseJS-framework-startTesting
 					</script>
 				`);
 			}

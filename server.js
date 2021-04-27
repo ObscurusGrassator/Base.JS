@@ -83,7 +83,9 @@ concoleWarnError(console0, b);
 	const console = console0;
 	const app = require(b.config.startFile);
 
-	b.util.promisify(b.modul.fs.writeFile, '.serverPID', process.pid+'' || '');
+	if ((process.env.npm_lifecycle_script || '').indexOf('nohup') > -1) {
+		b.util.promisify(b.modul.fs.writeFile, '.serverPID', process.pid + '' || '');
+	}
 
 	if (!b.modul.fs.existsSync('.gitBase.JS') && b.modul.fs.existsSync('.git')) {
 		b.modul.fs.renameSync('.git', '.gitBase.JS');

@@ -20,18 +20,18 @@ Väčšina IDE editorov zatiaľ neumožňuje používať nápovedy a typovú kon
 ```
 npm start
 
-# Application's tests (shared/services/testing.base.js) can by run with:
+# Start server with run application unit tests (shared/services/testing.base.js):
 npm start testing
 npm start testing=/fileWithTests/i
 
-# Show console.debug
+# Start server with showing console.debug
 npm start debuging
 npm start debuging=/fileWithTests/i
 
-# Restart node server after project file change
+# Start server with automatic restarting after project file change
 npm start refreshAfterChange
 
-# (MacOS only) Refresh web page and go to browser web page after start/restart node server:
+# (`MacOS only`) Automatic refresh web page and going to browser web page after server start/restart
 npm start refresh toBrowser
 ```
   
@@ -44,7 +44,7 @@ npm update
 Only remove full folder
   
   
-# Generation client final HTML
+# Generation of final HTML code
   
 Aby mohol IDE editor využívať typovú kontrolu a nápovedu, obsahuje frontend nadbytočný kód, ktorý musí framework zmazať. Identifikácia tohoto kódu si vyžaduje, aby bol napísaný v konkrétnom formáte. Postupne bude framework podporovať viac formátov.
   
@@ -63,6 +63,7 @@ module.exports = functionName;
 ### (Nepovinné) Wrapping of HTML template modificator
 ```
 <... onbase="w({ ... })" ...>
+<div onbase="w({ ... })">...</div>
 ```
 ### (Nepovinné) Wrapping of JS code template
 ```
@@ -88,15 +89,21 @@ Frontend má od začiatku dostupnú globálnu premennú `serverContent`, ktorá 
 Framework automaticky vytvára `index.js` súbory podľa nastavení v `jsconfig.json > utils._createIndex`. Tieto indexi kopírujú kvôli prehladnosti svoju priečinkovú štruktúru. Funkcie a triedy, na ktoré indexi ukazujú by preto mali myť rovnaké názvy, ako samotné súbory.
   
 **WARNING:** Frontend využívajúci funkcionalitu z `utils/`|`services/`|`src/` by mal byť ovrapowaný spustiteľnou funkciou alebo cez `window.afterLoadRequires.unshift(() => { ... });`, aby sa nezavolal skôr, ako sa načítajú funkcie, ktoré využíva (`require()`).  
-For example in the case of shared functions: (eg: `shared/services/myService.js`)
+For example in the case of shared functions: (eg: `shared/utils/myFunction.js`)
 ```
-let initializationCode = () => { ... };
+let staticObject = {};
 
+// require('client/util/set.js') ešte nemusí existovať
+let initializationCode = () => { const set = require('client/util/set.js'); set(staticObject, 'a.b', 'c'); };
+
+// exportovaná funkcia alebo trieda nemusí byť wrappovaná
+let myFunction = () => { const set = require('client/util/set.js'); set(staticObject, 'x.y', 'z'); };
+
+// if (browser-frontend) wrapujeme okamžite spušťaný kód
 if (typeof require === 'undefined') window.afterLoadRequires.unshift(initializationCode);
 else initializationCode();
 
-class myService { ... }
-module.exports = Testing;
+module.exports = myFunction;
 ```
   
 **NOTICE:** Kód v `client/templates/` je už automaticky zabalený do `window.addEventListener('load', async () => { ... }, false);`  
@@ -111,13 +118,15 @@ module.exports = Testing;
 7. client/services/**/*.js
 8. client/src/**/*.js
   
+**WARNING:** Ak sa rozhodnete načítať súbor vyššej vrstvy v nižšej vrstve, môže dôjsť k ciklickej závislosti.
+  
   
 # Project configuration
   
 Všetky vlastnosti nastavujúce správanie projektu, utilít, servisov a IDE editora sú uvedené v súbore `jsconfig.json`.
 Odlišná konfiguráčné vlastnosti pre lokálne prostredie môže byť uvedené v súbore `jsconfig.local.json`. Tento súbor je na produkčnom servery ignorovaný, ak je v súbore `jsconfig.json` nastavená produkčná doména (`server.productionDomain: "example.com"`).
 Všetky vlastonsti je možné modifikovať cez enviromentálne premenné. For example `export server_port=5000` modifikuje vlastnosť `server.port`.
-Prístup k aktuálnym vlastnostiam a nastavenie defaultnej konfigurácie do `jsconfig.json`:
+Prístup k aktuálnym vlastnostiam a nastavenie defaultnej konfigurácie do `jsconfig.json`, ak ešte neexistuje (`update()`):
 ```
 // v komponente a client/src/... stačí zjednodušene cez: b.serverContent.config
 const config = require('shared/services/jsconfig.base.js').value;
@@ -132,7 +141,7 @@ const config = require('shared/services/jsconfig.base.js').update('utils.ifThisN
 ```
 Aktuálna konfigurácia sa automaticky odosiela aj na frontend. Predtým sa z nej ale odfiltrujú všetky všetky vlastnosti s prefixom "`_`".
   
-
+  
 # Template modificator
 Framework now does not have reactive template editor. Template rendering is started manualy:
 ```
@@ -156,14 +165,14 @@ Ak potrebujete, aby `index.html` obsahoval text vygenerovaný samotným serverom
 ```
   
 ### Supported modifier properties in examples
- *   <... onbase="w({ **if**: js.variableInTemplateJS })" ...> Pri hodnote `false` tento HTMLElement ani jeho obsah nie je spracovaný týmto modifikátorom a dostáva css triedu `_BaseJS_class_hidden`. </...>
- *   <... onbase="w({ **forIn**: js.arrayOrObjectFromTemplateJS, **key**: \'i\' })" ...> ... </...>
- *   <... onbase="w({ **template**: \'_example_/sub-component_example.html\', **input**: js.arrayOrObjectFromTemplateJS[i] })" ...> ... </...>
- *   <... onbase="w({ **setHtml**: b.serverContent.contentExample || 123 })" ...> ... </...>
- *   <... onbase="w({ **setAttr**: {src: b.serverContent.contentExample} })" ...> ... </...>
- *   <... onbase="w({ **setClass**: {className: \'test\' == b.serverContent.contentExample} })" ...> ... </...>
- *   <... onbase="w({ **js**: () => console.log(\'loaded\', this.id) })" ...> ... </...>
- *   <... onbase="w({ **priority**: 2 })" ...> Načíta HTMLElement oneskorene v poradí priority. Dovtedy dostáva dočasnú css triedu `_BaseJS_class_loading`. </...>
+ *   <span onbase="w({ **if**: js.variableInTemplateJS })"> Pri hodnote `false` tento HTMLElement ani jeho obsah nie je spracovaný týmto modifikátorom a dostáva css triedu `_BaseJS_class_hidden`. </span>
+ *   <li   onbase="w({ **forIn**: js.arrayOrObjectFromTemplateJS, **key**: \'i\' })"> ... </li>
+ *   <div  onbase="w({ **template**: \'_example_/sub-component_example.html\', **input**: js.arrayOrObjectFromTemplateJS[i] })"></div>
+ *   <a    onbase="w({ **setHtml**: b.serverContent.contentExample || 123 })"> ... </a>
+ *   <img  onbase="w({ **setAttr**: {src: b.serverContent.contentExample} })">
+ *   <div  onbase="w({ **setClass**: {className: \'test\' == b.serverContent.contentExample} })"> ... </div>
+ *   <body onbase="w({ **js**: () => console.log(\'loaded\', this.id) })"> ... </body>
+ *   <div  onbase="w({ **priority**: 2 })" ...> Načíta HTMLElement oneskorene v poradí priority. Dovtedy dostáva dočasnú css triedu `_BaseJS_class_loading`. </div>
    
 Onbase lastnosti je možné zakomentovať prefixom "`_`" (`onbase="{ _setHtml: '...' }"`).
    

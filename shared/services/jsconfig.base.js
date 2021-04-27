@@ -25,7 +25,7 @@ let envs = {};
 if (typeof require !== 'undefined') { for (let i in process.env) {
 	if (!/[a-z]/.test(i)) continue;
 	try {
-		set(envs, i.replace(/_/g, '.'), process.env[i], {
+		set(envs, i.replace(/_/g, '.').replace(/\.\./g, '._'), process.env[i], {
 			unsetEmptyArrayParentsDeep: true, unsetEmptyObjectParentsDeep: true, errorObjectDisable: true,
 		});
 	} catch (err) { console.debug('Environment variable:', i, 'can not be set:', err); }

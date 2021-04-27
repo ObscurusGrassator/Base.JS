@@ -10,50 +10,36 @@ let renderTimeSum = 0;
 let templates = serverContent.config.client.templates[serverContent.config.client.template];
 
 /**
- * Template elements can contains JS modifications.
+ * Property functions: if, forIn, template, setHtml, setAttr, setClass, js, priority
  * 
- * Property functions: if, forIn, template, setHtml, setAttr, setClass, js
+ * `templateEditor()` return Promise because of `onbase="{priority:...` elements, whose rendering triggers delayed but self rendering HTML is synchronous. `onbase` therefore supports only synchronous JavaScript so that it is not possible to inconsistent change the variables used during the rendering of DOM Elements. Asynchronous functions can redraw the affected elements additionally.  
  * 
- * A `this` used in attributes with the prefix `on` (eg: onclick, onchange) also contains the `this` properties of the component in the JS file. Be careful not to overwrite them.  
- *
- * WARNING: "onbase" supports only synchronous JavaScript so that it is not possible to change the variables used during the rendering of DOM Elements. Asynchronous functions can redraw the affected elements additionally.
- * WARNING: DOM properties (`onbase`) evaluate current content that can be changed interactively. In the case of `forIn`, it is possible to change the first` forIn` HTMLElement in the series (the others will be prefixed with `_`). For example, if you delete a class assigned to it and regenerate it (`templateEditor ()`), that class will no longer have any `forIn` HTMLElement.  
+ * **WARNING:** `onbase` properties evaluate current content that can be changed interactively. In the case of `forIn`, it is possible to change the first` forIn` HTMLElement in the series (others are cloned from it with the prefix "`_`"). For example, if you delete a class assigned to it and regenerate it (`templateEditor ()`), that class will no longer have any duplicated `forIn` HTMLElement.  
  * 
- * @param {String} [cssSelector = ''] Specific element selector for modification
- * @param {HTMLElement} [startElement = ducument.body] Specific element for modification
- * @param {{ ignoreRootIf?: Boolean }} [options = {}] Options
- * @returns Promise
+ * @example
+ *   <span onbase="w({ **if**: js.variableInTemplateJS })"> If false, this HTMLElement and his content is not processed by this modifier and gets the css class `_BaseJS_class_hidden`. </span>
+ *   <li   onbase="w({ **forIn**: js.arrayOrObjectFromTemplateJS, **key**: \'i\' })"> ... </li>
+ *   <div  onbase="w({ **template**: \'_example_/sub-component_example.html\', **input**: js.arrayOrObjectFromTemplateJS[i] })"></div>
+ *   <a    onbase="w({ **setHtml**: b.serverContent.contentExample || 123 })"> ... </a>
+ *   <img  onbase="w({ **setAttr**: {src: b.serverContent.contentExample} })">
+ *   <div  onbase="w({ **setClass**: {className: \'test\' == b.serverContent.contentExample} })"> ... </div>
+ *   <body onbase="w({ **js**: () => console.log(\'loaded\', this.id) })"> ... </body>
+ *   <div  onbase="w({ **priority**: 2 })" ...> Loads HTMLElement late in priority order. Until then, he receives a temporary css class `_BaseJS_class_loading`. </div>
+ * 
+ * `onbase` properties can be disabled with prefix "`_`" (`onbase="{ _setHtml: '...' }"`).
+ * 
+ * **WARNING:** JavaScript in `onbase` element property runs multiple times during a single render, except for code wrapped in a function `() => { return ...; }`.
+ * 
+ * **WARNING:** `this` in HTML component and this.htmlElement v JS contains during rendering only a fragment of DOM tree at the moment of startup. If you need eg. `parentElement`, you must start it:
+ *   - with the delay through `setTimeout(() => console.log(this.parentElement), 0)`
+ *   - through `onbase="{ js: () => console.log(this.parentElement) }`
+ *   - or through any event `onclick="console.log(this.parentElement)"`
  *
- * @example of transformed html "onbase" atribute:
- *   <... onbase="{ if: this.variableInTemplateJS }" ...> If false, it is not processed by this modifier and gets the css class `_BaseJS_class_hidden`. </...>
- *   <... onbase="{ forIn: this.arrayOrObjectFromTemplateJS, key:'key' }" ...> ... </...>
- *   <... onbase="{ template: '_example_/sub-component_example.html', input: this.arrayOrObjectFromTemplateJS[key] }" ...> ... </...>
- *   <... onbase="{ setHtml: content.contentExample || 123 }" ...> ... </...>
- *   <... onbase="{ setHtml: this.variableInTemplateJS }" ...> ... </...>
- *   <... onbase="{ setAttr: {src: content.contentExample} }" ...> ... </...>
- *   <... onbase="{ setClass: {content.className: 'test' == content.contentExample} }" ...> ... </...>
- *   <... onbase="{ js: console.log('loaded', this.id) }" ...> ... </...>
- *   <... onbase="{ priority: 2 }" ...> Until the element is loaded in order of priority, it gets the css class `_BaseJS_class_loading`. </...>
- *
- * Variables available in component:
- *   - content
- *     - user data from server (content.config)
- *     - entering to function `htmlGenerator`
- *     - types are defined in client/types/contentType.js
- *   - this.input
- *     - contain context from parent: onbase="{{template: ..., input: ...}}"
- *   - this.parent
- *     - contain parent this
- *   - this.
- *     - merge of HTMLElement this and user variable from component JS file
- *   - \*
- *     - objects and functions from `utils.*` and `services.*` (Eg.: `onbase="({ if: Storage.get(...`)
- *     - variable defined via `window.* = ...;`
- *
- * Order to evaluate property 'onbase':
- *   1. if
- *   2. forIn, key
- *   3. others
+ * ### Order to evaluate property 'onbase'
+ * 1. if
+ * 2. priority
+ * 3. forIn, key
+ * 4. ...others
  */
 async function templateEditor(cssSelector = '', startElement = document.body.parentElement, options = {}) {
 	let startTime = new Date().getTime();
