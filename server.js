@@ -169,9 +169,9 @@ concoleWarnError(console0, b);
 					var img = b.modul.fs.readFileSync(input.parts.join('/'));
 					res.setHeader('Content-Type', b.modul.mime.getType(fileSufix));
 					res.setHeader('ETag', etag);
-					if (!res.getHeader('Cache-Control')) {
-						res.setHeader('Cache-Control', `public, max-age=${eval(b.config.client.refresh)}`);
-					}
+					// if (!res.getHeader('Cache-Control')) { // with max-age is ignored etag
+					// 	res.setHeader('Cache-Control', `public, max-age=${eval(b.config.client.refresh)}`);
+					// }
 					res.statusCode = 200;
 					res.end(img, 'binary');
 					return;
@@ -183,13 +183,23 @@ concoleWarnError(console0, b);
 			b.storage.write(storage => storage.server.getData = input.queries);
 			b.storage.write(storage => storage.server.postData = postData);
 
+			let endIsCalled = false;
+			if (!res.endIsChanged) {
+				let endOld = res.end;
+				res.end = (...args) => {
+					endIsCalled = true;
+					return endOld.apply(res, args);
+				};
+				res.endIsChanged = true;
+			}
+
 			let response = await app.callPerResponce(req, res, input.queries, postData);
 			if (!(response instanceof Buffer) && typeof response != 'string') {
 				response = JSON.stringify(response);
 			}
 
 			if (!res.statusCode) res.statusCode = 200;
-			res.end(response);
+			!endIsCalled && res.end(response);
 		}
 		catch(err) {
 			if (!res.statusCode) {

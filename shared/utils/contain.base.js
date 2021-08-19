@@ -15,7 +15,11 @@ const optionsDefault = {
  * @author obscurus.grassator@gmail.com
  * @template {Array | {[key: string]: any}} T
  * @param {T} source
- * @param {import('../types/general.base.js').DeepJoinObjPartialWrite<T, {orderInArray: "keep" | "random"} | function(any): Boolean>} mustHave
+ * @_param {import('../types/general.base.js').DeepReplaceObjPartial<
+ *           import('../types/general.base.js').DeepJoinObjPartial<
+ *             T, {orderInArray: "keep" | "random"}>, function(any): Boolean>} mustHave
+ * @param {import('../types/general.base.js').DeepReplaceObjPartial<
+ *           T, {orderInArray: "keep" | "random"} | (function(any): Boolean)>} mustHave
  * @param {Object} options
  * @param {any[][]} [options.equalsValues = [[undefined, false]] ] Defaul undefined === false
  * @param {String | Boolean} [options.throwAfterUncontain = false] If set message string, is throw: [options.throwAfterUncontain, path, bugs[]]
@@ -113,24 +117,9 @@ function contain(source, mustHave, options = optionsDefault) {
 	return loop(source, mustHave, options);
 }
 
-() => {
+() => { // type check
 	// contain({a: 2, obj: {b: 'c'}, arr: [{d: 'd'}, 'b']}, {a: 'w', arr: ['b', {orderInArray: "keep"}]});
 	contain({a: 2, obj: {b: 'c'}, arr: [{d: 'd'}, 'b']}, {arr: ['b', {orderInArray: "keep"}], a: a => a === 2});
 };
 
 module.exports = contain;
-
-
-
-// /**
-//  * @template {{[key: string]: any}} T
-//  * @typedef {T | {[k: string]: Deep } | Deep[] | {[k: string]: any} | any[]} Deep
-//  */
-// /**
-//  * @template {Array | {[key: string]: any}} T
-//  * @param {T} object
-//  * @param {T | Deep<{x: number}>} mustHave
-//  */
-// function aaa(object, mustHave) {}
-
-// aaa({a: 2, b: 'e'}, {});

@@ -77,7 +77,7 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 
 			await Promise.all(proms);
 
-			let js = `var modules = []; module.exports = {
+			let js = `module.exports = {
 				assert: require('assert'),
 				buffer: require('buffer'),
 				child_process: require('child_process'),

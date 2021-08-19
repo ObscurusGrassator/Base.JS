@@ -1,8 +1,9 @@
 const util = require('shared/utils');
 const error = require('shared/utils/error.base.js');
 
-/** @template A @template B @typedef {import('shared/types/general.base.js').DeepAnyJoinObjRead<A, B>} DeepAnyJoinObjRead<A, B> */
-/** @template A @template B @typedef {import('shared/types/general.base.js').DeepAnyJoinObjWrite<A, B>} DeepAnyJoinObjWrite<A, B> */
+/** @template A @template B @typedef {import('shared/types/general.base.js').DeepJoinObj<A, B>} DeepJoinObj<A, B> */
+/** @template A @template B @typedef {import('shared/types/general.base.js').DeepAnyJoinObjPartialRead<A, B>} DeepAnyJoinObjPartialRead<A, B> */
+/** @template A @template B @typedef {import('shared/types/general.base.js').DeepAnyJoinObjPartialWrite<A, B>} DeepAnyJoinObjPartialWrite<A, B> */
 
 const config = require('shared/services/jsconfig.base.js').update('services.storage', {
 	"services": {
@@ -174,12 +175,12 @@ function setCookies(obj) {
 	else data.server.response.setHeader('Set-Cookie', cookie);
 }
 
-function storageEdit(selectFunction, userObject) {
+function storageEdit(selectFunction, userObject, defaultValue) {
 	dataEdit = userObject || data;
 	path = [];
 	let result = selectFunction(userObject ? new Proxy({}, handler) : proxyData);
-	if (typeof result == 'boolean') return result;
-	else return result._BaseJS_value;
+	if (typeof result == 'boolean' || result === undefined) return result;
+	else return result._BaseJS_value || defaultValue;
 }
 
 /**
@@ -236,17 +237,20 @@ class Storage {
 	 * It is a type oriented alternative to Lodash.<get/set/...>
 	 * 
 	 * @template T
+	 * @template R
 	 * 
 	 * @param {T} userObject
-	 * @param {function(T): any} selectFunction
+	 * @param {function(DeepJoinObj<T, {get: typeof Storage.get, set: typeof Storage.set, update: typeof Storage.update}>): R} selectFunction
+	 * @param {any} [defaultValue]
+	 * @returns {R}
 	 * 
 	 * @example Storage.of({a: {b: {c: 'x'}}}, storage => storage.a.b.c);
 	 * @example Storage.of({a: {b: {c: 'x'}}}, storage => storage.a.b.d = 'test');
 	 * @example Storage.of({a: {b: {c: 'x'}}}, storage => storage.a.b.e.push('test'));
 	 * @example Storage.of({a: {b: {c: 'x'}}}, storage => delete storage.a.b.f);
 	 */
-	static of(userObject, selectFunction) {
-		return storageEdit(selectFunction, userObject);
+	static of(userObject, selectFunction, defaultValue) {
+		return storageEdit(selectFunction, userObject, defaultValue);
 	}
 }
 class StorageClient extends Storage {
@@ -256,15 +260,18 @@ class StorageClient extends Storage {
 	 * 
 	 * Special storage properties: storage.cookie, storage.session, storage.local
 	 * 
-	 * @param {function(DeepAnyJoinObjRead<import('client/types/storage').Type, {get: typeof Storage.get, set: typeof Storage.set, update: typeof Storage.update}>): any} selectFunction
+	 * @template R
+	 * @param {function(DeepJoinObj<import('client/types/storage').Type, {get: typeof Storage.get, set: typeof Storage.set, update: typeof Storage.update}>): R} selectFunction
+	 * @param {any} [defaultValue]
+	 * @returns {R}
 	 * 
 	 * @example Storage.edit(storage => storage.a.b.c);
 	 * @example Storage.edit(storage => storage.a.b.d = 'test');
 	 * @example Storage.edit(storage => storage.a.b.e.push('test'));
 	 * @example Storage.edit(storage => delete storage.a.b.f);
 	 */
-	static edit(selectFunction) {
-		return storageEdit(selectFunction);
+	static edit(selectFunction, defaultValue) {
+		return storageEdit(selectFunction, undefined, defaultValue);
 	}
 	/**
 	 * Type-safe property editing.
@@ -273,15 +280,38 @@ class StorageClient extends Storage {
 	 * 
 	 * Special storage properties: storage.cookie, storage.session, storage.local
 	 * 
-	 * @param {function(DeepAnyJoinObjWrite<import('client/types/storage').Type, {get: typeof Storage.get, set: typeof Storage.set, update: typeof Storage.update}>): any} selectFunction
+	 * @template R
+	 * @param {function(DeepAnyJoinObjPartialRead<import('client/types/storage').Type, {get: typeof Storage.get, set: typeof Storage.set, update: typeof Storage.update}>): R} selectFunction
+	 * @param {any} [defaultValue]
+	 * @returns {R}
 	 * 
 	 * @example Storage.edit(storage => storage.a.b.c);
 	 * @example Storage.edit(storage => storage.a.b.d = 'test');
 	 * @example Storage.edit(storage => storage.a.b.e.push('test'));
 	 * @example Storage.edit(storage => delete storage.a.b.f);
 	 */
-	static write(selectFunction) {
-		return storageEdit(selectFunction);
+	 static read(selectFunction, defaultValue) {
+		return storageEdit(selectFunction, undefined, defaultValue);
+	}
+	/**
+	 * Type-safe property editing.
+	 * It is equals as method edit(), but types is not erroring.
+	 * It is a type oriented alternative to Lodash.<get/set/...>
+	 * 
+	 * Special storage properties: storage.cookie, storage.session, storage.local
+	 * 
+	 * @template R
+	 * @param {function(DeepAnyJoinObjPartialWrite<import('client/types/storage').Type, {get: typeof Storage.get, set: typeof Storage.set, update: typeof Storage.update}>): R} selectFunction
+	 * @param {any} [defaultValue]
+	 * @returns {R}
+	 * 
+	 * @example Storage.edit(storage => storage.a.b.c);
+	 * @example Storage.edit(storage => storage.a.b.d = 'test');
+	 * @example Storage.edit(storage => storage.a.b.e.push('test'));
+	 * @example Storage.edit(storage => delete storage.a.b.f);
+	 */
+	static write(selectFunction, defaultValue) {
+		return storageEdit(selectFunction, undefined, defaultValue);
 	}
 }
 class StorageServer extends Storage {
@@ -291,31 +321,58 @@ class StorageServer extends Storage {
 	 * 
 	 * Special storage properties: storage.cookie
 	 * 
-	 * @param {function(DeepAnyJoinObjRead<import('server/types/storage').Type, {get: typeof Storage.get, set: typeof Storage.set, update: typeof Storage.update}>): any} selectFunction
+	 * @template R
+	 * @param {function(DeepJoinObj<import('server/types/storage').Type, {get: typeof Storage.get, set: typeof Storage.set, update: typeof Storage.update}>): R} selectFunction
+	 * @param {any} [defaultValue]
+	 * @returns {R}
 	 * 
 	 * @example Storage.edit(storage => storage.a.b.c);
 	 * @example Storage.edit(storage => storage.a.b.d = 'test');
 	 * @example Storage.edit(storage => storage.a.b.e.push('test'));
 	 * @example Storage.edit(storage => delete storage.a.b.f);
 	 */
-	static edit(selectFunction) {
-		return storageEdit(selectFunction);
+	static edit(selectFunction, defaultValue) {
+		return storageEdit(selectFunction, undefined, defaultValue);
 	}
 	/**
 	 * Type-safe property editing.
+	 * It is equals as method edit(), but types is not erroring.
 	 * It is a type oriented alternative to Lodash.<get/set/...>
 	 * 
 	 * Special storage properties: storage.cookie
 	 * 
-	 * @param {function(DeepAnyJoinObjWrite<import('server/types/storage').Type, {get: typeof Storage.get, set: typeof Storage.set, update: typeof Storage.update}>): any} selectFunction
+	 * @template R
+	 * @param {function(DeepAnyJoinObjPartialRead<import('server/types/storage').Type, {get: typeof Storage.get, set: typeof Storage.set, update: typeof Storage.update}>): R} selectFunction
+	 * @param {any} [defaultValue]
+	 * @returns {R}
 	 * 
 	 * @example Storage.edit(storage => storage.a.b.c);
 	 * @example Storage.edit(storage => storage.a.b.d = 'test');
 	 * @example Storage.edit(storage => storage.a.b.e.push('test'));
 	 * @example Storage.edit(storage => delete storage.a.b.f);
 	 */
-	static write(selectFunction) {
-		return storageEdit(selectFunction);
+	 static read(selectFunction, defaultValue) {
+		return storageEdit(selectFunction, undefined, defaultValue);
+	}
+	/**
+	 * Type-safe property editing.
+	 * It is equals as method edit(), but types is not erroring.
+	 * It is a type oriented alternative to Lodash.<get/set/...>
+	 * 
+	 * Special storage properties: storage.cookie
+	 * 
+	 * @template R
+	 * @param {function(DeepAnyJoinObjPartialWrite<import('server/types/storage').Type, {get: typeof Storage.get, set: typeof Storage.set, update: typeof Storage.update}>): R} selectFunction
+	 * @param {any} [defaultValue]
+	 * @returns {R}
+	 * 
+	 * @example Storage.edit(storage => storage.a.b.c);
+	 * @example Storage.edit(storage => storage.a.b.d = 'test');
+	 * @example Storage.edit(storage => storage.a.b.e.push('test'));
+	 * @example Storage.edit(storage => delete storage.a.b.f);
+	 */
+	static write(selectFunction, defaultValue) {
+		return storageEdit(selectFunction, undefined, defaultValue);
 	}
 }
 

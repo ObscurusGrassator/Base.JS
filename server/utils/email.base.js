@@ -37,13 +37,9 @@ const other = {
  * @returns {Promise<Object[] | false>}
  */
 async function email(message, configuration = {}) {
-	if (typeof configuration.to == 'string') configuration.to = [configuration.to];
-	if (Array.isArray(configuration.to)) {
-		// @ts-ignore
-		configuration.to = configuration.to.filter(item => item);
-		// @ts-ignore
-		if (configuration.to.length === 0) return Promise.resolve(false);
-	}
+	if (!Array.isArray(configuration.to)) configuration.to = [configuration.to];
+	configuration.to = configuration.to.filter(item => item);
+	if (configuration.to.length === 0) return Promise.resolve(false);
 
 	let proms = [];
 

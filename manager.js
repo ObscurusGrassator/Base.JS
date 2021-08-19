@@ -126,8 +126,8 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 			"bgconnect": "tail -n100 -f nohup.out & echo $! > .tailPID; trap 'cat .tailPID | xargs kill -KILL; rm .tailPID; exit 0;' INT; cat > nohup.in",
 			"bgstop": "npm run _killSleep; npm run _killNohupFifo; npm run _killServer;",
 			"_killSleep": "if test -e .sleepPID; then cat .sleepPID | xargs kill -KILL; rm .sleepPID; fi;",
-			"_killNohupFifo": "if test -e 'nohup.in'; then rm nohup.in; fi;",
-			"_killServer": "if test -e .serverPID; then cat .serverPID | xargs kill -KILL; rm .serverPID; fi;",
+			"_killNohupFifo": "if test -e nohup.in; then rm nohup.in; fi;",
+			"_killServer": "if test -e .serverPID; then cat .serverPID | xargs kill -KILL; fi;",
 		},
 	});
 	str = jsonStringify(object, space);
@@ -237,9 +237,9 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 				app();
 			} else {
 				console.info(' ' + console.colors.red2, console.colors.reset + console.colors.bold + console.colors.red,
-					'SERVER RESTART FAILDED...', (new Date()).getTime() - time, '> 5000');
+					'SERVER RESTART FAILED...', (new Date()).getTime() - time, '> 5000');
 
-				email('SERVER RESTART FAILDED', {group: 'sendEmailAfterFatalError'})
+				email('SERVER RESTART FAILED', {group: 'sendEmailAfterFatalError'})
 					.catch((err) => { console.error(err); });
 			}
 		}

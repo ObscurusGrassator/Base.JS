@@ -169,7 +169,7 @@ Ak potrebujete, aby `index.html` obsahoval text vygenerovaný samotným serverom
  *   <li   onbase="w({ **forIn**: js.arrayOrObjectFromTemplateJS, **key**: \'i\' })"> ... </li>
  *   <div  onbase="w({ **template**: \'_example_/sub-component_example.html\', **input**: js.arrayOrObjectFromTemplateJS[i] })"></div>
  *   <a    onbase="w({ **setHtml**: b.serverContent.contentExample || 123 })"> ... </a>
- *   <img  onbase="w({ **setAttr**: {src: b.serverContent.contentExample} })">
+ *   <img  onbase="w({ **setAttr**: {src: js.removeSrc ? undefined : 'tmp.png'} })">
  *   <div  onbase="w({ **setClass**: {className: \'test\' == b.serverContent.contentExample} })"> ... </div>
  *   <body onbase="w({ **js**: () => console.log(\'loaded\', this.id) })"> ... </body>
  *   <div  onbase="w({ **priority**: 2 })" ...> Načíta HTMLElement oneskorene v poradí priority. Dovtedy dostáva dočasnú css triedu `_BaseJS_class_loading`. </div>
@@ -179,7 +179,6 @@ Onbase lastnosti je možné zakomentovať prefixom "`_`" (`onbase="{ _setHtml: '
 **WARNING:** JavaScript kód v `onbase` vlastnosti sa spúšťa v priebehu jedného vykreslenia viackrát, s výnimkou kódu zabaleného do funkcie `() => { return ...; }`.
    
 **WARNING:** `this` v HTML componente a this.htmlElement v JS obsahuje počas renderovania len fragment DOM stromu. Ak potrebujete napr. `parentElement`, musíte ho spustiť:
-* s oneskorením `setTimeout(() => console.log(this.parentElement), 0)`
 * cez `onbase="{ js: () => console.log(this.parentElement) }`
 * alebo cez ľubovolné event `onclick"console.log(this.parentElement)"`
    

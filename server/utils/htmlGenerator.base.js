@@ -89,9 +89,6 @@ async function readFile(
 	if (filePath.substring(-3) == '.js') result = '<script> ' + jsWraperBefore + /* onlyJS(result) */ result + jsWraperAfter + '\n</script>';
 	else if (filePath.substring(-4) == '.css') result = `<style>\n${result}\n/*# sourceURL=${filePath}*/\n</style>`;
 	else if (filePath.substring(-5) == '.html') result = result
-		// ((isIndexTemplate ? '' : `<div style="display: none;" _BaseJS_TemplateName_="${templateName}" onbase="{}"></div>`) + result)
-		// .replace(/(\s*onbase\s*=\s*\"\s*(\{\{)?\s*\(?\s*\{)(_BaseJS_ComponentId_)?/g,
-		// 	(all, base, b, iff) => iff ? all : `${base}_BaseJS_ComponentId_: '_BaseJS_ComponentId_${id}', `)
 		.replace(/([\s\S]*?)(\<script[^\>]*?\>)([\s\S]*?)(\<\/script\>)/ig, (all, /** @type {String} */ before, start, content, end) => {
 			// @ts-ignore
 			js.push(start + (before.match(/\n/g) || []).join('') + jsWraperBefore + /* onlyJS(content) */ content + jsWraperAfter + end);
@@ -160,15 +157,16 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 
 		if (serverContent) templates = {};
 		if (templates[template]) return templates[template];
+		else templates[template] = true;
 		let html0 = await readFile(pathNotSuf + '.html', templateConf, inputContent, false, !!serverContent, js, css);
-		if (templates[template]) return templates[template];
 
 		templates[template] = html0;
 
 		// onbase="{ template: '_example_/sub-component_example.html' }
 		/** @type {Promise<{template: String, html: String}>[]} */ let proms = [];
-		html0.replace(/\s+onbase\s*\=[^\}]*template\s*\:\s*\'([^\']+)\'/gi, (all, template) => {
-			proms.push(deep(null, template, html, css, js).then( html => ({template, html}) ));
+		// html0.replace(/\s+onbase\s*\=[^\}]*template\s*\:\s*\'([^\']+)\'/gi, (all, template) => { // toto nefungule ak je pred template nastavený napr. setClass, pretože obsahuje "}"
+		html0.replace(/\s+onbase\s*\=.*?((\=[a-z0-9]\s*\>)|(\"\s*\>)|((template)\s*\:\s*\'([^\']+)\'))/gis, (all, a, b, c, d, name, template) => {
+			if (name == 'template') proms.push(deep(null, template, html, css, js).then( html => ({template, html}) ));
 			return all;
 		});
 		await Promise.all(proms);
