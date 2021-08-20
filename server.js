@@ -213,7 +213,7 @@ concoleWarnError(console0, b);
 		}
 	};
 
-	let httpsExists = b.modul.fs.existsSync(b.config.server.https._privateKey);
+	let httpsExists = b.modul.fs.existsSync(b.get(b.config, 'server.https._privateKey'));
 
 	// // https://gist.github.com/bnoordhuis/4740141
 	// let httpSocket = 'http.sock'; b.modul.fs.existsSync(httpSocket) && b.modul.fs.unlinkSync(httpSocket);
