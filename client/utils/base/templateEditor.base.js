@@ -55,6 +55,8 @@ for (let i in document) {
  * @returns Promise
  */
 async function templateEditor(cssSelector = '', startElement = document.body.parentElement, options = {}) {
+	if (!_BaseJS_ComponentId_counter) await promisify(setTimeout, ()=>{}, 0); // only before first rendering
+
 	return Promise.all(Array.from(/** @type { NodeListOf<HTMLElement> } */ (cssSelector ? startElement.querySelectorAll(cssSelector) : [startElement]))
 		.map(startElement => templateEditorSystem(startElement, options, true)))
 	.then(async times => {
