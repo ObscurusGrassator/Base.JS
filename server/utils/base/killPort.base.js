@@ -1,6 +1,6 @@
-const promisify = require('shared/utils/promisify.base');
+const promisify = require('shared/utils/base/promisify.base');
 const { exec } = require('child_process');
-const error = require('shared/utils/error.base.js');
+const error = require('shared/utils/base/error.base.js');
 
 /**
  * Kill all process on port.

@@ -37,7 +37,7 @@ var b;
  */
 var w;
 
-// /** @global @type { import('shared/utils/console.base.js') } */
+// /** @global @type { import('shared/utils/base/console.base.js') } */
 // var console;
 
 /** @global @type { import('../types/serverContentType').ServerContentType } */

@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
-const arraysDiff = require('shared/utils/arraysDiff.base.js');
-const config = require('shared/services/jsconfig.base.js').update('utils.email', {
+const arraysDiff = require('shared/utils/base/arraysDiff.base.js');
+const config = require('shared/services/base/jsconfig.base.js').update('utils.email', {
 	"utils": {
 		"email": [{
 			"service": "gmail",

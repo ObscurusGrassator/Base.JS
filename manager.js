@@ -3,8 +3,8 @@ const fs = require('fs');
 const _path = require('path');
 // const net = require('net');
 
-const update = require('shared/utils/update.base.js');
-const jsonStringify = require('shared/utils/jsonStringify.base.js');
+const update = require('shared/utils/base/update.base.js');
+const jsonStringify = require('shared/utils/base/jsonStringify.base.js');
 
 /***************************************************************************
 * Update package.json, jsconfig.json and others with Base.JS configuration *
@@ -141,7 +141,7 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 		},
 		"scripts": {
 			"update": "git --git-dir=.gitBase.JS pull & npm install",
-			"indexing": "NODE_PATH=. node -e \"require('server/utils/indexCreate.base.js')()\"",
+			"indexing": "NODE_PATH=. node -e \"require('server/utils/base/indexCreate.base.js')()\"",
 			"startBaseJS": "NODE_PATH=. node manager.js",
 			"bgstart": "npm run bgstop; if test ! -e nohup.in; then mkfifo nohup.in; fi; NODE_PATH=. nohup sh -c 'node manager.js' < nohup.in > nohup.out & nohup sh -c 'sleep inf > nohup.in' > /dev/null & echo $! > .sleepPID",
 			"bgconnect": "tail -n100 -f nohup.out & echo $! > .tailPID; trap 'cat .tailPID | xargs kill -KILL; rm .tailPID; exit 0;' INT; cat > nohup.in",
@@ -210,12 +210,12 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 ***************************************************************/
 	let time;
 	const app = async () => {
-		const console = require('shared/utils/console.base.js').configure({
-			userErrorFunction: require('shared/utils/error.base.js')
+		const console = require('shared/utils/base/console.base.js').configure({
+			userErrorFunction: require('shared/utils/base/error.base.js')
 		});
-		const email = require('server/utils/email.base.js');
+		const email = require('server/utils/base/email.base.js');
 
-		await require('server/utils/indexCreate.base.js')();
+		await require('server/utils/base/indexCreate.base.js')();
 
 		time = (new Date()).getTime();
 		let args = process.argv.slice(1);

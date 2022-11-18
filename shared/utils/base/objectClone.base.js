@@ -72,7 +72,7 @@ function objectClone(obj, opt) {
 	return deepClean(deepClone(obj), obj);
 };
 
-require('shared/services/testing.base.js').add(async () => {
+require('shared/services/base/testing.base.js').add(async () => {
 	let f = 'objectClone() test failed';
 
 	let s1 = {sh: 3};

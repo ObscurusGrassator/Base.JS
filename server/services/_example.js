@@ -1,6 +1,6 @@
 // Cannot be used due to cyclic dependence: require('server/index.js')
 const util = require('shared/utils');
-// const config = require('shared/services/jsconfig.base.js')
+// const config = require('shared/services/base/jsconfig.base.js')
 // 	.update('services.example', { // default values
 // 		"services": {
 // 			"example": {

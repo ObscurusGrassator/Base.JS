@@ -1,4 +1,4 @@
-const StorageShared = require('shared/services/storage.ignr.base.js');
+const StorageShared = require('shared/services/base/storage.ignr.base.js');
 
 /** @type {typeof StorageShared['StorageServer']} */
 // @ts-ignore

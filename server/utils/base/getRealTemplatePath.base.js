@@ -1,8 +1,8 @@
 const fs = require('fs');
 const pathLib = require('path');
 
-const getFilePaths = require('server/utils/getFilePaths.base.js');
-const urlParser = require('shared/utils/urlParser.base.js');
+const getFilePaths = require('server/utils/base/getFilePaths.base.js');
+const urlParser = require('shared/utils/base/urlParser.base.js');
 
 /**
  * If you use path with variables, this function return real path and variables in object.

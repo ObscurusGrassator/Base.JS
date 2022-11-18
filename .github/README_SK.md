@@ -20,7 +20,7 @@ Väčšina IDE editorov zatiaľ neumožňuje používať nápovedy a typovú kon
 ```
 npm start
 
-# Start server with run application unit tests (shared/services/testing.base.js):
+# Start server with run application unit tests (shared/services/base/testing.base.js):
 npm start testing
 npm start testing=/fileWithTests/i
 
@@ -98,8 +98,8 @@ Všetky vlastonsti je možné modifikovať cez enviromentálne premenné. For ex
 Prístup k aktuálnym vlastnostiam a nastavenie defaultnej konfigurácie do `jsconfig.json`, ak ešte neexistuje (`update()`):
 ```
 // v komponente a client/src/... stačí zjednodušene cez: b.serverContent.config
-const config = require('shared/services/jsconfig.base.js').value;
-const config = require('shared/services/jsconfig.base.js').update('utils.ifThisNotExists', {
+const config = require('shared/services/base/jsconfig.base.js').value;
+const config = require('shared/services/base/jsconfig.base.js').update('utils.ifThisNotExists', {
    utils: {
       ifThisNotExists: {
          public: 'abc',
@@ -114,7 +114,7 @@ Aktuálna konfigurácia sa automaticky odosiela aj na frontend. Predtým sa z ne
 # Template modificator
 Framework now does not have reactive template editor. Template rendering is started manualy:
 ```
-const templateEditor = require('client/utils/templateEditor.base.js');
+const templateEditor = require('client/utils/base/templateEditor.base.js');
 // OR
 const templateEditor = require('client/src/_index.js').templateEditor;
 // OR

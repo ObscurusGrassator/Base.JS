@@ -1,8 +1,8 @@
-const get = require('shared/utils/get.base');
-const set = require('shared/utils/set.base');
-const objectClone = require('shared/utils/objectClone.base');
-const contain = require('shared/utils/contain.base');
-const testing = require('shared/services/testing.base');
+const get = require('shared/utils/base/get.base');
+const set = require('shared/utils/base/set.base');
+const objectClone = require('shared/utils/base/objectClone.base');
+const contain = require('shared/utils/base/contain.base');
+const testing = require('shared/services/base/testing.base');
 
 /**
  * Deep merging second object to first object argument.

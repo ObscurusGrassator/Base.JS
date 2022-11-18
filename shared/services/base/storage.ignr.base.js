@@ -1,12 +1,12 @@
 const util = require('shared/utils');
-const error = require('shared/utils/error.base.js');
+const error = require('shared/utils/base/error.base.js');
 
 /** @template A             @typedef { import('shared/types/general.base').DeepPartial<A> } DeepPartial<A> */
 /** @template A             @typedef { import('shared/types/general.base').StringPathOf<A> } StringPathOf<A> */
 /** @template A @template B @typedef { import('shared/types/general.base').TypeOfPath<A, B> } TypeOfPath<A, B> */
 /** @template A @template B @typedef { import('shared/types/general.base').DeepJoinObj<A, B> } DeepJoinObj<A, B> */
 
-const config = require('shared/services/jsconfig.base.js').update('services.storage', {
+const config = require('shared/services/base/jsconfig.base.js').update('services.storage', {
     "services": {
         "storage": {
             "cookies": {

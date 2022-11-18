@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const promisify = require('shared/utils/promisify.base.js');
-const error = require('shared/utils/error.base.js');
+const promisify = require('shared/utils/base/promisify.base.js');
+const error = require('shared/utils/base/error.base.js');
 
 // https://stackoverflow.com/questions/5827612/node-js-fs-readdir-recursive-directory-search
 /**
@@ -82,8 +82,8 @@ function getFilePaths(dirPath, regExp = /.+/, deep = true, libOrService = false)
 	return recursive(dirPath, regExp, deep, libOrService);
 };
 
-require('shared/services/testing.base.js').add(async () => {
-	if (!(await getFilePaths('../')).includes('server/utils/getFilePaths.base.js')) throw 'getFilePaths("") test failed';
+require('shared/services/base/testing.base.js').add(async () => {
+	if (!(await getFilePaths('../')).includes('server/utils/base/getFilePaths.base.js')) throw 'getFilePaths("") test failed';
 	if ((await getFilePaths('../', /_not_exist_name_nscfanlysn/)).length !== 0) throw 'getFilePaths("", RegExp) test failed';
 });
 

@@ -1,5 +1,5 @@
-const promisify = require('shared/utils/promisify.base.js');
-const error = require('shared/utils/error.base.js');
+const promisify = require('shared/utils/base/promisify.base.js');
+const error = require('shared/utils/base/error.base.js');
 
 let commands = [/^if$/i, /^setHtml$/i, /^setAttr$/i, /^setClass$/i, /^js$/i, /^priority$/i,
 	/^template$/i, /^input$/i, /^_BaseJS_ComponentId_$/i,

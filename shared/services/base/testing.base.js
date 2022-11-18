@@ -34,9 +34,9 @@ class Testing {
 	 * @throws Throws an exception if the test fails.
 	 */
 	static async testAll(rexExp) {
-		const promisify = require('shared/utils/promisify.base');
-		const error = require('shared/utils/error.base');
-		const console = require('shared/utils/console.base');
+		const promisify = require('shared/utils/base/promisify.base');
+		const error = require('shared/utils/base/error.base');
+		const console = require('shared/utils/base/console.base');
 
 		let proms = [];
 		let max = tests.length;

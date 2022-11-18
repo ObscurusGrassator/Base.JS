@@ -1,15 +1,15 @@
 const fs = require('fs');
 const pathLib = require("path");
 
-const error = require('shared/utils/error.base.js');
-const objectDeepPropertiesProcessing = require('shared/utils/objectDeepPropertiesProcessing.base.js');
-const getFilePaths = require('server/utils/getFilePaths.base.js');
-const indexCreate = require('server/utils/indexCreate.base.js');
-const update = require('shared/utils/update.base.js');
-const objectClone = require('shared/utils/objectClone.base.js');
-const promisify = require('shared/utils/promisify.base.js');
-const console = require('shared/utils/console.base.js');
-const config = require('shared/services/jsconfig.base.js').value;
+const error = require('shared/utils/base/error.base.js');
+const objectDeepPropertiesProcessing = require('shared/utils/base/objectDeepPropertiesProcessing.base.js');
+const getFilePaths = require('server/utils/base/getFilePaths.base.js');
+const indexCreate = require('server/utils/base/indexCreate.base.js');
+const update = require('shared/utils/base/update.base.js');
+const objectClone = require('shared/utils/base/objectClone.base.js');
+const promisify = require('shared/utils/base/promisify.base.js');
+const console = require('shared/utils/base/console.base.js');
+const config = require('shared/services/base/jsconfig.base.js').value;
 
 /** @typedef {import('client/types/serverContentType.js').ServerContentType} ServerContentType */
 
@@ -59,7 +59,7 @@ async function readFile(
 		result = result
 			.replace(/require\(["']([a-zA-Z0-9_\-]*\/[a-zA-Z0-9_\-\/\.]*?)(\/index)?(\/|\.html|\.js)?["']\)/gi,
 				(all, templateName) => requireReplacer(templateName))
-			.replace(/require\(['"][^\)\/]+['"]\)/gi, 'undefined') // require('fs'); v shared/services/jsconfig.base.js
+			.replace(/require\(['"][^\)\/]+['"]\)/gi, 'undefined') // require('fs'); v shared/services/base/jsconfig.base.js
 			.replace(/export\s*\{\};/gi, '')
 			.replace(/(const|var|let)\s*[a-zA-Z0-9_\-]+\s*=\s*require\([\s\S]+?(;;|; |;\n| else)/gi,
 				(all, lett, req) => req == ';;' ? all : req)
@@ -272,14 +272,14 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 					window.js = undefined;
 					window.templateHTML = {}; // HTML templates
 					window.templateJS = {}; // wrapper of template JS is called per HTML template existing
-					window.templateJsThis = {}; // 'this' per HTML template JS for client/utils/templateEditor.base.js
+					window.templateJsThis = {}; // 'this' per HTML template JS for client/utils/base/templateEditor.base.js
 					window.unloadFunctionalityStack = []; // unloaded functionality file path
 					window.requires = {}; // loaded functionality
 					window.serverContent = window.requires['client/types/serverContentType'] =
 						/*<.*serverContent*.->*/${JSON.stringify({...serverContent, config: conf})}/*<-.*serverContent*.>*/ ;
 					window.templateHTML['${notSuppTempl}'] = \`
 						${fs.existsSync(notSuppTempl) ? encode(await promisify(fs.readFile, notSuppTempl, 'utf8')) : ''}\`;
-					${fs.existsSync(notSuppTempl) ? await promisify(fs.readFile, 'client/utils/browserTestCompatibility.ignr.base.js', 'utf8') : ''}
+					${fs.existsSync(notSuppTempl) ? await promisify(fs.readFile, 'client/utils/base/browserTestCompatibility.ignr.base.js', 'utf8') : ''}
 
 					function isFunction(f) { return typeof f == 'function' && f.marker == 'rWFM'; }
 					function rWFM(fun) { fun.marker = 'rWFM'; return fun; }
@@ -309,8 +309,8 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 
 					window.b = window.requires['client/src/_index'];
 
-					window.requires['shared/utils/console.base'].configure({
-						userErrorFunction: window.requires['shared/utils/error.base'],
+					window.requires['shared/utils/base/console.base'].configure({
+						userErrorFunction: window.requires['shared/utils/base/error.base'],
 						debugFileRegExp: ${console.debugFileRegExp}
 					});
 
@@ -340,7 +340,7 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 					<script>
 						window.addEventListener('load', async () => {
 							setTimeout(() => {
-								window.requires['shared/services/testing.base'].testAll()
+								window.requires['shared/services/base/testing.base'].testAll()
 									.catch((err) => { console.error(err); });
 							}, 100);
 						}, false);

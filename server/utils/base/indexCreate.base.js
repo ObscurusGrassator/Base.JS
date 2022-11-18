@@ -1,14 +1,14 @@
 const path = require('path');
 const fs = require('fs');
 
-const error = require('shared/utils/error.base.js');
+const error = require('shared/utils/base/error.base.js');
 const package = require('package.json');
-const getFilePaths = require('server/utils/getFilePaths.base.js');
-const get = require('shared/utils/get.base.js');
-const set = require('shared/utils/set.base.js');
-const promisify = require('shared/utils/promisify.base.js');
-const console = require('shared/utils/console.base.js');
-const config = require('shared/services/jsconfig.base.js').update('utils._createIndex', {
+const getFilePaths = require('server/utils/base/getFilePaths.base.js');
+const get = require('shared/utils/base/get.base.js');
+const set = require('shared/utils/base/set.base.js');
+const promisify = require('shared/utils/base/promisify.base.js');
+const console = require('shared/utils/base/console.base.js');
+const config = require('shared/services/base/jsconfig.base.js').update('utils._createIndex', {
 	'utils': {
 		'_createIndex': {
 			'utils': {

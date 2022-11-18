@@ -1,7 +1,7 @@
-const error = require('shared/utils/error.base.js');
-const get = require('shared/utils/get.base.js');
-const contain = require('shared/utils/contain.base.js');
-const Testing = require('shared/services/testing.base.js');
+const error = require('shared/utils/base/error.base.js');
+const get = require('shared/utils/base/get.base.js');
+const contain = require('shared/utils/base/contain.base.js');
+const Testing = require('shared/services/base/testing.base.js');
 
 /**
  * Implemented like Lodash.set()

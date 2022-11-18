@@ -1,4 +1,4 @@
-const error = require('shared/utils/error.base.js');
+const error = require('shared/utils/base/error.base.js');
 
 let path = [];
 

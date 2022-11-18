@@ -1,11 +1,11 @@
 const fs = require('fs');
 const child_process = require('child_process');
 
-const error = require('shared/utils/error.base.js');
-const get = require('shared/utils/get.base.js');
-const set = require('shared/utils/set.base.js');
-const update = require('shared/utils/update.base.js');
-const jsonStringify = require('shared/utils/jsonStringify.base.js');
+const error = require('shared/utils/base/error.base.js');
+const get = require('shared/utils/base/get.base.js');
+const set = require('shared/utils/base/set.base.js');
+const update = require('shared/utils/base/update.base.js');
+const jsonStringify = require('shared/utils/base/jsonStringify.base.js');
 const confBase = require('jsconfig.json');
 
 let local = require('jsconfig.local.json');

@@ -2,7 +2,7 @@ const fs = require('fs');
 
 var error;
 if (typeof require === 'undefined' || fs.existsSync('jsconfig.json')) {
-	error = require('shared/utils/error.base.js');
+	error = require('shared/utils/base/error.base.js');
 } else error = message => (new Error(message)).stack;
 
 /**

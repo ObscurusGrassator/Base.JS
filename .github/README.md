@@ -20,7 +20,7 @@ Most IDE editors do not yet support the use of hints, type check and autocomplet
 ```
 npm start
 
-# Start server with run application unit tests (shared/services/testing.base.js):
+# Start server with run application unit tests (shared/services/base/testing.base.js):
 npm start testing
 npm start testing=/fileWithTests/i
 
@@ -98,8 +98,8 @@ All properties can be modified via environmental variables. For example `export 
 Access to current configuration and set default configuration to `jsconfig.json`, if it does not already exist (`update()`):
 ```
 // in the component and client/src/..., simply by using: b.serverContent.config
-const config = require('shared/services/jsconfig.base.js').value;
-const config = require('shared/services/jsconfig.base.js').update('utils.ifThisNotExists', {
+const config = require('shared/services/base/jsconfig.base.js').value;
+const config = require('shared/services/base/jsconfig.base.js').update('utils.ifThisNotExists', {
    utils: {
       ifThisNotExists: {
          public: 'abc',
@@ -114,7 +114,7 @@ The current configuration is also automatically sent to the frontend. Before tha
 # Template modificator
 Framework now does not have reactive template editor. Template rendering is started manualy:
 ```
-const templateEditor = require('client/utils/templateEditor.base.js');
+const templateEditor = require('client/utils/base/templateEditor.base.js');
 // OR
 const templateEditor = require('client/src/_index.js').templateEditor;
 // OR

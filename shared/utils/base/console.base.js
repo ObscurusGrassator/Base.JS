@@ -175,7 +175,7 @@ console.firstConfiguretion = true;
  * @returns {Console & ConsolePlus & OptionsDefault}
  */
 function configure(options = {}) {
-	const config = require('shared/services/jsconfig.base.js').update('utils.console', {
+	const config = require('shared/services/base/jsconfig.base.js').update('utils.console', {
 		"utils": {
 			"console": {
 				"backupFilePath": "console.log",

@@ -11,7 +11,7 @@ let config;
  */
 function error(...err) {
 	// prevent of circular dependency
-	if (!config) config = require('shared/services/jsconfig.base.js').update('utils._error', {
+	if (!config) config = require('shared/services/base/jsconfig.base.js').update('utils._error', {
 		"utils": {
 			"_error": {
 				"errorStackStringRemove": [
