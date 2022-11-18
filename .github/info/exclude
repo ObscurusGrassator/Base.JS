@@ -14,9 +14,9 @@
 
 !client/
 !client/services/
-!client/services/BaseJs/
+!client/services/base/
 !client/utils/
-!client/utils/BaseJs/
+!client/utils/base/
 !client/libs/
 !client/src/
 !client/src/_index.js
@@ -32,9 +32,9 @@
 !server/
 !server/api/
 !server/services/
-!server/services/BaseJs/
+!server/services/base/
 !server/utils/
-!server/utils/BaseJs/
+!server/utils/base/
 !server/src/
 !server/src/_index.js
 !server/types/
@@ -42,9 +42,9 @@
 
 !shared/
 !shared/services/
-!shared/services/BaseJs/
+!shared/services/base/
 !shared/utils/
-!shared/utils/BaseJs/
+!shared/utils/base/
 !shared/types/
 
 
