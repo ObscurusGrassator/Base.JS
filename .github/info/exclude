@@ -14,7 +14,9 @@
 
 !client/
 !client/services/
+!client/services/BaseJs/
 !client/utils/
+!client/utils/BaseJs/
 !client/libs/
 !client/src/
 !client/src/_index.js
@@ -26,26 +28,23 @@
 !client/types/
 !client/types/events/
 !client/types/storage/
-!client/types/storage/cookie.js
-!client/types/storage/local.js
-!client/types/storage/session.js
 
 !server/
 !server/api/
 !server/services/
+!server/services/BaseJs/
 !server/utils/
+!server/utils/BaseJs/
 !server/src/
 !server/src/_index.js
 !server/types/
 !server/types/storage/
-!server/types/storage/root.js
-!server/types/storage/cookies.js
-!server/types/storage/local.js
-!server/types/storage/session.js
 
 !shared/
 !shared/services/
+!shared/services/BaseJs/
 !shared/utils/
+!shared/utils/BaseJs/
 !shared/types/
 
 

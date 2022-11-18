@@ -3,6 +3,7 @@ module.exports = class Index {
 	static get = require('shared/utils/get.base.js');
 	static set = require('shared/utils/set.base.js');
 	static console = require('shared/utils/console.base.js');
+
 	static storage = require('server/services/storage.base.js');
 	static config = require('shared/services/jsconfig.base.js').value;
 

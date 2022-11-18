@@ -1,8 +1,5 @@
 const error = require('shared/utils/error.base.js');
 
-/** @template UserData @typedef {import('client/types/events/eventType.ignr.base.js').EventType<UserData>} EventType<UserData> */
-/** @template O @template A @typedef {import('shared/types/general.base.js').DeepAnyJoinObjRead<O, A>} DeepAnyJoinObjRead */
-
 let path = [];
 
 /** @type {ProxyHandler} */
@@ -14,7 +11,7 @@ const handler = {
 			document.dispatchEvent(new CustomEvent(eventName, {detail: argumentsList[0]}));
 		}
 		else if (funcName == 'listen') {
-			let action = event => argumentsList[0](event, event['detail']);
+			let action = event => argumentsList[0](event['detail'], event);
 
 			document.addEventListener(eventName, action);
 
@@ -44,12 +41,10 @@ const proxy = {_BaseJS_root: true};
 /**
  * Easy communication of components through events.
  * 
- * @template UserData
- * @type {DeepAnyJoinObjRead<import('client/types/events').Type, EventType<any>>}
- * 
+ * @type { import('client/types/events').Type }
  * @example
  *   let listen = events.userPath.eventName.listen(
- *      (event, properties) => { ... properties.example ... }
+ *      (properties, event) => { console.log(properties.example); }
  *   );
  *   events.userPath.eventName.send({example: 123}));
  *   listen.removeListen();

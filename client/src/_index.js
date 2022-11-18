@@ -6,9 +6,10 @@ module.exports = {
 	get: require('shared/utils/get.base.js'),
 	set: require('shared/utils/set.base.js'),
 	console: require('shared/utils/console.base.js'),
+	templateEditor: require('client/utils/templateEditor.base.js'),
+
 	storage: require('client/services/storage.base.js'),
 	config: require('shared/services/jsconfig.base.js').value,
-	templateEditor: require('client/utils/templateEditor.base.js'),
 
 	util: require('client/utils/'),
 	service: require('client/services/'),

@@ -18,7 +18,7 @@
 		<link rel="icon" href="http://www.example.com/images/icon.jpg">
 	</head>
 	<body>
-		<script> /** @type { include("index.js") } */ var js; </script>
+		<script> /** @type { import("index.js") } */ var js; </script>
 
 		Dynamic template server content from server data:
 		<span onbase="w({ setHtml: b.serverContent.pathVariables.user_variable })"></span>

@@ -3,7 +3,7 @@ module.exports = new function () {
 	const b = require('client/src/_index.js');
 
 	const listeners = [];
-	listeners.push(b.events._example_.exampleRoot.listen((event, output) => {
+	listeners.push(b.events._example_.exampleRoot.listen(output => {
 		document.getElementById("template_example_event_value").innerHTML += output.my_prop_root;
 	}));
 

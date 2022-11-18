@@ -26,7 +26,9 @@ function getFilePaths(dirPath, regExp = /.+/, deep = true, libOrService = false)
 	/**
 	 * @param {String} dirPath
 	 * @param {RegExp} [regExp = /.+/]
+	 * @param {Boolean} [deep = false]
 	 * @param {Boolean} [libOrService = false]
+	 * @param {String} [dirPathOrig = null]
 	 *
 	 * @returns {Promise<String[]>}
 	 */
@@ -65,15 +67,15 @@ function getFilePaths(dirPath, regExp = /.+/, deep = true, libOrService = false)
 					}
 				}
 
-				return resolve( Promise.all(proms).then(dirs => {
+				return Promise.all(proms).then(dirs => {
 					for (let files of dirs) {
 						for (let file of files) {
 							file = file.replace(new RegExp(path.resolve('') + '\\/', 'g'), '');
 							results.push(file);
 						}
 					}
-					return results;
-				}).catch((err) => { return Promise.reject(error(err)); }) );
+					return resolve(results);
+				}).catch((err) => { return Promise.reject(error(err)); });
 			});
 		}).catch((err) => { return Promise.reject(error(err)); });
 	};

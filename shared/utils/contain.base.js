@@ -13,28 +13,31 @@ const optionsDefault = {
  * 'mustHave' can contain compare function(sourcePart): boolean
  * 
  * @author obscurus.grassator@gmail.com
- * @template {Array | {[key: string]: any}} T
- * @param {T} source
- * @_param {import('../types/general.base.js').DeepReplaceObjPartial<
- *           import('../types/general.base.js').DeepJoinObjPartial<
- *             T, {orderInArray: "keep" | "random"}>, function(any): Boolean>} mustHave
- * @param {import('../types/general.base.js').DeepReplaceObjPartial<
- *           T, {orderInArray: "keep" | "random"} | (function(any): Boolean)>} mustHave
- * @param {Object} options
- * @param {any[][]} [options.equalsValues = [[undefined, false]] ] Defaul undefined === false
- * @param {String | Boolean} [options.throwAfterUncontain = false] If set message string, is throw: [options.throwAfterUncontain, path, bugs[]]
- * @param {'keep' | 'random'} [options.orderInArray = 'random'] Default comparison in all arrays.
+ * @template { Array | {[key: string]: any} } T
+ * @param { T } source
+ * @param { import('../types/general.base.js').DeepJoinObjPartial<
+ *    	import('../types/general.base.js').DeepWrappingObjPartial<T, 9>,
+ *      {orderInArray: "keep" | "random"},
+ * 		9
+ * > } mustHave
+ * @_param { import('../types/general.base.js').DeepReplaceObjPartial<
+ *           T, {orderInArray: "keep" | "random"} | (function(any): Boolean)> } mustHave
+ * @param { Object } options
+ * 		@param { any[][] } [options.equalsValues = [[undefined, false]] ] Defaul undefined === false
+ * 		@param { String | Boolean } [options.throwAfterUncontain = false] If set message string, is throw: [options.throwAfterUncontain, path, bugs[]]
+ * 		@param { Boolean } [options.equal = false] = contain(A, B) && contain(B, A)
+ * 		@param { 'keep' | 'random' } [options.orderInArray = 'random'] Default comparison in all arrays.
  * 
  * @example contain({a: {x: 2}, b: {y: 3}}, {b: {y: 3}}); // true
  * @example contain({a: {x: 2}, b: {y: 3}}, {b: {x: 2}}); // false
- * @example contain({a: {x: 2}, b: {y: 3}}, {b: {y: s => s === 2}}); // true
+ * @example contain({a: {x: 2}, b: {y: 3}}, {b: {y: s => s === 3}}); // true
  * @example contain({a: {array: [{x: 5}, {y: 6}]}}, {a: {array: [{y: 6}]}}); // true
  * @example contain({a: {array: [{x: 5}, {y: 6}]}}, {a: {array: [{y: 6}, {orderInArray: "keep"}]}}); // false
  * @example contain({a: {array: [{x: 5}, {y: 6}]}}, {a: {array: [{x: 5}, {orderInArray: "keep"}]}}); // true
  * @example contain({}, {b: false}); // true for default options
  * 
- * @returns {Boolean}
- * @throws {[String | Boolean, String, [Object]]} // [opt.throwAfterUncontain, filaName, [bugInfoObject]] // IF options.throwAfterUncontain = 'message'
+ * @returns { Boolean }
+ * @throws {[ String | Boolean, String, [Object] ]} // [opt.throwAfterUncontain, filaName, [bugInfoObject]] // IF options.throwAfterUncontain = 'message'
  */
 function contain(source, mustHave, options = optionsDefault) {
 	const loop = (source, mustHave, options, path = '', bugs = {bugs: []}) => {
@@ -111,15 +114,26 @@ function contain(source, mustHave, options = optionsDefault) {
 				return all;
 			});
 
-			throw [opt.throwAfterUncontain, file, bugs.bugs];
+			let errorMessage = typeof opt.throwAfterUncontain == 'string'
+				? opt.throwAfterUncontain : 'utils.contain() throw';
+			throw [errorMessage, file, bugs.bugs];
 		} else return false;
 	};
-	return loop(source, mustHave, options);
+
+	let result = loop(source, mustHave, options);
+	if (options.equal && result) {
+		let {equal, ...options2} = options;
+		return loop(source, mustHave, options2);
+	}
+	else return result;
 }
 
 () => { // type check
 	// contain({a: 2, obj: {b: 'c'}, arr: [{d: 'd'}, 'b']}, {a: 'w', arr: ['b', {orderInArray: "keep"}]});
 	contain({a: 2, obj: {b: 'c'}, arr: [{d: 'd'}, 'b']}, {arr: ['b', {orderInArray: "keep"}], a: a => a === 2});
+
+	/** @type { any } */ let test = {a: 2, y: 3, obj: {b: 'c'}, arr: [{d: 'd'}, 'b']};
+	contain(test, {y: true, arr: ['x', {orderInArray: "keep"}], a: a => a === 2});
 };
 
 module.exports = contain;

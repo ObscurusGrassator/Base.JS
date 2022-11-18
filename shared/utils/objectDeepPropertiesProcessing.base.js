@@ -3,8 +3,8 @@
  * 
  * @template {Object} T
  * 
- * @param {T} obj
- * @param {function(any, string|number, (String | Number)[]): void} deepFunction deepFunction(objectPart, key, objectPartPath)
+ * @param { T } obj
+ * @param { (objectPart: any, key: string | number, keyPath: (String | Number)[]) => void } deepFunction
  * 
  * @example objectDeepPropertiesProcessing(object, (objPart, i) => { if (objPart[i] === 0) objPart[i] = false; });
  * 

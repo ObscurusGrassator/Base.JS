@@ -1,6 +1,8 @@
 /**
  * @template UserData
- * @typedef {{send: function(UserData): void,
- *   listen: function(function(Event, UserData): void): {removeListen: function(): void}}} EventType
+ * @typedef {{
+ * 		send: (userData: UserData) => void,
+ *   	listen: (callback: (userData: UserData, event: Event) => void) => {removeListen: function(): void}
+ * }} EventType
  */
 export {}

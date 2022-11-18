@@ -13,7 +13,7 @@ module.exports = new function () {
 	this.array = [1, 2, 3, 4, 5];
 
 	const listeners = [];
-	listeners.push(b.events._example_.exampleRoot.listen((event, output) => {
+	listeners.push(b.events._example_.exampleRoot.listen(output => {
 		document.getElementById("template_example_identifitator").innerHTML = this.htmlElement.id;
 	}));
 

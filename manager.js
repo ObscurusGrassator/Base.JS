@@ -3,8 +3,7 @@ const fs = require('fs');
 const _path = require('path');
 // const net = require('net');
 
-const merge = require('shared/utils/merge.base.js');
-const defaults = require('shared/utils/defaults.base.js');
+const update = require('shared/utils/update.base.js');
 const jsonStringify = require('shared/utils/jsonStringify.base.js');
 
 /***************************************************************************
@@ -37,7 +36,7 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 
 
 	[string, object, space] = getContent('jsconfig.json');
-	let jsconfigObj = defaults(object, {
+	let jsconfigObj = update(object, '', {
 		"compilerOptions": {
 			"checkJs": true,
 			"resolveJsonModule": true,
@@ -51,17 +50,18 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 		"startFile": "app_example.js",
 		"server": {
 			"hostname": "0.0.0.0",
-			"productionDomain": "yourdomain.com",
 			"port": 3000,
+			"disableRedirectToHttps": false,
 			"https": {
 				"_privateKey": "/etc/letsencrypt/live/yourdomain.com/privkey.pem",
 				"_certificate": "/etc/letsencrypt/live/yourdomain.com/cert.pem",
 				"_chain": "/etc/letsencrypt/live/yourdomain.com/chain.pem"
 			},
-			"publicHTTPsuffixes": ["gif", "jpg", "png"]
+			"publicHTTPsuffixes": ["gif", "jpg", "png", "svg"]
 		},
 		"client": {
 			"refresh": "60 * 60 * 24",
+			"maxAgeDisableForRegExp": ["/api/getProfileImage/"],
 			"templateNotSupportedBrowser": "notSupportedBrowser.html",
 			"template": "original",
 			"templates": {
@@ -83,14 +83,14 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 
 		"services": {},
 		"utils": {},
-	});
+	}, {arrayItemEqual: (a, b) => a === b, updateWithDefaultValues: true});
 	let str = jsonStringify(jsconfigObj, space);
 	if (string.replace(/\n$/, '') != str) {
 		fs.writeFileSync('jsconfig.json', str);
 	}
 
 	[string, object, space] = getContent('jsconfig.local.json');
-	let jsconfigLocalObj = defaults(object, {
+	let jsconfigLocalObj = update(object, '', {
 		"server": {
 			"hostname": "127.0.0.1"
 		},
@@ -99,29 +99,50 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 				"_auth": { "user": "", "pass": "" }
 			}]
 		}
-	})
+	}, {updateWithDefaultValues: true})
 	str = jsonStringify(jsconfigLocalObj, space);
-	if (string.replace(/\n$/, '') != str) {
+	// if (string.replace(/\n$/, '') != str) {
+	if (!fs.existsSync('jsconfig.local.json')) {
 		fs.writeFileSync('jsconfig.local.json', str);
+	}
+
+	let ignoreString = [
+		'node_modules/',
+		'nohup.out',
+		'console.log',
+		'.serverPID',
+		'jsconfig.local.json',
+	];
+	let gitignoreOld = '';
+	if (fs.existsSync('.gitignore')) {
+		gitignoreOld = fs.readFileSync('.gitignore', {encoding: 'utf8'});
+	}
+	let gitignoreNew = gitignoreOld;
+	for (let str of ignoreString) {
+		if (!(new RegExp(`^${str}$`, 'm')).test(gitignoreNew)) gitignoreNew = `${str}\n${gitignoreNew}`; 
+	}
+	if (gitignoreOld != gitignoreNew) {
+		fs.writeFileSync('.gitignore', gitignoreNew);
 	}
 
 
 
 	[string, object, space] = getContent('package.json');
-	object = merge(defaults(object, {
-		"engines": {"node": ">=12"},
-		"dependencies": {
-			"iconv-lite": "^0.6.2",
-			"nodemailer": "^6.5.0",
-			"shell-exec": "^1.0.2",
-			"mime": "^2.5.2",
-			"run-applescript": "^3.2.0",
+	object = update(update(object, '', {
+		"engines": {"node": ">=16"},
+		"scripts": {
+			"start": "npm run startBaseJS",
 		},
-	}), {
+	}, {updateWithDefaultValues: true}), '', {
+		"dependencies": {
+			"iconv-lite": "^0.6.3",
+			"nodemailer": "^6.8.0",
+			"mime": "^3.0.0",
+		},
 		"scripts": {
 			"update": "git --git-dir=.gitBase.JS pull & npm install",
 			"indexing": "NODE_PATH=. node -e \"require('server/utils/indexCreate.base.js')()\"",
-			"start": "NODE_PATH=. node manager.js",
+			"startBaseJS": "NODE_PATH=. node manager.js",
 			"bgstart": "npm run bgstop; if test ! -e nohup.in; then mkfifo nohup.in; fi; NODE_PATH=. nohup sh -c 'node manager.js' < nohup.in > nohup.out & nohup sh -c 'sleep inf > nohup.in' > /dev/null & echo $! > .sleepPID",
 			"bgconnect": "tail -n100 -f nohup.out & echo $! > .tailPID; trap 'cat .tailPID | xargs kill -KILL; rm .tailPID; exit 0;' INT; cat > nohup.in",
 			"bgstop": "npm run _killSleep; npm run _killNohupFifo; npm run _killServer;",
@@ -138,15 +159,6 @@ const jsonStringify = require('shared/utils/jsonStringify.base.js');
 		child_process.execSync("npm install", {stdio: [process.stdin, process.stdout, process.stderr]});
 		console.info(`\n INF: Help> Configuration file: ${__dirname}/jsconfig.json`);
 		console.info(` INF: Help> Command for server restart: ${jsconfigObj.manager.shortcuts.serverRestart.replace('\n', '')} ⏎`);
-	}
-
-
-
-	try {
-		require.resolve("run-applescript");
-	} catch(e) {
-		console.info('Base.JS installing new packages:');
-		child_process.execSync("npm install", {stdio: [process.stdin, process.stdout, process.stderr]});
 	}
 
 

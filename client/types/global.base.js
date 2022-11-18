@@ -43,9 +43,6 @@ var w;
 /** @global @type { import('../types/serverContentType').ServerContentType } */
 var serverContent;
 
-/** @global @type { (() => any)[] } */
-var afterLoadRequires;
-
 // w({
 // 	if: true,
 // 	forIn: () => [], key: 'qqw',

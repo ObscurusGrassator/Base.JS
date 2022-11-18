@@ -9,23 +9,23 @@ const set = require('shared/utils/set.base.js');
 const promisify = require('shared/utils/promisify.base.js');
 const console = require('shared/utils/console.base.js');
 const config = require('shared/services/jsconfig.base.js').update('utils._createIndex', {
-	"utils": {
-		"_createIndex": {
-			"utils": {
-				"client/src/": ["client/src/"],
-				"client/utils/": ["client/utils/", "shared/utils/"],
-				"server/utils/": ["server/utils/", "shared/utils/"],
-				"shared/utils/": ["shared/utils/"]
+	'utils': {
+		'_createIndex': {
+			'utils': {
+				'client/src/': ['client/src/'],
+				'client/utils/': ['client/utils/', 'client/utils/base/', 'shared/utils/', 'shared/utils/base/'],
+				'server/utils/': ['server/utils/', 'server/utils/base/', 'shared/utils/', 'shared/utils/base/'],
+				'shared/utils/': ['shared/utils/', 'shared/utils/base/']
 			},
-			"services": {
-				"client/services/": ["client/services/", "shared/services/"],
-				"server/services/": ["server/services/", "shared/services/"],
-				"shared/services/": ["shared/services/"]
+			'services': {
+				'client/services/': ['client/services/', 'client/services/base/', 'shared/services/', 'shared/services/base/'],
+				'server/services/': ['server/services/', 'server/services/base/', 'shared/services/', 'shared/services/base/'],
+				'shared/services/': ['shared/services/', 'shared/services/base/']
 			},
-			"jsDocs": {
-				"client/types/events/": ["client/types/events/"],
-				"client/types/storage/": ["client/types/storage/"],
-				"server/types/storage/": ["server/types/storage/"]
+			'jsDocs': {
+				'client/types/events/': ['client/types/events/'],
+				'client/types/storage/': ['client/types/storage/'],
+				'server/types/storage/': ['server/types/storage/']
 			}
 		}
 	}
@@ -34,18 +34,18 @@ const config = require('shared/services/jsconfig.base.js').update('utils._create
 /**
  * Create .index.js file
  * 
- * @param {String} [destinationPath]
+ * @param { string } [destinationPath]
  *    Folder for create '.index.js' file.
  *    If is not set, function indexing all in jsconfig.json/util._createIndex
- * @param {String[]} [dirPathsSource = []] Indexing files of these folders
- * @param {'utils' | 'services' | 'jsDocs'} [type = 'utils'] 'services' not indexing files into service folders
- * @param {String} [objectPathsSource]
+ * @param { string[] } [dirPathsSource = []] Indexing files of these folders
+ * @param { 'utils' | 'services' | 'jsDocs' } [type = 'utils'] 'services' not indexing files into service folders
+ * @param { (templateName: string) => string } [requireReplacer]
  *    if this not defined, is used require function is used for file path,
  *    else this client array with file paths properties
  * 
  * @returns {Promise<String>}
  */
-async function indexCreate(destinationPath = null, dirPathsSource = [], type = 'utils', objectPathsSource = null) {
+async function indexCreate(destinationPath = null, dirPathsSource = [], type = 'utils', requireReplacer = null) {
 	try {
 		if (!destinationPath && dirPathsSource.length === 0) {
 			let serverContentType = '/**'
@@ -151,9 +151,10 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 							continue;
 						}
 
-						if (!objectPathsSource && /\.ignr\./.test(file)) continue;
+						if (!requireReplacer && /\.ignr\./.test(file)) continue;
 						if (file.substr(file.length - 14) == '/src/_index.js') continue;
 
+						let templateName = file.replace(/^\/|\.html$|\.js$/g, '');
 						let functionName = file.match(/(^|\/)([a-zA-Z_\-]+)[^\/]*.js$/i)[2].replace(/[_\-]$/, '');
 						let path = (file + '...').substring(dirPathsSource[i].length).split('/');
 						path.pop();
@@ -168,15 +169,15 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 
 						if (type == 'jsDocs' && functionName == 'root') {
 							path.push('root');
-							if (objectPathsSource) set(group, path, `${objectPathsSource}['${file}']`);
-							else                   set(group, path, `require('${file}')`);
+							if (requireReplacer) set(group, path, requireReplacer(templateName));
+							else                set(group, path, `require('${file}')`);
 							continue;
 						}
 						path.push('array');
 						let array = get(group, path, undefined);
-						if (objectPathsSource) {
-							if (array === undefined) set(group, path, [`'${functionName}':: ${objectPathsSource}['${file}']`]);
-							else array.push(`'${functionName}':: ${objectPathsSource}['${file}']`);
+						if (requireReplacer) {
+							if (array === undefined) set(group, path, [`'${functionName}':: ${requireReplacer(templateName)}`]);
+							else array.push(`'${functionName}':: ${requireReplacer(templateName)}`);
 						} else {
 							if (array === undefined) set(group, path, [`'${functionName}':: require('${file}')`]);
 							else array.push(`'${functionName}':: require('${file}')`);
@@ -185,7 +186,7 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 				}
 			});
 		/***********************************/
-		
+
 		let result = '';
 
 		if (type == 'jsDocs') {

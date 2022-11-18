@@ -19,8 +19,8 @@ const urlParser = require('shared/utils/urlParser.base.js');
  *   // or: {path: 'article/12345/index.html', variables: {}}
  *   // or: {path: 'article/12345.html', variables: {}}
  */
-async function getRealTemplatePath(path = '/index.html', defaultPath = 'notFounds.html', pathPrefix = '') {
-	path = pathLib.join(pathPrefix, path.replace(/\/$|\?.*$/, ''));
+async function getRealTemplatePath(path = 'index.html', defaultPath = 'notFounds.html', pathPrefix = '') {
+	path = pathLib.join(pathPrefix, path.replace(/^\/|\/$|\?.*$/g, ''));
 	let lastPathPart = (path) => {
 		if (fs.existsSync(pathLib.join(path, 'index.html'))) return {path: pathLib.join(path, 'index.html'), variables: {}};
 		else if (fs.existsSync(pathLib.join(path, 'index.js'))) return {path: pathLib.join(path, 'index.js'), variables: {}};

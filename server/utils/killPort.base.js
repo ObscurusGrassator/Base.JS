@@ -1,4 +1,5 @@
-const sh = require('shell-exec');
+const promisify = require('shared/utils/promisify.base');
+const { exec } = require('child_process');
 const error = require('shared/utils/error.base.js');
 
 /**
@@ -11,24 +12,21 @@ async function killPort(port, method = 'tcp') {
 	let killing, result;
 
 	if (process.platform === 'win32') {
-		killing = await sh(`Get-Net${method === 'udp' ? 'UDP' : 'TCP'}Connection -LocalPort ${port}`);
+		killing = await promisify(exec, `Get-Net${method === 'udp' ? 'UDP' : 'TCP'}Connection -LocalPort ${port}`).catch(e => '');
 	} else {
-		killing = await sh(`lsof -i ${method === 'udp' ? 'udp' : 'tcp'}:${port} | grep ${method === 'udp' ? 'UDP' : 'LISTEN'}`);
-		// killing = await sh(`lsof -t -i:${port} -s${method === 'udp' ? 'UDP' : 'TCP'}:LISTEN`);
+		killing = await promisify(exec, `lsof -i ${method === 'udp' ? 'udp' : 'tcp'}:${port} | grep ${method === 'udp' ? 'UDP' : 'LISTEN'}`).catch(e => '');
+		// killing = await promisify(exec, `lsof -t -i:${port} -s${method === 'udp' ? 'UDP' : 'TCP'}:LISTEN`).catch(e => '');
 	}
 
-	if (killing.stdout) {
-		console.warn('Killing process on port', port, ':\n', killing.stdout);
+	if (killing) {
+		console.warn('Killing process on port', port, ':\n', killing);
 
 		if (process.platform === 'win32') {
-			result = await sh(`Stop-Process -Id (Get-Net${method === 'udp' ? 'UDP' : 'TCP'}Connection -LocalPort ${port}).OwningProcess -Force`);
+			result = await promisify(exec, `Stop-Process -Id (Get-Net${method === 'udp' ? 'UDP' : 'TCP'}Connection -LocalPort ${port}).OwningProcess -Force`).catch(e => '');
 		} else {
-			// result = await sh(`lsof -i ${method === 'udp' ? 'udp' : 'tcp'}:${port} | grep ${method === 'udp' ? 'UDP' : 'LISTEN'} | awk '{print $2}' | xargs kill -9 && sleep 1s`);
-			result = await sh(`kill -9 $(lsof -t -i:${port} -s${method === 'udp' ? 'UDP' : 'TCP'}:LISTEN) && sleep 1s`);
+			result = await promisify(exec, `kill -9 $(lsof -t -i:${port} -s${method === 'udp' ? 'UDP' : 'TCP'}:LISTEN) && sleep 1s`).catch(e => '');
+			// result = await promisify(exec, `lsof -i ${method === 'udp' ? 'udp' : 'tcp'}:${port} | grep ${method === 'udp' ? 'UDP' : 'LISTEN'} | awk '{print $2}' | xargs kill -9 && sleep 1s`).catch(e => '');
 		}
-	}
-	if (result && result.stderr) {
-		return Promise.reject(error(result.cmd + ':\n' + result.stderr));
 	}
 }
 

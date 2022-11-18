@@ -51,9 +51,9 @@ process.stdin.on('data', async data => {
 		process.exit(2);
 	}
 	else if (data.toString() == b.config.manager.shortcuts.serverRestartAndTerminalClear) {
-		await b.modul["run-applescript"](`
+		await b.util.promisify(b.modul.child_process.execFile, 'osascript', ['-e', `
 			tell application "System Events" to tell process "Terminal" to keystroke "k" using command down
-		`);
+		`]);
 		process.exit(2);
 	}
 	else { try { eval(data.toString()); } catch (err) { console.error(err); } }
@@ -91,15 +91,16 @@ concoleWarnError(console0, b);
 		b.modul.fs.renameSync('.git', '.gitBase.JS');
 		b.modul.fs.writeFileSync('.gitBase.JS/info/exclude', b.modul.fs.readFileSync('.github/info/exclude'));
 	}
-	b.modul["shell-exec"]('alias gitb="git --git-dir=.gitBase.JS"');
 
-	b.modul["shell-exec"](`
+	await b.util.promisify(b.modul.child_process.exec, 'alias gitb="git --git-dir=.gitBase.JS"');
+
+	await b.util.promisify(b.modul.child_process.exec, `
 		git --git-dir=.gitBase.JS rev-parse HEAD;
 		git --git-dir=.gitBase.JS fetch origin master;
 		git --git-dir=.gitBase.JS log master..origin/master --format="%H %B"
-	`).then((data) => {
+	`).then(data => {
 		/** @type {String[]} */
-		let newCommits = data.stdout.split('\n');
+		let newCommits = data.split('\n');
 		let showNewCommits = [];
 		let hashNew = '';
 		let hashOld = newCommits.shift();
@@ -169,27 +170,30 @@ concoleWarnError(console0, b);
 					var img = b.modul.fs.readFileSync(input.parts.join('/'));
 					res.setHeader('Content-Type', b.modul.mime.getType(fileSufix));
 					res.setHeader('ETag', etag);
-					// if (!res.getHeader('Cache-Control')) { // with max-age is ignored etag
-					// 	res.setHeader('Cache-Control', `public, max-age=${eval(b.config.client.refresh)}`);
-					// }
+					if (!b.storage.of(b.config, a => a.client.maxAgeDisableForRegExp, ['']).find(a => new RegExp(a).test(input.parts.join('/')))
+					 && !res.getHeader('Cache-Control')) { // with max-age is ignored etag
+						res.setHeader('Cache-Control', `public, max-age=${eval(b.config.client.refresh)}`);
+					}
 					res.statusCode = 200;
 					res.end(img, 'binary');
 					return;
 				}
 			}
 
-			b.storage.write(storage => storage.server.response = res);
-			b.storage.write(storage => storage.server.request = req);
-			b.storage.write(storage => storage.server.getData = input.queries);
-			b.storage.write(storage => storage.server.postData = postData);
+			b.storage.edit(storage => storage.server.response = res);
+			b.storage.edit(storage => storage.server.request = req);
+			b.storage.edit(storage => storage.server.getData = input.queries);
+			b.storage.edit(storage => storage.server.postData = postData);
 
 			let endIsCalled = false;
+			// @ts-ignore
 			if (!res.endIsChanged) {
 				let endOld = res.end;
 				res.end = (...args) => {
 					endIsCalled = true;
 					return endOld.apply(res, args);
 				};
+				// @ts-ignore
 				res.endIsChanged = true;
 			}
 
@@ -261,7 +265,7 @@ concoleWarnError(console0, b);
 	// https://stackoverflow.com/questions/22453782/nodejs-http-and-https-over-same-port
 	let servers = {};
     servers.http = b.modul.http.createServer((req, res) => {
-		if (httpsExists) {
+		if (!b.config.server.disableRedirectToHttps && httpsExists) {
 			res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
 			res.end();
 		}
@@ -312,7 +316,7 @@ concoleWarnError(console0, b);
 
 	let refreshAndToBrowser = async () => {
 		if (process.argv.includes('refresh') || process.argv.includes('toBrowser')) {
-			await b.modul["run-applescript"](`
+			await b.util.promisify(b.modul.child_process.execFile, 'osascript', ['-e', `
 				set urll to "${httpsExists ? 'https' : 'http'}://${b.config.server.hostname}${b.config.server.port ? ':' + b.config.server.port : ''}"
 				on is_running(appName)
 					tell application "System Events" to (name of processes) contains appName
@@ -352,7 +356,7 @@ concoleWarnError(console0, b);
 						open location urll
 					end tell
 				end if
-			`);
+			`]);
 		}
 	}
 	b.storage.edit(s => s.server.help.push(
@@ -378,10 +382,10 @@ concoleWarnError(console0, b);
 		{prop: 'testing=/fileWithTest/', desc: 'start specific tests'}
 	));
 	for (let i in process.argv) {
-		if (process.argv[i] === 'testing') b.service.testing.testAll(); // await
+		if (process.argv[i] === 'testing') await b.service.testing.testAll(); // await
 		else if (process.argv[i].substr(0, 8) === 'testing=') {
 			let match = process.argv[i].match(/=\/?([^\/]+)\/?(.*)$/);
-			b.service.testing.testAll(new RegExp(match[1], match[2]));
+			await b.service.testing.testAll(new RegExp(match[1], match[2]));
 		}
 	}
 

@@ -3,16 +3,6 @@ var util = require('util');
 var fs = require('fs');
 var pathLib = require("path");
 
-const config = require('shared/services/jsconfig.base.js').update('utils.console', {
-	"utils": {
-		"console": {
-			"backupFilePath": "console.log",
-			"debugFileRegExp": "",
-			"enableFileRegExp": "/.*/"
-		}
-	}
-}).value.utils.console;
-
 console.origStdoutWrite = console.origStdoutWrite || (typeof process !== 'undefined' && process.stdout.write);
 console.origStderrWrite = console.origStderrWrite || (typeof process !== 'undefined' && process.stderr.write);
 
@@ -185,6 +175,16 @@ console.firstConfiguretion = true;
  * @returns {Console & ConsolePlus & OptionsDefault}
  */
 function configure(options = {}) {
+	const config = require('shared/services/jsconfig.base.js').update('utils.console', {
+		"utils": {
+			"console": {
+				"backupFilePath": "console.log",
+				"debugFileRegExp": "",
+				"enableFileRegExp": "/.*/"
+			}
+		}
+	}).value.utils.console;
+
 	if (console.firstConfiguretion) {
 		let debugFile = config.debugFileRegExp.match(/^\/(.*?)\/(.*)$/);
 		let enableFile = config.enableFileRegExp.match(/^\/(.*?)\/(.*)$/);
@@ -225,7 +225,6 @@ function configure(options = {}) {
 console.configure = configure;
 
 if (typeof require !== 'undefined') console.configure();
-else window.afterLoadRequires.unshift(console.configure);
 
 class ConsolePlus {
 	/** @type {(buffer: string | Uint8Array, cb?: (err?: Error) => void) => boolean} */

@@ -6,8 +6,16 @@ let commands = [/^if$/i, /^setHtml$/i, /^setAttr$/i, /^setClass$/i, /^js$/i, /^p
 	/^forIn$/i, /^_forIn$/i, /^key$/i, /^_BaseJS_ForEachKey_\S+$/i];
 let _BaseJS_ComponentId_counter = 0;
 let renderTimeSum = 0;
+let renderTimeSumDom = 0;
 
 let templates = serverContent.config.client.templates[serverContent.config.client.template];
+
+let onEventSelectors = {};
+for (let i in document) {
+	if (i.substr(0, 2) == 'on') {
+		onEventSelectors[i] = `[${i}]:not([${i}^="return window.baseEval"])`;
+	}
+}
 
 /**
  * Property functions: if, forIn, template, setHtml, setAttr, setClass, js, priority
@@ -47,32 +55,37 @@ let templates = serverContent.config.client.templates[serverContent.config.clien
  * @returns Promise
  */
 async function templateEditor(cssSelector = '', startElement = document.body.parentElement, options = {}) {
-	let startTime = new Date().getTime();
 	return Promise.all(Array.from(/** @type { NodeListOf<HTMLElement> } */ (cssSelector ? startElement.querySelectorAll(cssSelector) : [startElement]))
 		.map(startElement => templateEditorSystem(startElement, options, true)))
-	.then(async () => {
-		let renderTime = new Date().getTime() - startTime;
-		renderTimeSum += renderTime;
-		console.debug(`renderTimeSum: ${renderTimeSum} = ... + ${renderTime} (${startElement.id || ''} ${cssSelector})`);
+	.then(async times => {
+		let renderTimeSumLocal = 0, renderTimeSumDomLocal = 0;
+		for (let t of times) { renderTimeSumLocal += t.renderTime; renderTimeSumDomLocal += t.renderTimeDom; }
+		renderTimeSum += renderTimeSumLocal; renderTimeSumDom += renderTimeSumDomLocal;
+		console.debug(`${renderTimeSum + renderTimeSumDom} = ${renderTimeSum} + ${renderTimeSumDom}[DOM] = ... + ${renderTimeSumLocal} + ${renderTimeSumDomLocal}[DOM] (${startElement.id || ''} ${cssSelector})`);
 	})
 }
 
 /**
  * @param {HTMLElement} [startElement0 = document.body.parentElement] Specific element for modification
  * @param {{ ignoreRootIf?: Boolean, ignoreRootPriority?: Boolean }} [options = {}] Options
+ * @param {Boolean} [isStartRenderElement]
  * @param { { priority: Number, element: HTMLElement }[] } [priorityElementStack = []] Elements for rendering with priority
  * @param {Function[]} [asyncFunctionStack = []]
- * @param {Boolean} [isStartRenderElement]
- * @returns Promise
+ * @returns {{renderTime: Number, renderTimeDom: Number}}
  */
-async function templateEditorSystem(
+function templateEditorSystemSync(
 	startElement0 = document.body.parentElement,
 	options = {},
 	isStartRenderElement = false,
 	priorityElementStack = [],
 	asyncFunctionStack = [],
 ) {
-	if (isStartRenderElement && !document.body.parentElement.contains(startElement0)) return Promise.resolve(); // spustenie templateEditora so starým už prerenderovaným elementom
+	if (isStartRenderElement && !document.body.parentElement.contains(startElement0))
+		return {renderTime: 0, renderTimeDom: 0}; // spustenie templateEditora so starým už prerenderovaným elementom
+
+	let renderTimeStart = new Date().getTime();
+	let renderTime = 0;
+	let renderTimeDom = 0;
 	/** @type { HTMLElement } */ let startElement = startElement0;
 	if (startElement0 !== document.body.parentElement) { // DOM optimalization
 		// @ts-ignore
@@ -80,8 +93,6 @@ async function templateEditorSystem(
 		startElement.appendChild(/** @type { HTMLElement } */ (startElement0.cloneNode(true)));
 	}
 
-	let ttt = (new Date()).getTime();
-	// console.log('CCC', startElement);
 	// @ts-ignore
 	let templateHTML = window.templateHTML || {};
 	// @ts-ignore
@@ -106,7 +117,7 @@ async function templateEditorSystem(
 
 	templateName == 'index' && wrapHtmlEvents(startElement, _BaseJS_ComponentId_, templateName);
 
-	if (!allOnbase.length) return Promise.resolve(); // after Wrapping event atributes ("on...")
+	if (!allOnbase.length) return {renderTime: new Date().getTime() - renderTime, renderTimeDom: 0}; // after Wrapping event atributes ("on...")
 
 	let oldIDs = new Set();
 	allOnbase.forEach(e => oldIDs.add(e.getAttribute('_BaseJS_ComponentId_')));
@@ -227,7 +238,7 @@ async function templateEditorSystem(
 		if (!newFindedBase) break;
 	}
 
-	startElement.querySelectorAll('[onbase]').forEach(async (/** @type { HTMLElement } */ element) => {
+	startElement.querySelectorAll('[onbase]').forEach((/** @type { HTMLElement } */ element) => {
 		let _BaseJS_ComponentId_ = element.getAttribute('_BaseJS_ComponentId_') || '_BaseJS_ComponentId_';
 
 		if (element.classList.contains('_BaseJS_class_hidden') || element.classList.contains('_BaseJS_class_loading')) return;
@@ -250,11 +261,15 @@ async function templateEditorSystem(
 
 					if (i == 'template' && templateHTML) {
 						let templateName = value.replace('.html', '');
-						let template = templateHTML[templateName];
-						if (!template) console.error(`Template "${value}" is not exists`);
+						if (typeof templateHTML[templateName] === 'string') {
+							let tmp = document.createElement('template');
+							tmp.innerHTML = decodeURI(window.atob(templateHTML[templateName]));
+							templateHTML[templateName] = tmp.content;
+						}
+						if (!templateHTML[templateName]) console.error(`Template "${value}" is not exists`);
 
 						element.classList.add('_BaseJS_class_template');
-						element.innerHTML = decodeURI(window.atob(template)); // async operation
+						element.appendChild(templateHTML[templateName].cloneNode(true));
 
 						let new_BaseJS_ComponentId_ = '_BaseJS_ComponentId_' + (++_BaseJS_ComponentId_counter);
 
@@ -263,8 +278,12 @@ async function templateEditorSystem(
 							this.parent = templateJsThis[_BaseJS_ComponentId_];
 							this.htmlElement = element;
 						};
-						if (templateJS[templateName + '__Super']) {
+						if (templateJS[templateName + '__Parts' + '__Super'])
+							defThis = templateJS[templateName + '__Parts' + '__Super'].call(defThis);
+						if (templateJS[templateName + '__Super'])
 							defThis = templateJS[templateName + '__Super'].call(defThis);
+
+						if (templateJS[templateName + '__Parts' + '__Super'] || templateJS[templateName + '__Super']) {
 							let origin = {};
 							for (let i in defThis) {
 								if (typeof defThis[i] === 'function') origin[i] = defThis[i].bind();
@@ -272,7 +291,12 @@ async function templateEditorSystem(
 							// @ts-ignore
 							defThis.origin = origin;
 						}
-						templateJsThis[new_BaseJS_ComponentId_] = templateJS[templateName].call(defThis);
+						if (templateJS[templateName + '__Parts'])
+							defThis = templateJS[templateName + '__Parts'].call(defThis);
+						if (templateJS[templateName])
+							defThis = templateJS[templateName].call(defThis);
+
+						templateJsThis[new_BaseJS_ComponentId_] = defThis;
 
 						element.querySelectorAll('[onbase]').forEach(e => {
 							e.setAttribute('_BaseJS_ComponentId_', new_BaseJS_ComponentId_);
@@ -280,8 +304,12 @@ async function templateEditorSystem(
 						});
 
 						wrapHtmlEvents(element, new_BaseJS_ComponentId_, templateName);
+
 						for (let child of element.children) {
-							await templateEditorSystem(/** @type { HTMLElement } */ (child), options, false, priorityElementStack, asyncFunctionStack);
+							let time = new Date().getTime();
+							let times = templateEditorSystemSync(/** @type { HTMLElement } */ (child), options, false, priorityElementStack, asyncFunctionStack);
+							renderTime += times.renderTime - (new Date().getTime() - time);
+							renderTimeDom += times.renderTimeDom;
 						}
 					}
 					if (i == 'setHtml') element.innerHTML = value;
@@ -316,38 +344,75 @@ async function templateEditorSystem(
 		}
 	});
 
+	let renderTimeDomStart = new Date().getTime();
 	if (startElement0 !== document.body.parentElement) startElement0.replaceWith(startElement);
+	// if (startElement0 !== document.body.parentElement) morphdom(startElement0, startElement, {
+	// 	onBeforeElUpdated: function(fromEl, toEl) {
+	// 		for (let e of priorityElementStack) {
+	// 			if (e.element === toEl) e.element = fromEl;
+	// 		}
+	// 		return true;
+	// 	},
+	// });
+	// if (startElement0 !== document.body.parentElement) {
+	// 	if (isStartRenderElement) morphdom(startElement0, startElement);
+	// 	else startElement0.replaceWith(startElement);
+	// }
+
+	// @ts-ignore
+	console.debugFileRegExp && document.getElementsByTagName('div').length;
+	renderTimeDom += new Date().getTime() - renderTimeDomStart;
+
+	return {renderTime: new Date().getTime() - renderTimeStart, renderTimeDom};
+}
+/**
+ * @param {HTMLElement} [startElement0 = document.body.parentElement] Specific element for modification
+ * @param {{ ignoreRootIf?: Boolean, ignoreRootPriority?: Boolean }} [options = {}] Options
+ * @param {Boolean} [isStartRenderElement]
+ * @param { { priority: Number, element: HTMLElement }[] } [priorityElementStack = []] Elements for rendering with priority
+ * @param {Function[]} [asyncFunctionStack = []]
+ * @returns {Promise<{renderTime: Number, renderTimeDom: Number}>}
+ */
+async function templateEditorSystem(
+	startElement0 = document.body.parentElement,
+	options = {},
+	isStartRenderElement = false,
+	priorityElementStack = [],
+	asyncFunctionStack = [],
+) {
+	let {renderTime, renderTimeDom} = templateEditorSystemSync(startElement0, options, isStartRenderElement, priorityElementStack, asyncFunctionStack);
+
 	// .replaceWith is async DOM function
-	if (isStartRenderElement) await b.util.promisify(setTimeout, () => {
+	asyncFunctionStack.length && await b.util.promisify(setTimeout, () => {
 		for (let funct of asyncFunctionStack) funct();
 	}, 0);
 
-	if (isStartRenderElement && priorityElementStack.length) {
+	if (priorityElementStack.length) {
 		return new Promise(async (res, rej) => {
 			await promisify(setTimeout, () => {}, 200); // 0 is not enough to render the loading animation
 			priorityElementStack.sort((a, b) => a.priority - b.priority);
 
 			for (let i in priorityElementStack) {
 				await promisify(setTimeout, () => {}, 10); // for applying event between rendering
-				await templateEditorSystem(priorityElementStack[i].element, {...options, ignoreRootPriority: true}, true);
+				let times = await templateEditorSystem(priorityElementStack[i].element, {...options, ignoreRootPriority: true}, true);
+				renderTime += times.renderTime; renderTimeDom += times.renderTimeDom;
 			}
-			res();
+			res({renderTime, renderTimeDom});
 		}).catch((err) => { return Promise.reject(error(err)); });
-	} else return Promise.resolve();
+	} else return Promise.resolve({renderTime, renderTimeDom});
 };
 
 // Wrapping event atributes ("on...") to onbase this object
 function wrapHtmlEvents(startElement, _BaseJS_ComponentId_, templateName) {
-	for (let i in document) {
-		if (i.substr(0, 2) == 'on') {
-			startElement.querySelectorAll(`[${i}]:not([${i}^="return window.baseEval"])`).forEach((/** @type { HTMLElement } */ element) => {
-				if (element.classList.contains('_BaseJS_class_hidden') || element.classList.contains('_BaseJS_class_loading')) return;
-				element.setAttribute('_BaseJS_ComponentId_', _BaseJS_ComponentId_);
-				element.setAttribute('_BaseJS_TemplateName_', templateName);
-				element.setAttribute(i, `return window.baseEval(async () => {${element.getAttribute(i)}}, this === window ? document.body : this);`);
-			});
-		}
-	}
+	startElement.querySelectorAll(Object.values(onEventSelectors).join(', '))
+	.forEach((/** @type { HTMLElement } */ element) => {
+		if (element.classList.contains('_BaseJS_class_hidden') || element.classList.contains('_BaseJS_class_loading')) return;
+		element.setAttribute('_BaseJS_ComponentId_', _BaseJS_ComponentId_);
+		element.setAttribute('_BaseJS_TemplateName_', templateName);
+		for (let i in onEventSelectors) { if (element.matches(onEventSelectors[i])) {
+			element.setAttribute(i, `return window.baseEval(async () => {${element.getAttribute(i)}}, this === window ? document.body : this);`);
+		} }
+	});
 }
 
 function baseEval(baseAttribute, /** @type { HTMLElement } */ element, notEval = false) {

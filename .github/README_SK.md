@@ -1,4 +1,4 @@
-**(Node.js backend/frontend) Framework `Base.JS v2.0.0`** tvorí jednoduchý základ Vášho projektu. Je rýchli, účelný a plne modulárny. Je veľmi jednoduchý a intuitívny, preto nevyžaduje takmer žiadne štúdium. Každého oslovili iné technológie, preto sa do budúcna neplánuje veľmi obsiahla komplexita. Špecialna funkcionalita sa nainštaluje ako npm balík alebo sa ako súbor skopíruje do jedného z adresárov `libs/`|`services/`|`utils/`. Vďaka predvytvorenej základnej štruktúre projektu so skriptom pre automatické vytváranie indexov sa môžete naplno venovať už len dizajnu a byznis logike vášho projektu (`src/`). Automaticky vytvorené `index.js` súbory kopírujú kvôli prehladnosti svoju priečinkovú štruktúru. Cez klientske komponenty je možné rozbiť stránku na malé reciklovateľné, samostatné kúsky, ktoré medzi sebou defaultne komunikujú cez eventy.  
+**(Node.js backend/frontend) Framework `Base.JS v3.0.0`** tvorí jednoduchý základ Vášho projektu. Je rýchli, účelný a plne modulárny. Je veľmi jednoduchý a intuitívny, preto nevyžaduje takmer žiadne štúdium. Každého oslovili iné technológie, preto sa do budúcna neplánuje veľmi obsiahla komplexita. Špecialna funkcionalita sa nainštaluje ako npm balík alebo sa ako súbor skopíruje do jedného z adresárov `libs/`|`services/`|`utils/`. Vďaka predvytvorenej základnej štruktúre projektu so skriptom pre automatické vytváranie indexov sa môžete naplno venovať už len dizajnu a byznis logike vášho projektu (`src/`). Automaticky vytvorené `index.js` súbory kopírujú kvôli prehladnosti svoju priečinkovú štruktúru. Cez klientske komponenty je možné rozbiť stránku na malé reciklovateľné, samostatné kúsky, ktoré medzi sebou defaultne komunikujú cez eventy.  
   
 Na strane vášho IDE editora sa aj klientska časť tvári ako Node.js aplikácia, vďaka čomu máte prístup k jeho plnej `JSDoc` nápovede. Všetky funkcie frameworku sú pre túto nápovedu zdokumentované a umožňujú nepovinné definície typov. Každý priečinok obsahuje funkčný pomocný `_example.js` súbor.  
   
@@ -60,12 +60,12 @@ require('client/util/get.js')
 // new export format actual is not supported
 module.exports = functionName;
 ```
-### (Nepovinné) Wrapping of HTML template modificator
+### (Nepovinné) Wrapping of HTML template modificator for type hint
 ```
 <... onbase="w({ ... })" ...>
 <div onbase="w({ ... })">...</div>
 ```
-### (Nepovinné) Wrapping of JS code template
+### (Nepovinné) Wrapping of JS code template for correct usage of `this`
 ```
 module.exports = new function () { ... }
 ```
@@ -86,45 +86,14 @@ Po zmodifikovaní existujúcej funkcie môžete zavolať pôvodnú funkciu cez `
   
 Frontend má od začiatku dostupnú globálnu premennú `serverContent`, ktorá obsahuje užívateľské dáta zo servera vrátane frameworkom automaticky pridanej `config` vlastnosti. Types are defined manually by user in `client/types/ServerContentType.js` .
   
-Framework automaticky vytvára `index.js` súbory podľa nastavení v `jsconfig.json > utils._createIndex`. Tieto indexi kopírujú kvôli prehladnosti svoju priečinkovú štruktúru. Funkcie a triedy, na ktoré indexi ukazujú by preto mali myť rovnaké názvy, ako samotné súbory.
-  
-**WARNING:** Frontend využívajúci funkcionalitu z `utils/`|`services/`|`src/` by mal byť ovrapowaný spustiteľnou funkciou alebo cez `window.afterLoadRequires.unshift(() => { ... });`, aby sa nezavolal skôr, ako sa načítajú funkcie, ktoré využíva (`require()`).  
-For example in the case of shared functions: (eg: `shared/utils/myFunction.js`)
-```
-let staticObject = {};
-
-// require('client/util/set.js') ešte nemusí existovať
-let initializationCode = () => { const set = require('client/util/set.js'); set(staticObject, 'a.b', 'c'); };
-
-// exportovaná funkcia alebo trieda nemusí byť wrappovaná
-let myFunction = () => { const set = require('client/util/set.js'); set(staticObject, 'x.y', 'z'); };
-
-// if (browser-frontend) wrapujeme okamžite spušťaný kód
-if (typeof require === 'undefined') window.afterLoadRequires.unshift(initializationCode);
-else initializationCode();
-
-module.exports = myFunction;
-```
-  
-**NOTICE:** Kód v `client/templates/` je už automaticky zabalený do `window.addEventListener('load', async () => { ... }, false);`  
-  
-### Poradie inicializácie funkcii a tried z priečinkov:
-1. shared/utils/error.base.js
-2. shared/services/testing.base.js
-3. client/libs/**/*.js
-4. shared/utils/**/*.js
-5. client/utils/**/*.js
-6. shared/services/**/*.js
-7. client/services/**/*.js
-8. client/src/**/*.js
-  
-**WARNING:** Ak sa rozhodnete načítať súbor vyššej vrstvy v nižšej vrstve, môže dôjsť k ciklickej závislosti.
+Framework automaticky vytvára `index.js` súbory podľa nastavení v `jsconfig.json > utils._createIndex`. Tieto indexi kopírujú kvôli prehladnosti svoju priečinkovú štruktúru. Funkcie a triedy, na ktoré indexi ukazujú by preto mali mať rovnaké názvy, ako samotné súbory.
+**NOTE:** Na frontende bude dostupná len funkcionalita uvedená v tejto konfigurácií, spolu so súbormy templatu a `client/src/*`
   
   
 # Project configuration
   
 Všetky vlastnosti nastavujúce správanie projektu, utilít, servisov a IDE editora sú uvedené v súbore `jsconfig.json`.
-Odlišná konfiguráčné vlastnosti pre lokálne prostredie môže byť uvedené v súbore `jsconfig.local.json`. Tento súbor je na produkčnom servery ignorovaný, ak je v súbore `jsconfig.json` nastavená produkčná doména (`server.productionDomain: "example.com"`).
+Odlišná konfiguráčné vlastnosti pre lokálne prostredie môže byť uvedené v súbore `jsconfig.local.json`.
 Všetky vlastonsti je možné modifikovať cez enviromentálne premenné. For example `export server_port=5000` modifikuje vlastnosť `server.port`.
 Prístup k aktuálnym vlastnostiam a nastavenie defaultnej konfigurácie do `jsconfig.json`, ak ešte neexistuje (`update()`):
 ```
@@ -154,6 +123,8 @@ const templateEditor = b.templateEditor;
 templateEditor(/* 'css selector', startingDomElement, options */);
 ```
   
+JavaScript templatov je spúšťaný pred vykreslením HTML templatu. Výnimočný prípad tvorí index.html, pretože jeho JavaScript spúšťa vykresľovanie zvyšných templatov stránky.
+  
 `templateEditor()` vracia Promise kôli `onbase="{priority:...` elementom, ktorých renderovanie sa spúšťa oneskorene, avšak samotné renderovanie HTML je synchronne. `onbase` preto podporuje len synchronny JavaScript, aby nebolo možné nekonzistentne meniť použité premenné počas renderovania DOM Elementov.
   
 **WARNING:** `onbase` vlastnosti vyhodnocujú aktuálny obsah, ktorý je možné interaktývne meniť. V prípade `forIn` je možné meniť prvý `forIn` HTMLElement v rade (ostatné sa z neho naklonujú s prefix "`_`": `_forIn`). Ak teda napríklad zmažete jemu pridelenú classu a opätovne ho pregenerujete (`templateEditor()`), túto class už nebude mať žiadny duplikovaný `forIn` HTMLElement.  
@@ -180,7 +151,7 @@ Onbase lastnosti je možné zakomentovať prefixom "`_`" (`onbase="{ _setHtml: '
    
 **WARNING:** `this` v HTML componente a this.htmlElement v JS obsahuje počas renderovania len fragment DOM stromu. Ak potrebujete napr. `parentElement`, musíte ho spustiť:
 * cez `onbase="{ js: () => console.log(this.parentElement) }`
-* alebo cez ľubovolné event `onclick"console.log(this.parentElement)"`
+* alebo cez ľubovolné event `onclick="console.log(this.parentElement)"`
    
 ### Variables available in HTML template component
  * **w()**
@@ -276,11 +247,10 @@ shared/
    error.base.js              // better error message with cause history
                               //  - strongly recommended for use as wrapper for you Errors
 
-   get.base.js                // (lodash) safely getting of object property
-   set.base.js                // (lodash) safely setting of object property
-   merge.base.js              // (lodash) objects merge
-   defaults.base.js           // (lodash) objects merge
-   substring.base.js          // (PHP) implementing negative value 
+   get.base.js                // (lodash) safely getting property from object
+   set.base.js                // (lodash) safely setting property from object
+   update.base.js             // (lodash) objects merge / default
+   substring.base.js          // (PHP) implementing with negative number value
    contain.base.js            // check if object A conains object B
    arraysDiff.base.js         // get difference and intersection of two input array
 
@@ -292,11 +262,11 @@ shared/
 
 # Try it online:
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#snapshot/d11a5ed9-7a1e-44a1-876e-7930078094e5)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io#snapshot/3c484c47-a3db-493b-b2bf-ca2e9e405cdc)
 
 The editor requires a github login, but also allows you to quickly create an anonymous account.  
 After open empty project you can set [Download, Installation and First start](#download-installation-and-first-start) commands to terminal.  
-After server starting Gitpod show popup "A service is available on port 3000". You can click on "Open Preview".  
+After server starting you can click on "Open Preview".  
   
 ### Look for example at:
 - client/src/\_example.js
@@ -307,6 +277,6 @@ After server starting Gitpod show popup "A service is available on port 3000". Y
   
 **Contact: obscurus.grassator@gmail.com**  
 
-[MIT License - Copyright (c) 2019 Obscurus Grassator](./LICENSE)  
+[MIT License - Copyright (c) 2019-2023 Obscurus Grassator](./LICENSE)  
 
 ![alt text](./BaseJS.png)
