@@ -233,7 +233,7 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 
 			let fromDirs = async path => {
 				if ((await promisify(fs.lstat, path)).isDirectory()) {
-					let paths = await getFilePaths(path, /(^|\/)[^\/]*\.(js|css)$/);
+					let paths = await getFilePaths(path, /(^|\/)[^\/]*\.(js|css)$/, false);
 					let indexExists = false;
 					for (let path of paths) {
 						if (/\.(js|css)/.test(path) /*&& (!/\.ignr\./.test(path) || /getActualElement\./.test(path))*/) {
@@ -320,18 +320,34 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 
 			// js = [];
 			js.push(`<script>
-				window.addEventListener('load', async () => {
-					let defThis = {};
-					if (templateJS['${template}__Super']) {
-						defThis = templateJS['${template}__Super'].call(defThis);
+				function getTemplateJsThis(defThis, templateName) {
+					// '__Parts' = functions from .html files
+					if (window.templateJS[templateName + '__Parts__Super'])
+						defThis = window.templateJS[templateName + '__Parts__Super'].call(defThis);
+					if (window.templateJS[templateName + '__Super'])
+						defThis = window.templateJS[templateName + '__Super'].call(defThis);
+
+					if (window.templateJS[templateName + '__Parts__Super'] || window.templateJS[templateName + '__Super']) {
 						let origin = {};
 						for (let i in defThis) {
 							if (typeof defThis[i] === 'function') origin[i] = defThis[i].bind();
 						}
+						// @ts-ignore
 						defThis.origin = origin;
 					}
-					templateJsThis['_BaseJS_ComponentId_'] = templateJS['${template}'].call(defThis);
+					if (window.templateJS[templateName + '__Parts'])
+						defThis = window.templateJS[templateName + '__Parts'].call(defThis);
+					if (window.templateJS[templateName])
+						defThis = window.templateJS[templateName].call(defThis);
+
+					return defThis;
+				}
+
+				window.templateRootName = '${template}';
+				window.addEventListener('load', async () => {
+					window.templateJsThis['_BaseJS_ComponentId_'] = getTemplateJsThis(new function() {}, window.templateRootName);
 				}, false);
+
 				//# sourceURL=BaseJS-framework-startIndex
 			</script>`);
 

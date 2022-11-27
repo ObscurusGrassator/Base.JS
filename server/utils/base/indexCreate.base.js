@@ -87,6 +87,7 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 				dns: require('dns'),
 				domain: require('domain'),
 				events: require('events'),
+				os: require('os'),
 				fs: require('fs'),
 				http: require('http'),
 				https: require('https'),

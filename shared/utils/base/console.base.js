@@ -122,7 +122,7 @@ const getMessage = (methodKey, tmp, ...inputs) => {
 		else return console.colors.reset + util.inspect(obj, false, 10, true);
 	});
 
-	inputs.unshift(console.replacer[methodKey]);
+	inputs.unshift(console.replacer[methodKey] || console.colors.reset);
 	inputs.push(console.colors.reset);
 
 	let outputs = [];
@@ -213,11 +213,12 @@ function configure(options = {}) {
 		setStream(options);
 	}
 
-	for (let i in console.replacer) {
-		console[i + 'Orig'] = console[i + 'Orig'] || console[i] || console.logOrig || console.log;
+	for (let i in {...console.replacer, log: 1, trace: 1}) {
+		let ii = i == 'trace' ? 'log' : i;
+		console[i + 'Orig'] = console[ii + 'Orig'] || console[ii] || console.logOrig || console.log;
 		if (typeof require == 'undefined') console['debugOrig'] = console.logOrig || console.log;
-		console[i] = (...inputs) => { getMessage.apply(console, [i, false].concat(inputs)); };
-		console[i + 'Tmp'] = (...inputs) => { getMessage.apply(console, [i, true].concat(inputs)); };
+		console[i] = (...inputs) => { getMessage.apply(console, [ii, false].concat(inputs)); };
+		console[i + 'Tmp'] = (...inputs) => { getMessage.apply(console, [ii, true].concat(inputs)); };
 	}
 
 	return console;
@@ -237,8 +238,9 @@ class ConsolePlus {
 	/** @type {replacer} */
 	get replacer() { return console.replacer; };
 
-	infoTmp(...params) {};
+	traceTmp(...params) {};
 	debugTmp(...params) {};
+	infoTmp(...params) {};
 	warnTmp(...params) {};
 	errorTmp(...params) {};
 	errorMessage(...params) {};

@@ -7,13 +7,16 @@ module.exports = {
 	callBeforeServerStarting: async () => {
 	},
 
+	callAfterServerStarting: async () => {
+	},
+
 	/**
 	 * @param {import('http').IncomingMessage} req
 	 * @param {import('http').ServerResponse} res
 	 * @param { {[key: string]: String} } getData
 	 * @param { String } postData
 	 * 
-	 * @return {Promise<Buffer | String | Array | {[key: string]: any}>}
+	 * @return { Promise<Buffer | String | Array | {[key: string]: any} >}
 	*/
 	callPerResponce: async (req, res, getData, postData) => {
 		res.setHeader('Content-Type', 'text/html');
@@ -48,6 +51,6 @@ module.exports = {
 		};
 
 		// In production generate HTML only onece and update only new serverContent
-		return await b.util.htmlGenerator(serverContent, realPath.path, !['127.0.0.1', 'localhost'].includes(b.config.server.hostname));
+		return await b.util.htmlGenerator(serverContent, realPath.path, b.config.server.isProduction);
 	}
 };

@@ -46,18 +46,21 @@ process.stdin.setEncoding('utf8');
 process.stdin.on('error', async err => { console.error(err); });
 // process.stdin.on('end', async () => { console.log('end'); process.stdin.reopen; });
 process.stdin.on('data', async data => {
-	// let toTMPFile = str => b.modul.fs.writeFileSync('.tmp', str);
+	// let toTMPFile = str => b.module.fs.writeFileSync('.tmp', str);
 	if (data.toString() == b.config.manager.shortcuts.serverRestart) {
-		process.exit(2);
+		process.kill(process.pid, "SIGUSR2");
 	}
 	else if (data.toString() == b.config.manager.shortcuts.serverRestartAndTerminalClear) {
-		await b.util.promisify(b.modul.child_process.execFile, 'osascript', ['-e', `
+		await b.util.promisify(b.module.child_process.execFile, 'osascript', ['-e', `
 			tell application "System Events" to tell process "Terminal" to keystroke "k" using command down
 		`]);
-		process.exit(2);
+		process.kill(process.pid, "SIGUSR2");
 	}
 	else { try { eval(data.toString()); } catch (err) { console.error(err); } }
 });
+process.on("SIGINT", () => setTimeout(() => process.exit(0), 1000));
+process.on("SIGUSR2", () => setTimeout(() => process.exit(2), 1000));
+
 
 let debugFileRegExp;
 b.storage.edit(s => s.server.help.push(
@@ -84,17 +87,17 @@ concoleWarnError(console0, b);
 	const app = require(b.config.startFile);
 
 	if ((process.env.npm_lifecycle_script || '').indexOf('nohup') > -1) {
-		b.util.promisify(b.modul.fs.writeFile, '.serverPID', process.pid + '' || '');
+		b.util.promisify(b.module.fs.writeFile, '.serverPID', process.pid + '' || '');
 	}
 
-	if (!b.modul.fs.existsSync('.gitBase.JS') && b.modul.fs.existsSync('.git')) {
-		b.modul.fs.renameSync('.git', '.gitBase.JS');
-		b.modul.fs.writeFileSync('.gitBase.JS/info/exclude', b.modul.fs.readFileSync('.github/info/exclude'));
+	if (!b.module.fs.existsSync('.gitBase.JS') && b.module.fs.existsSync('.git')) {
+		b.module.fs.renameSync('.git', '.gitBase.JS');
+		b.module.fs.writeFileSync('.gitBase.JS/info/exclude', b.module.fs.readFileSync('.github/info/exclude'));
 	}
 
-	await b.util.promisify(b.modul.child_process.exec, 'alias gitb="git --git-dir=.gitBase.JS"');
+	await b.util.promisify(b.module.child_process.exec, 'alias gitb="git --git-dir=.gitBase.JS"');
 
-	await b.util.promisify(b.modul.child_process.exec, `
+	await b.util.promisify(b.module.child_process.exec, `
 		git --git-dir=.gitBase.JS rev-parse HEAD;
 		git --git-dir=.gitBase.JS fetch origin master;
 		git --git-dir=.gitBase.JS log master..origin/master --format="%H %B"
@@ -157,18 +160,18 @@ concoleWarnError(console0, b);
 
 			for (let suffix of b.config.server.publicHTTPsuffixes) {
 				if (file.substring((-1 * suffix.length) -1) == '.' + suffix) {
-					if (!b.modul.fs.existsSync(input.parts.join('/'))) {
+					if (!b.module.fs.existsSync(input.parts.join('/'))) {
 						res.statusCode = 404;
 						throw `File "${input.parts.join('/')}" is not exists.`;
 					}
-					let etag = '' +  b.modul.fs.statSync(input.parts.join('/')).mtime.getTime();
+					let etag = '' +  b.module.fs.statSync(input.parts.join('/')).mtime.getTime();
 					if (etag === req.headers['if-none-match']) {
 						res.statusCode = 304;
 						res.end();
 						return;
 					}
-					var img = b.modul.fs.readFileSync(input.parts.join('/'));
-					res.setHeader('Content-Type', b.modul.mime.getType(fileSufix));
+					var img = b.module.fs.readFileSync(input.parts.join('/'));
+					res.setHeader('Content-Type', b.module.mime.getType(fileSufix));
 					res.setHeader('ETag', etag);
 					if (!b.storage.of(b.config, a => a.client.maxAgeDisableForRegExp, ['']).find(a => new RegExp(a).test(input.parts.join('/')))
 					 && !res.getHeader('Cache-Control')) { // with max-age is ignored etag
@@ -217,13 +220,13 @@ concoleWarnError(console0, b);
 		}
 	};
 
-	let httpsExists = b.modul.fs.existsSync(b.get(b.config, 'server.https._privateKey'));
+	let httpsExists = b.module.fs.existsSync(b.get(b.config, 'server.https._privateKey'));
 
 	// // https://gist.github.com/bnoordhuis/4740141
-	// let httpSocket = 'http.sock'; b.modul.fs.existsSync(httpSocket) && b.modul.fs.unlinkSync(httpSocket);
-	// let httpsSocket = 'https.sock'; b.modul.fs.existsSync(httpsSocket) && b.modul.fs.unlinkSync(httpsSocket);
+	// let httpSocket = 'http.sock'; b.module.fs.existsSync(httpSocket) && b.module.fs.unlinkSync(httpSocket);
+	// let httpsSocket = 'https.sock'; b.module.fs.existsSync(httpsSocket) && b.module.fs.unlinkSync(httpsSocket);
 
-	// b.modul.net.createServer(socket => {
+	// b.module.net.createServer(socket => {
 	// 	socket.once('data', function(buffer) {
 	// 		let byte = buffer[0];
 	// 		let address;
@@ -233,7 +236,7 @@ concoleWarnError(console0, b);
 	// 		else if (32 < byte && byte < 127) address = httpSocket;
 	// 		else throw 'Internal error (not http / not https)';
 
-	// 		let proxy = b.modul.net.createConnection(address, function() {
+	// 		let proxy = b.module.net.createConnection(address, function() {
 	// 			proxy.write(buffer);
 	// 			socket.pipe(proxy).pipe(socket);
 	// 		});
@@ -243,7 +246,7 @@ concoleWarnError(console0, b);
 	// 	console.info('Server socket rooter is runned');
 	// });
 
-	// b.modul.http.createServer((req, res) => {
+	// b.module.http.createServer((req, res) => {
 	// 	if (httpsExists) {
 	// 		res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
 	// 		res.end();
@@ -254,17 +257,17 @@ concoleWarnError(console0, b);
 	// 	else console.info('Server running at', console.colors.bold, console.colors.green, `http://${b.config.server.hostname}:${b.config.server.port}`);
 	// });
 
-	// if (httpsExists) b.modul.https.createServer({
-	// 	key: b.modul.fs.readFileSync(b.config.server.https._privateKey),
-	// 	cert: b.modul.fs.readFileSync(b.config.server.https._certificate),
-	// 	ca: b.modul.fs.readFileSync(b.config.server.https._chain)
+	// if (httpsExists) b.module.https.createServer({
+	// 	key: b.module.fs.readFileSync(b.config.server.https._privateKey),
+	// 	cert: b.module.fs.readFileSync(b.config.server.https._certificate),
+	// 	ca: b.module.fs.readFileSync(b.config.server.https._chain)
 	// }, serverFunction).listen(httpsSocket, b.config.server.hostname, () => {
 	// 	console.info('Server running at', console.colors.bold, console.colors.green, `https://${b.config.server.hostname}:${b.config.server.port}`);
 	// });
 
 	// https://stackoverflow.com/questions/22453782/nodejs-http-and-https-over-same-port
 	let servers = {};
-    servers.http = b.modul.http.createServer((req, res) => {
+    servers.http = b.module.http.createServer((req, res) => {
 		if (!b.config.server.disableRedirectToHttps && httpsExists) {
 			res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
 			res.end();
@@ -272,14 +275,14 @@ concoleWarnError(console0, b);
 		else return serverFunction(req, res);
 	});
 	if (httpsExists) {
-		servers.https = b.modul.https.createServer({
-			key: b.modul.fs.readFileSync(b.config.server.https._privateKey),
-			cert: b.modul.fs.readFileSync(b.config.server.https._certificate),
-			ca: b.modul.fs.readFileSync(b.config.server.https._chain)
+		servers.https = b.module.https.createServer({
+			key: b.module.fs.readFileSync(b.config.server.https._privateKey),
+			cert: b.module.fs.readFileSync(b.config.server.https._certificate),
+			ca: b.module.fs.readFileSync(b.config.server.https._chain)
 		}, serverFunction);
 	}
 
-	let server = b.modul.net.createServer(socket => {
+	let server = b.module.net.createServer(socket => {
 		socket.once('data', buffer => {
 			socket.pause(); // Pause the socket
 			let byte = buffer[0]; // Determine if this is an HTTP(s) request
@@ -303,20 +306,21 @@ concoleWarnError(console0, b);
 
 	// let server;
 	// if (httpsExists)
-	// 	server = b.modul.get('https').createServer({
-	// 		key: b.modul.fs.readFileSync(b.config.server.https._privateKey),
-	// 		cert: b.modul.fs.readFileSync(b.config.server.https._certificate),
-	// 		ca: b.modul.fs.readFileSync(b.config.server.https._chain)
+	// 	server = b.module.get('https').createServer({
+	// 		key: b.module.fs.readFileSync(b.config.server.https._privateKey),
+	// 		cert: b.module.fs.readFileSync(b.config.server.https._certificate),
+	// 		ca: b.module.fs.readFileSync(b.config.server.https._chain)
 	// 	}, serverFunction);
-	// else server = b.modul.get('http').createServer(serverFunction);
+	// else server = b.module.get('http').createServer(serverFunction);
 
-	server.listen(+b.config.server.port, b.config.server.hostname, () => {
+	server.listen(+b.config.server.port, b.config.server.hostname, async () => {
 		console.info('Server running at', console.colors.bold, console.colors.green, `http${httpsExists ? 's' : ''}://${b.config.server.hostname}:${b.config.server.port}`);
+		await app.callAfterServerStarting();
 	});
 
 	let refreshAndToBrowser = async () => {
 		if (process.argv.includes('refresh') || process.argv.includes('toBrowser')) {
-			await b.util.promisify(b.modul.child_process.execFile, 'osascript', ['-e', `
+			await b.util.promisify(b.module.child_process.execFile, 'osascript', ['-e', `
 				set urll to "${httpsExists ? 'https' : 'http'}://${b.config.server.hostname}${b.config.server.port ? ':' + b.config.server.port : ''}"
 				on is_running(appName)
 					tell application "System Events" to (name of processes) contains appName
@@ -368,7 +372,7 @@ concoleWarnError(console0, b);
 	let ignnoreWatchFiles = b.config.manager.ignnoreWatchFiles;
 	b.storage.edit(s => s.server.help.push({prop: 'refreshAfterChange', desc: 'refresh server after its file change'}));
 	if (process.argv.includes('refreshAfterChange')) {
-		b.modul.fs.watch('./', {recursive: true}, (eventType, filename) => {
+		b.module.fs.watch('./', {recursive: true}, (eventType, filename) => {
 			for (let i in ignnoreWatchFiles) {
 				if (new RegExp(ignnoreWatchFiles[i], 'i').test(filename)) return;
 			}

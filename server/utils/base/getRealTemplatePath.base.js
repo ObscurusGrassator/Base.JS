@@ -9,7 +9,7 @@ const urlParser = require('shared/utils/base/urlParser.base.js');
  * 
  * @param {String} [path = 'index.html']
  * @param {String} [defaultPath = 'notFounds.html']
- * @param {String} [pathPrefix = '']
+ * @param {String} [pathPrefix = 'client/templates']
  * 
  * @returns {Promise<{path: String, variables: {[key: string]: string}}>}
  * 
@@ -19,7 +19,7 @@ const urlParser = require('shared/utils/base/urlParser.base.js');
  *   // or: {path: 'article/12345/index.html', variables: {}}
  *   // or: {path: 'article/12345.html', variables: {}}
  */
-async function getRealTemplatePath(path = 'index.html', defaultPath = 'notFounds.html', pathPrefix = '') {
+async function getRealTemplatePath(path = 'index.html', defaultPath = 'notFounds.html', pathPrefix = 'client/templates') {
 	path = pathLib.join(pathPrefix, path.replace(/^\/|\/$|\?.*$/g, ''));
 	let lastPathPart = (path) => {
 		if (fs.existsSync(pathLib.join(path, 'index.html'))) return {path: pathLib.join(path, 'index.html'), variables: {}};

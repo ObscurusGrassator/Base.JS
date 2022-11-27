@@ -22,13 +22,12 @@ const config = require('shared/services/base/jsconfig.base.js').update('services
 }).value.services.storage;
 
 const data = {};
-let dataEdit = data;
-let path = [];
 
 /** @type {ProxyHandler} */
 const handler = {
     apply: (obj, thisArg, argumentsList) => {
-        let orig = util.get(dataEdit, path.slice(0, path.length-1));
+        let path = thisArg._BaseJS_path;
+        let orig = util.get(thisArg._BaseJS_originalData, path.slice(0, path.length-1));
         let prop = path[path.length-1];
         let result;
 
@@ -42,7 +41,7 @@ const handler = {
             result = orig[prop].apply(orig, argumentsList);
         }
         saveSpecial(path[0]);
-        return result;
+        return {_BaseJS_value: result};
     },
     get: (obj, prop) => {
         if (obj._BaseJS_default) {
@@ -77,49 +76,60 @@ const handler = {
             }
         }
 
-        let value = util.get(dataEdit, path);
+        // console.log('Storage:', prop, obj._BaseJS_path);
+
+        if (['_BaseJS_originalData', '_BaseJS_path'].includes(/** @type { string } */ (prop))) return obj[prop];
+
+        let path = obj._BaseJS_path;
+        let addData = obj2 => {
+            obj2._BaseJS_path = obj._BaseJS_path;
+            obj2._BaseJS_originalData = obj._BaseJS_originalData;
+            return obj2;
+        };
+
+        let value = util.get(obj._BaseJS_originalData, path);
         if (prop == '_BaseJS_value') return value;
         path.push(prop);
 
-        if (!value && ['push', 'pop', 'shift', 'unshift'].indexOf(prop.toString()) > -1) {
-            util.set(dataEdit, path.slice(0, path.length-1), []);
+        if (value === undefined && ['push', 'pop', 'shift', 'unshift'].indexOf(prop.toString()) > -1) {
+            util.set(obj._BaseJS_originalData, path.slice(0, path.length-1), []);
             return new Proxy([][prop], handler);
         }
-        else if (value && !value[prop] && prop == 'get') {
-            return new Proxy((path, defautValue) => util.get(value, path || '', defautValue), handler); // tu vstupuje do proxy funkcia, nie objekt
+        else if (value !== undefined && value[prop] === undefined && prop == 'get') {
+            return new Proxy(addData((path, defautValue) => util.get(value, path || '', defautValue)), handler); // tu vstupuje do proxy funkcia, nie objekt
         }
-        else if (value && !value[prop] && prop == 'set') {
-            return new Proxy((path, value, options) => util.set(value, path, value, options), handler); // tu vstupuje do proxy funkcia, nie objekt
+        else if (value !== undefined && value[prop] === undefined && prop == 'set') {
+            return new Proxy(addData((path, value, options) => util.set(value, path, value, options)), handler); // tu vstupuje do proxy funkcia, nie objekt
         }
-        else if (value && !value[prop] && prop == 'update') {
-            return new Proxy((path, valuePart) => util.update(value, path, valuePart), handler); // tu vstupuje do proxy funkcia, nie objekt
+        else if (value !== undefined && value[prop] === undefined && prop == 'update') {
+            return new Proxy(addData((path, valuePart) => util.update(value, path, valuePart)), handler); // tu vstupuje do proxy funkcia, nie objekt
         }
-        else if (value && typeof value[prop] == 'function') {
-            return new Proxy(value[prop], handler); // tu vstupuje do proxy funkcia, nie objekt
+        else if (value !== undefined && typeof value[prop] == 'function') {
+            return new Proxy(addData(value[prop]), handler); // tu vstupuje do proxy funkcia, nie objekt
         }
-        else if (!obj[prop]) {
-            obj[prop] = new Proxy({}, handler);
+        else if (obj[prop] === undefined) {
+            obj[prop] = new Proxy(addData({}), handler);
         }
 
         return obj[prop];
     },
     set: (obj, prop, val) => {
+        let path = obj._BaseJS_path;
         path.push(prop);
-        util.set(dataEdit, path, val);
+        util.set(obj._BaseJS_originalData, path, val);
         saveSpecial(path[0]);
         return true;
     },
     deleteProperty: (obj, prop) => {
-        if (util.get(dataEdit, path)) {
-            delete util.get(dataEdit, path)[prop];
+        let path = obj._BaseJS_path;
+        if (util.get(obj._BaseJS_originalData, path)) {
+            delete util.get(obj._BaseJS_originalData, path)[prop];
             delete obj[prop];
             saveSpecial(path[0] || prop);
         }
         return true;
     }
 };
-
-const proxyData = new Proxy({_BaseJS_default: true}, handler);
 
 function saveSpecial(special) {
     if (special == 'cookie') {
@@ -171,11 +181,17 @@ function setCookies(obj) {
 }
 
 function storageEdit(selectFunction, userObject, defaultValue) {
-    dataEdit = userObject || data;
-    path = [];
-    let result = selectFunction(userObject ? new Proxy({}, handler) : proxyData);
+    let inputData = {
+        _BaseJS_originalData: userObject || data,
+        _BaseJS_path: [],
+    };
+    let result = selectFunction(userObject
+        ? new Proxy(inputData, handler)
+        : new Proxy({_BaseJS_default: true, ...inputData}, handler));
+
     if (typeof result == 'boolean' || result === undefined) return result;
-    else return result._BaseJS_value || defaultValue;
+    else if (result._BaseJS_value === undefined) defaultValue;
+    else return result._BaseJS_value;
 }
 
 
