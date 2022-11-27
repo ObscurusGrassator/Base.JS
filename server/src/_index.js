@@ -7,7 +7,7 @@ module.exports = class Index {
 	static storage = require('server/services/base/storage.base.js');
 	static config = require('shared/services/base/jsconfig.base.js').value;
 
-	static modul = require('index.js');
+	static module = require('index.js');
 	static util = require('server/utils');
 	static service = require('server/services');
 };

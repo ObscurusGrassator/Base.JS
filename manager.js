@@ -40,15 +40,17 @@ const jsonStringify = require('shared/utils/base/jsonStringify.base.js');
 		"compilerOptions": {
 			"checkJs": true,
 			"resolveJsonModule": true,
-			"target": "ES6",
+			"target": "ES2019",
 			"module": "commonjs",
 			"moduleResolution": "node",
+			"allowSyntheticDefaultImports": true,
 			"baseUrl": "."
 		},
 		"exclude": ["node_modules"],
 
 		"startFile": "app_example.js",
 		"server": {
+			"isProduction": true,
 			"hostname": "0.0.0.0",
 			"port": 3000,
 			"disableRedirectToHttps": false,
@@ -92,6 +94,7 @@ const jsonStringify = require('shared/utils/base/jsonStringify.base.js');
 	[string, object, space] = getContent('jsconfig.local.json');
 	let jsconfigLocalObj = update(object, '', {
 		"server": {
+			"isProduction": false,
 			"hostname": "127.0.0.1"
 		},
 		"utils": {
@@ -130,6 +133,9 @@ const jsonStringify = require('shared/utils/base/jsonStringify.base.js');
 	[string, object, space] = getContent('package.json');
 	object = update(update(object, '', {
 		"engines": {"node": ">=16"},
+		"devDependencies": {
+			"@types/node": "16",
+		},
 		"scripts": {
 			"start": "npm run startBaseJS",
 		},
@@ -167,10 +173,10 @@ const jsonStringify = require('shared/utils/base/jsonStringify.base.js');
 	if (!fs.existsSync(fileName)) {
 		fs.writeFileSync(fileName,
 			'/**\n'
-			+ ' * @typedef {Object} ServerContentType\n'
-			+ ' * @property {typeof import(\'jsconfig.json\')} config\n'
-			+ ' * @property {string} contentExample\n'
-			+ ' * @property {string} pathVariables\n'
+			+ ' * @typedef { Object } ServerContentType\n'
+			+ ' * @property { typeof import(\'jsconfig.json\') } config\n'
+			+ ' * @property { string } contentExample\n'
+			+ ' * @property { {[key: string]: String} } pathVariables\n'
 			+ ' */\n'
 			+ 'export {}\n'
 		);
@@ -238,7 +244,7 @@ const jsonStringify = require('shared/utils/base/jsonStringify.base.js');
 				'The server cannot be started in non-interactive terminal! child_process.spawnSync:', {...result, envPairs: '...', options: '...'});
 		}
 
-		if (['SIGKILL', 'SIGINT', 'SIGSTOP'].includes(result.signal)) {
+		if (result.status === 0 || ['SIGKILL', 'SIGINT', 'SIGSTOP'].includes(result.signal)) {
 			if (fs.existsSync('.serverPID')) fs.rmSync('.serverPID');
 			process.exit();
 		}

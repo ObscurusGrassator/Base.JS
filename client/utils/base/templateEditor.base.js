@@ -17,6 +17,13 @@ for (let i in document) {
 	}
 }
 
+// @ts-ignore
+let templateHTML = window.templateHTML;
+// @ts-ignore
+let templateRootName = window.templateRootName;
+// @ts-ignore
+let templateJsThis = window.templateJsThis;
+
 /**
  * Property functions: if, forIn, template, setHtml, setAttr, setClass, js, priority
  * 
@@ -95,13 +102,6 @@ function templateEditorSystemSync(
 		startElement.appendChild(/** @type { HTMLElement } */ (startElement0.cloneNode(true)));
 	}
 
-	// @ts-ignore
-	let templateHTML = window.templateHTML || {};
-	// @ts-ignore
-	let templateJS = window.templateJS || {};
-	// @ts-ignore
-	let templateJsThis = window.templateJsThis || {};
-
 	// startElement.querySelectorAll('[onbase]').forEach(e =>
 	// 	e.setAttribute('onbase', e.getAttribute('onbase').replace(/^(\{\{)?\s*\(?|\)?\s*(\}\})?$/g, ''))
 	// );
@@ -115,9 +115,9 @@ function templateEditorSystemSync(
 
 	let allOnbase = startElement.querySelectorAll('[onbase]');
 	let _BaseJS_ComponentId_ = (allOnbase[0] && allOnbase[0].getAttribute('_BaseJS_ComponentId_')) || '_BaseJS_ComponentId_';
-	let templateName = (allOnbase[0] && allOnbase[0].getAttribute('_BaseJS_TemplateName_')) || 'index';
+	let templateName = (allOnbase[0] && allOnbase[0].getAttribute('_BaseJS_TemplateName_')) || templateRootName;
 
-	templateName == 'index' && wrapHtmlEvents(startElement, _BaseJS_ComponentId_, templateName);
+	templateName == templateRootName && wrapHtmlEvents(startElement, _BaseJS_ComponentId_, templateName);
 
 	if (!allOnbase.length) return {renderTime: new Date().getTime() - renderTime, renderTimeDom: 0}; // after Wrapping event atributes ("on...")
 
@@ -280,25 +280,9 @@ function templateEditorSystemSync(
 							this.parent = templateJsThis[_BaseJS_ComponentId_];
 							this.htmlElement = element;
 						};
-						if (templateJS[templateName + '__Parts' + '__Super'])
-							defThis = templateJS[templateName + '__Parts' + '__Super'].call(defThis);
-						if (templateJS[templateName + '__Super'])
-							defThis = templateJS[templateName + '__Super'].call(defThis);
 
-						if (templateJS[templateName + '__Parts' + '__Super'] || templateJS[templateName + '__Super']) {
-							let origin = {};
-							for (let i in defThis) {
-								if (typeof defThis[i] === 'function') origin[i] = defThis[i].bind();
-							}
-							// @ts-ignore
-							defThis.origin = origin;
-						}
-						if (templateJS[templateName + '__Parts'])
-							defThis = templateJS[templateName + '__Parts'].call(defThis);
-						if (templateJS[templateName])
-							defThis = templateJS[templateName].call(defThis);
-
-						templateJsThis[new_BaseJS_ComponentId_] = defThis;
+						// @ts-ignore
+						templateJsThis[new_BaseJS_ComponentId_] = getTemplateJsThis(defThis, templateName);
 
 						element.querySelectorAll('[onbase]').forEach(e => {
 							e.setAttribute('_BaseJS_ComponentId_', new_BaseJS_ComponentId_);
@@ -418,7 +402,7 @@ function wrapHtmlEvents(startElement, _BaseJS_ComponentId_, templateName) {
 }
 
 function baseEval(baseAttribute, /** @type { HTMLElement } */ element, notEval = false) {
-	let templateName = element.getAttribute('_BaseJS_TemplateName_') || 'index';
+	let templateName = element.getAttribute('_BaseJS_TemplateName_') || templateRootName;
 	let _BaseJS_ComponentId_ = element.getAttribute('_BaseJS_ComponentId_') || '_BaseJS_ComponentId_';
 	baseAttribute = typeof baseAttribute == 'string' ? baseAttribute : `return (${baseAttribute.toString()})()`;
 

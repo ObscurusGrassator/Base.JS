@@ -28,42 +28,43 @@ function getFilePaths(dirPath, regExp = /.+/, deep = true, libOrService = false)
 	 * @param {RegExp} [regExp = /.+/]
 	 * @param {Boolean} [deep = false]
 	 * @param {Boolean} [libOrService = false]
-	 * @param {String} [dirPathOrig = null]
 	 *
 	 * @returns {Promise<String[]>}
 	 */
-	let recursive = (dirPath, regExp, deep, libOrService, dirPathOrig = null) => {
-		dirPathOrig = dirPathOrig || dirPath;
+	let recursive = (dirPath, regExp, deep, libOrService) => {
 		return new Promise((resolve, reject) => {
 			let results = [];
 			fs.readdir(dirPath, async (err, list) => {
 				if (err) return reject(err);
 				let proms = [];
 
-				if (libOrService) {
-					// duplication of logic of indexCreate.base.js
-					for (let file of list) {
-						file = path.resolve(dirPath, file);
-						let dirName = dirPath.match(/(^|\/)([a-zA-Z_\-]+)[\.0-9]*\/?$/);
-						let fileName = file.match(/(^|\/)([a-zA-Z_\-]+)[\.0-9]*\.js$/);
+				for (let file of list) {
+					file = path.resolve(dirPath, file);
+					const stat = await promisify(fs.stat, file);
 
-						if (dirName && fileName && dirPathOrig != dirPath && (fileName[2] == 'index'
-								|| dirName[2].replace(/[_\-]$/, '') == fileName[2].replace(/[_\-]$/, ''))) {
-							proms.push(Promise.resolve([file]));
+					if (stat && stat.isDirectory()) {
+						let dirLibExists = false;
+						let dirPath = file;
+						if (libOrService) {
+							let list = await promisify(fs.readdir, file);
+
+							// duplication of logic of indexCreate.base.js
+							for (let file of list) {
+								file = path.resolve(dirPath, file);
+								let dirName = dirPath.match(/(^|\/)([a-zA-Z_\-]+)[\.0-9]*\/?$/);
+								let fileName = file.match(/(^|\/)([a-zA-Z_\-]+)[\.0-9]*\.js$/);
+
+								if (dirName && fileName && (fileName[2] == 'index'
+										|| dirName[2].replace(/[_\-]$/, '') == fileName[2].replace(/[_\-]$/, ''))) {
+									if (regExp.test(file)) proms.push(Promise.resolve([file]));
+									dirLibExists = true;
+								}
+							}
 						}
+						if (deep && !dirLibExists) proms.push(recursive(file, regExp, deep, libOrService));
 					}
-				}
-
-				if (!proms.length) {
-					for (let file of list) {
-						file = path.resolve(dirPath, file);
-						const stat = await promisify(fs.stat, file);
-
-						if (stat && stat.isDirectory()) {
-							if (deep) proms.push(recursive(file, regExp, deep, libOrService, dirPathOrig));
-						} else if (regExp.test(file)) {
-							proms.push(Promise.resolve([file]));
-						}
+					else if (regExp.test(file)) {
+						proms.push(Promise.resolve([file]));
 					}
 				}
 
