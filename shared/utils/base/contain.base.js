@@ -15,12 +15,12 @@ const optionsDefault = {
  * @author obscurus.grassator@gmail.com
  * @template { Array | {[key: string]: any} } T
  * @param { T } source
- * @param { import('../types/general.base.js').DeepJoinObjPartial<
- *    	import('../types/general.base.js').DeepWrappingObjPartial<T, 9>,
+ * @param { import('shared/types/general.base.js').DeepJoinObjPartial<
+ *    	import('shared/types/general.base.js').DeepWrappingObjPartial<T, 9>,
  *      {orderInArray: "keep" | "random"},
  * 		9
  * > } mustHave
- * @_param { import('../types/general.base.js').DeepReplaceObjPartial<
+ * @_param { import('shared/types/general.base.js').DeepReplaceObjPartial<
  *           T, {orderInArray: "keep" | "random"} | (function(any): Boolean)> } mustHave
  * @param { Object } options
  * 		@param { any[][] } [options.equalsValues = [[undefined, false]] ] Defaul undefined === false
