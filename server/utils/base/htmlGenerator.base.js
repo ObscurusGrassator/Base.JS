@@ -13,6 +13,8 @@ const config = require('shared/services/base/jsconfig.base.js').value;
 
 /** @typedef {import('client/types/serverContentType.js').ServerContentType} ServerContentType */
 
+require('shared/utils/base/substring.base');
+
 let templates = {};
 let inputContent = {};
 let buildedHtml = {};
@@ -39,25 +41,29 @@ async function readFile(
 	let isExternalLibrary = filePath.substr(0, 12) == 'client/libs/' ? true : false;
 	filePath = filePath.replace(new RegExp(pathLib.resolve('') + '\\/', 'g'), '');
 	let templateName = filePath.replace(templateConf.path, '').replace(templateConf.extend, '')
-		.replace(new RegExp(`^\/|${isIndexTemplate ? '' : `(\/index)?`}(\.html|\.js)?$`, 'g'), '');
+		.replace(new RegExp(`^\/|${isIndexTemplate ? '' : `(\/index)?`}(\.html|\.js(on)?)?$`, 'g'), '');
 	/** @type { String } */
 	let result = fs.existsSync(filePath) ? await promisify(fs.readFile, filePath, 'utf8') : '';
 	if (!result) return result;
 
 	if (!isExternalLibrary && filePath.substring(-4) != '.css') {
+		let pwd = filePath.substring(0, filePath.lastIndexOf('\/')+1);
+		if (pwd) result = result // replace local path to from project root path
+			.replace(/(require\(["'])(\.\/)([a-zA-Z0-9_\-\/\.]*?(\/index)?(\/|\.html|\.js(on)?)?["']\))/gi,
+				(all, before, pwd0, after) => before + pwd + after);
 		if (!js) result = result
-			.replace(/(const|var|let)?\s*([a-zA-Z0-9_\-]+)\s*=\s*require\(["']([a-zA-Z0-9_\-]*\/[a-zA-Z0-9_\-\/\.]*?)(\/index)?(\/|\.html|\.js)?["']\)/gi,
-				(all, lett, prem, templateName) => `${lett ? 'let' : ''} ${
+			.replace(/((const|var|let)\s*)?([a-zA-Z0-9_\-]+)\s*=\s*require\(["']([a-zA-Z0-9_\-]*\/[a-zA-Z0-9_\-\/\.]*?)(\/index)?(\/|\.html|\.js(on)?)?["']\)/gi,
+				(all, a, lett, prem, templateName) => `${lett ? 'let' : ''} ${
 					prem} = ${requireReplacer(templateName)}`);
 		if (/\/_?index\.js$/.test(filePath) && !isIndexTemplate) {
 			result = result
-			.replace(/require\(["']([a-zA-Z0-9_\-]*\/[a-zA-Z0-9_\-\/\.]*?)(\/index)?(\/|\.html|\.js)?["']\)(\.[a-zA-Z0-9]+)?/gi,
-				(all, templateName, a, b, property) => requireReplacerFunc(templateName, property))
+			.replace(/require\(["']([a-zA-Z0-9_\-]*\/[a-zA-Z0-9_\-\/\.]*?)(\/index)?(\/|\.html|\.js(on)?)?["']\)(\.[a-zA-Z0-9]+)?/gi,
+				(all, templateName, a, b, c, property) => requireReplacerFunc(templateName, property))
 			.replace(/module\.exports\s*=/gi, `window.requires['${templateName}'] = new Proxy(`)
 			.replace(/};\s*$/i, '}, window.requireProxiHandler);')
 		}
 		result = result
-			.replace(/require\(["']([a-zA-Z0-9_\-]*\/[a-zA-Z0-9_\-\/\.]*?)(\/index)?(\/|\.html|\.js)?["']\)/gi,
+			.replace(/require\(["']([a-zA-Z0-9_\-]*\/[a-zA-Z0-9_\-\/\.]*?)(\/index)?(\/|\.html|\.js(on)?)?["']\)/gi,
 				(all, templateName) => requireReplacer(templateName))
 			.replace(/require\(['"][^\)\/]+['"]\)/gi, 'undefined') // require('fs'); v shared/services/base/jsconfig.base.js
 			.replace(/export\s*\{\};/gi, '')
@@ -94,7 +100,8 @@ async function readFile(
 	}
 
 	let jsWraperBefore = `window.templateJS['${templateName}${
-		!js || filePath.substring(-5) != '.html' ? '' : '__Parts'}${!isJSExtend ? '' : '__Super'}'] = (function() { `;
+		!js || filePath.substring(-5) != '.html' ? '' : '__Parts'}${!isJSExtend ? '' : '__Super'}'] = (function() { `
+		+ (filePath.substring(-5) == '.json' ? `window.requires['${templateName}'] = ` : '');
 	let jsWraperAfter = `
 		\n${js ? '' : 'window.unloadFunctionalityStack.splice(window.unloadFunctionalityStack.indexOf(\'' + templateName + '\'), 1);'}
 		\nreturn ${js ? 'this' : 'window.requires[\'' + templateName + '\']'}; })${js ? '' : ''/*'.apply(this)'*/};
@@ -104,7 +111,8 @@ async function readFile(
 	// 	.replace(/(\sonbase\s*=\s*(\\?)\"\s*(\{\{)?\s*\(?\s*\{)(_BaseJS_ComponentId_)?/g,
 	// 		(all, base, a, b, iff) => iff ? all : `${base}_BaseJS_ComponentId_: ${a?`'`:`"`}${a?`"`:`'`}+${id}+${a?`"'`:`'"`}, `);
 
-	if (filePath.substring(-3) == '.js') result = '<script> ' + jsWraperBefore + /* onlyJS(result) */ result + jsWraperAfter + '\n</script>';
+	if (filePath.substring(-3) == '.js' || filePath.substring(-5) == '.json')
+		result = '<script> ' + jsWraperBefore + /* onlyJS(result) */ result + jsWraperAfter + '\n</script>';
 	else if (filePath.substring(-4) == '.css') result = `<style>\n${result}\n/*# sourceURL=${filePath}*/\n</style>`;
 	else if (filePath.substring(-5) == '.html') result = result
 		.replace(/([\s\S]*?)(\<script[^\>]*?\>)([\s\S]*?)(\<\/script\>)/ig, (all, /** @type {String} */ before, start, content, end) => {
@@ -138,14 +146,19 @@ function getfilteredConfig() {
 	return conf;
 }
 
+// @ts-ignore
+if (process?.argv?.[2] && process.argv[3]) htmlGenerator({}, process.argv[2], process.argv[3]);
+
 /**
  * Create building HTML string.
  * To serverContent param is automatic added 'config' property. It contains
  *   jsconfig properties content whose names does not begin with character '_'.
  * 
- * @param {ServerContentType | {[key: string]: any}} [serverContent = {}] Json serverContent readable in client JavaScript.
+ * @param {ServerContentType | {[key: string]: any}} [serverContent = {}]
+ *   Json serverContent readable in client JavaScript.
  * @param {String} [templateFile = 'index'] Parent html template for building
- * @param {Boolean} [cache = false] In production (cache = true) generate HTML only onece and update only new serverContent
+ * @param {Boolean} [cache = false]
+ *   In production (cache = true) generate HTML only onece and update only new serverContent
  * @param {keyof typeof config.client.templates} [templatesGroupName = config.client.template]
  * 
  * @returns {Promise<String>} Builded HTML string
@@ -170,8 +183,9 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 	async function deep(serverContent = {}, template = 'index', html = [], css = [], js = [], jsParts = {}) {
 		if (serverContent && Object.keys(serverContent).length) inputContent = serverContent;
 
-		template = template.replace(templateConf.path, '').replace(templateConf.extend, '').replace(/^\/|\.html$|\.js$/g, ''); // duplication
+		template = template.replace(templateConf.path, '').replace(templateConf.extend, '').replace(/^\/|\.html$|\.js(on)?$/g, ''); // duplication
 		let pathNotSuf = pathLib.join(templateConf.path, template);
+
 		let pathJS = pathLib.join(templateConf.path, template + '.js');
 		let pathJSExt = pathLib.join(templateConf.extend, template + '.js');
 		if (!fs.existsSync(pathJS)) pathJS = undefined;
@@ -223,6 +237,7 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 
 			objectDeepPropertiesProcessing(
 				Object.values(config.utils._createIndex)
+					.filter(a => typeof a == 'object' && !Array.isArray(a))
 					.map(a => Object.keys(a).concat(Object.values(a).flat(1))).flat(1)
 					.filter(a => !/^server\/|\'type|types?\//i.test(a)),
 				(objPart, key) => {
@@ -233,14 +248,14 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 
 			let fromDirs = async path => {
 				if ((await promisify(fs.lstat, path)).isDirectory()) {
-					let paths = await getFilePaths(path, /(^|\/)[^\/]*\.(js|css)$/, false);
+					let paths = await getFilePaths(path, /(^|\/)[^\/]*\.(json|js|css)$/, false);
 					let indexExists = false;
 					for (let path of paths) {
 						if (/\.(js|css)/.test(path) /*&& (!/\.ignr\./.test(path) || /getActualElement\./.test(path))*/) {
-							if (path.substr(path.length - 9) == '/index.js') {
+							if (path.substring(path.length - 9) == '/index.js') {
 								indexExists = true;
 								utilsJsIndexes.push(await readFile(path, templateConf, inputContent));
-							} else if (path.substr(path.length - 10) == '/_index.js') {
+							} else if (path.substring(path.length - 10) == '/_index.js') {
 								utilsJsIndexes.push(await readFile(path, templateConf, inputContent));
 							} else {
 								utilsJs.push(await readFile(path, templateConf, inputContent));
@@ -321,6 +336,8 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 			// js = [];
 			js.push(`<script>
 				function getTemplateJsThis(defThis, templateName) {
+					let update = window.requires['shared/utils/base/update.base'] || window.templateJS['shared/utils/base/update.base']();
+
 					// '__Parts' = functions from .html files
 					if (window.templateJS[templateName + '__Parts__Super'])
 						defThis = window.templateJS[templateName + '__Parts__Super'].call(defThis);
@@ -339,6 +356,9 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 						defThis = window.templateJS[templateName + '__Parts'].call(defThis);
 					if (window.templateJS[templateName])
 						defThis = window.templateJS[templateName].call(defThis);
+
+					if (window.templateJS[templateName + '__JSON'])
+						defThis = update(window.templateJS[templateName + '__JSON'], '', defThis, {arrayItemEqual: (a, b) => a === b, updateWithDefaultValues: true});
 
 					return defThis;
 				}
@@ -382,6 +402,10 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 		let name = templatesGroupName + '-' + templateFile;
 		if (!buildedHtml[name]) {
 			buildedHtml[name] = await deep(serverContent, templateFile);
+
+			let path = (cache+'').indexOf('.htm') === -1 ? pathLib.join((cache+''), name) : (cache+'');
+			if (typeof cache == 'string') fs.writeFile(path, buildedHtml[name], ()=>{});
+
 			return buildedHtml[name];
 		} else return await contentRewrite(buildedHtml[name], serverContent);
 	}

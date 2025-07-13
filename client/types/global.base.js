@@ -31,20 +31,22 @@
 var b;
 
 /**
- * @global @type { function(_base_BaseTemplate & {
+ * @typedef { function(_base_BaseTemplate & {
  *   [key in keyof _base_BaseTemplate as `_${key}`]: _base_BaseTemplate[key]
- * }): void }
+ * }): void } W
  */
+/** @global @type { W } */
 var w;
-
-// /** @global @type { import('shared/utils/base/console.base.js') } */
-// var console;
-
-/** @global @type { import('../types/serverContentType').ServerContentType } */
-var serverContent;
-
 // w({
 // 	if: true,
 // 	forIn: () => [], key: 'qqw',
 // 	setHtml: () => { return 'aaa' + this.s }
 // })
+
+/** @global @type { typeof import('shared/utils/base/console.base.js') } */
+var console;
+
+/** @global @type { import('../types/serverContentType').ServerContentType } */
+var serverContent;
+
+export {}

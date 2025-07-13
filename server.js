@@ -216,7 +216,7 @@ concoleWarnError(console0, b);
 				b.util.email(err, {group: 'sendEmailAfterError'}).catch(err => { console.error(err); });
 			}
 			res.setHeader('Content-Type', 'text/html');
-			res.end(JSON.stringify(err));
+			res.end((err.message && err.message + err.stack) || JSON.stringify(err));
 		}
 	};
 

@@ -18,6 +18,9 @@ if (typeof Proxy === "undefined") {
 	doNotSupported.push('Proxy');
 }
 
+if (typeof Worker  === "undefined") {
+	doNotSupported.push('Worker');
+}
 
 if (typeof Promise === "undefined" || Promise.toString().indexOf("[native code]") === -1) {
 	doNotSupported.push('Promise');

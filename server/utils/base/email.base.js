@@ -1,4 +1,4 @@
-const nodemailer = require('nodemailer');
+const { createTransport } = require('nodemailer');
 
 const arraysDiff = require('shared/utils/base/arraysDiff.base.js');
 const config = require('shared/services/base/jsconfig.base.js').update('utils.email', {
@@ -31,7 +31,7 @@ const other = {
  * @param {String} message 
  * @param {{group?: String | String[], service?: 'gmail', _auth?: {user: String, pass: String} & {[key: string]: any}}
  *   & {[key: string]: any}
- *   & Partial<nodemailer.Transport & nodemailer.SendMailOptions>}
+ *   & Partial<import('nodemailer').Transport & import('nodemailer').SendMailOptions>}
  *     [configuration = {}] Default configuration is in jsconfig.json/util.email[0]
  * 
  * @returns {Promise<Object[] | false>}
@@ -50,10 +50,12 @@ async function email(message, configuration = {}) {
 				&& !arraysDiff(config.utils.email[i].group || [], configuration.group).intersection.length))
 			continue;
 
-		/** @type { {group?: String | String[], service?: String,
+		/**
+		 * @type { {group?: String | String[], service?: String,
 		 * 		auth?: {user: String, pass: String},
 		 * 		_auth?: {user: String, pass: String},
-		 *	} & Partial<nodemailer.Transport & nodemailer.SendMailOptions> } */
+		 *	} & Partial<import('nodemailer').Transport & import('nodemailer').SendMailOptions> }
+		 */
 		let emailConf = {
 			...(config.utils.email[i] || {}),
 			...configuration,
@@ -71,7 +73,7 @@ async function email(message, configuration = {}) {
 			console.debug(problem, emailConf);
 			proms.push({problem});
 		} else {
-			proms.push(nodemailer.createTransport(emailConf).sendMail(emailConf).catch(err => Promise.reject({err, emailConf}) ));
+			proms.push(createTransport(emailConf).sendMail(emailConf).catch(err => Promise.reject({err, emailConf}) ));
 		}
 	}
 	return Promise.all(proms);

@@ -26,7 +26,7 @@ const jsonStringify = require('shared/utils/base/jsonStringify.base.js');
 			try {
 				object = JSON.parse(string);
 			} catch (err) {
-				console.error(new Error(err));
+				console.error(fileName, 'JSON file parse error:', new Error(err));
 				process.exit();
 			}
 		}
@@ -140,6 +140,8 @@ const jsonStringify = require('shared/utils/base/jsonStringify.base.js');
 			"start": "npm run startBaseJS",
 		},
 	}, {updateWithDefaultValues: true}), '', {
+		"types": "./globalTypes.d.ts",
+		"main": "manager.js",
 		"dependencies": {
 			"iconv-lite": "^0.6.3",
 			"nodemailer": "^6.8.0",

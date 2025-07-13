@@ -1,13 +1,19 @@
 /**
  * @typedef { Object } Type
  * @property {{
- * 		reqID: Number,
- * 		speak?: String, listen?: true,
- * 		getAccept?: boolean, speakDisable?: boolean,
- * 		name?: String,
- * 		resolve: function, reject: function,
+ *      reqID: number,
+ *      speak?: string, speakDisable?: boolean,
+ *      listen?: boolean,
+ *      name?: string,
+ *      getAccept?: boolean,
+ *      resolve: function, reject: function,
  * } | false} sendDataToClient
  * @property { number } requestID
  * @property { boolean } speakDisable
+ * @property { (result: string) => void } waitingToPromptAnswer
+ * @property { string } appStorage
+ * @property { string } appStoragePlugins
+ * @property { string } appStorageLocalPlugins
+ * @property { string } appStorageCodeCache
  */
 export {}

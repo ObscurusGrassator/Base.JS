@@ -52,7 +52,7 @@ function getFilePaths(dirPath, regExp = /.+/, deep = true, libOrService = false)
 							for (let file of list) {
 								file = path.resolve(dirPath, file);
 								let dirName = dirPath.match(/(^|\/)([a-zA-Z_\-]+)[\.0-9]*\/?$/);
-								let fileName = file.match(/(^|\/)([a-zA-Z_\-]+)[\.0-9]*\.js$/);
+								let fileName = file.match(/(^|\/)([a-zA-Z_\-]+)[\.0-9]*\.js(on)?$/);
 
 								if (dirName && fileName && (fileName[2] == 'index'
 										|| dirName[2].replace(/[_\-]$/, '') == fileName[2].replace(/[_\-]$/, ''))) {
@@ -83,7 +83,9 @@ function getFilePaths(dirPath, regExp = /.+/, deep = true, libOrService = false)
 	return recursive(dirPath, regExp, deep, libOrService);
 };
 
-require('shared/services/base/testing.base.js').add(async () => {
+// @ts-ignore
+const android = !!fs.DocumentDirectoryPath;
+!android && require('shared/services/base/testing.base.js').add(async () => {
 	if (!(await getFilePaths('../')).includes('server/utils/base/getFilePaths.base.js')) throw 'getFilePaths("") test failed';
 	if ((await getFilePaths('../', /_not_exist_name_nscfanlysn/)).length !== 0) throw 'getFilePaths("", RegExp) test failed';
 });

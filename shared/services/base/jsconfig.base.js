@@ -47,9 +47,12 @@ class Config {
      * @returns Config
      */
     static update(ifThisPathNotExists, value) {
+        if (!conf) Config.value;
+
         let path = typeof ifThisPathNotExists == 'string' ? [ifThisPathNotExists] : ifThisPathNotExists;
+
         if (typeof require !== 'undefined' && typeof jsonStringify == 'function'
-         && get(conf, path, undefined) === undefined) {
+                && get(conf, path, undefined) === undefined) {
             /** @type {typeof confBase} */ let jsconfigObj;
             let jsconfigSpace = '\t';
             let jsconfigString = fs.readFileSync('jsconfig.json', {encoding: 'utf8'});

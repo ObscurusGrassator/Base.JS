@@ -9,6 +9,7 @@
 !app_example.js
 !manager.js
 !server.js
+!globalTypes.d.ts
 
 
 

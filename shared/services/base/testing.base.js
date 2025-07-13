@@ -59,7 +59,7 @@ class Testing {
 					let tmp = Math.round((counter/max)*100);
 					if (percent !== tmp) {
 						percent = tmp;
-						console.infoTmp(max, 'tests in progress...', ('  ' + percent).substr(-3), '%');
+						console.infoTmp(max, 'tests in progress...', ('  ' + percent).substring(-3), '%');
 					}
 					return data;
 				})

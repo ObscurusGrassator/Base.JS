@@ -27,17 +27,13 @@ module.exports = {
 				res.statusCode = 404;
 				return '';
 			}
-			let result = await require(realPath.path)(req, res, realPath.variables, postData);
+			let result = await require(realPath.path)(req, res, {...realPath.variables, ...getData}, postData);
 			return result;
 		}
 
 		b.storage.edit(storage => storage.cookie._exampleCookieStorage.v = 'serverValue');
 
 		if (req.url == '/') req.url = '_example_/index_example.html';
-		// else if (req.url.substr(0, 5) == '/api/') {
-		// 	let realPath = await b.util.getRealTemplatePath(req.url, 'notFounds.html', 'server/');
-		// 	return require(realPath.path)(req, res, realPath.variables);
-		// }
 
 		let templatePath = b.config.client.templates[b.config.client.template].path;
 		let realPath = await b.util.getRealTemplatePath(req.url, 'notFounds.html', templatePath);

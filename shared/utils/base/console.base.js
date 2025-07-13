@@ -3,8 +3,8 @@ var util = require('util');
 var fs = require('fs');
 var pathLib = require("path");
 
-console.origStdoutWrite = console.origStdoutWrite || (typeof process !== 'undefined' && process.stdout.write);
-console.origStderrWrite = console.origStderrWrite || (typeof process !== 'undefined' && process.stderr.write);
+console.origStdoutWrite = console.origStdoutWrite || (typeof process !== 'undefined' && process?.stdout?.write) || (() => {});
+console.origStderrWrite = console.origStderrWrite || (typeof process !== 'undefined' && process?.stderr?.write) || (() => {});
 
 const colors = {
 	reset: 		"\x1b[0m",
@@ -45,20 +45,22 @@ console.replacer = replacer;
 console.userErrorFunction = (message) => new Error(message);
 
 const setStream = (opt) => {
+	if (!fs.ReadStream?.prototype?.constructor?.name) return false;
+
 	console.logStream = (!opt.backupFilePath && console.logStream)
 		|| (console.backupFilePath && fs.createWriteStream(console.backupFilePath, {flags: 'a', encoding: 'utf8'}));
 
-	let write = (args) => {
-		let d = new Date();
-		args[0] = console.colors.reset + console.colors.yellow2
-					// + (new Date()).toLocaleString('en-GB')
-					+ `${('0'+d.getUTCDate()).substr(-2)}.${('0'+d.getUTCMonth()).substr(-2)} `
-					+ `${('0'+d.getUTCHours()).substr(-2)}:${('0'+d.getUTCMinutes()).substr(-2)}`
-					+ console.colors.reset + ' ' + args[0];
-		console.logStream.write.apply(console.logStream, args);
-	};
-
 	if (console.backupFilePath) {
+		let write = (args) => {
+			let d = new Date();
+			args[0] = console.colors.reset + console.colors.yellow2
+				// + (new Date()).toLocaleString('en-GB')
+				+ `${('0'+d.getUTCDate()).substr(-2)}.${('0'+d.getUTCMonth()).substr(-2)} `
+				+ `${('0'+d.getUTCHours()).substr(-2)}:${('0'+d.getUTCMinutes()).substr(-2)}`
+				+ console.colors.reset + ' ' + args[0];
+			console.logStream.write.apply(console.logStream, args);
+		};
+
 		process.stdout.write = (...args) => {
 			console.origStdoutWrite.apply(process.stdout, args);
 			write(args);
@@ -136,12 +138,12 @@ const getMessage = (methodKey, tmp, ...inputs) => {
 		} else outputs.push(inputs[i]);
 	}
 
-	if (typeof require !== 'undefined' && process.stdout.clearLine && process.stdout.cursorTo) {
+	if (typeof require !== 'undefined' && process.stdout && process.stdout.clearLine && process.stdout.cursorTo) {
 		process.stdout.clearLine(); process.stdout.cursorTo(1);
 	}
 
 	if (tmp) {
-		if (typeof require !== 'undefined' && process.stdout.clearLine && process.stdout.cursorTo) {
+		if (typeof require !== 'undefined' && process.stdout && process.stdout.clearLine && process.stdout.cursorTo) {
 			process.stdout.write(outputs.join(' '));
 		} else {
 			// do súboru takéto logy písať nebudem
@@ -238,11 +240,11 @@ class ConsolePlus {
 	/** @type {replacer} */
 	get replacer() { return console.replacer; };
 
-	traceTmp(...params) {};
-	debugTmp(...params) {};
-	infoTmp(...params) {};
-	warnTmp(...params) {};
-	errorTmp(...params) {};
+	traceTmp(...params) {};	traceOrig(...params) {};
+	debugTmp(...params) {};	debugOrig(...params) {};
+	infoTmp(...params) {};	infoOrig(...params) {};
+	warnTmp(...params) {};	warnOrig(...params) {};
+	errorTmp(...params) {};	errorOrig(...params) {};
 	errorMessage(...params) {};
 	errorMessageTmp(...params) {};
 

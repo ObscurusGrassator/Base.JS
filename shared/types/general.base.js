@@ -66,11 +66,11 @@ export {}
  * It checks the identity of the type from the input object on the input dot-separated path.
  * 
  * @template { {[k: string | number]: any} } Schema
- * @template { string } Path
+ * @template { StringPathOf<Schema> } Path
  * @template { number } [D = 4] Maximal deep level
  * @typedef { [D] extends [never] ? never
  *      : Path extends `${infer T}.${infer U}`
- *          ? TypeOfPath<Schema[T], U, Prev[D]>
+ *          ? TypeOfPath<Schema[T], U & StringPathOf<Schema[T]>, Prev[D]>
  *          : Schema[Path]
  * } TypeOfPath
  * @example type { TypeOfPath<{ aa: number; bb: {xx: number, yy: string}; }, 'bb.xx'> // number
@@ -145,6 +145,14 @@ export {}
 
 
 /**
+ * @template { any } Input
+ * @typedef { Input extends Promise<infer R> ? R : never } TypeInPromise
+ */
+export {}
+
+
+
+/**
  * @template { {[k: string]: any} } Obj
  * @template { any } Type
  * @typedef { {[K in keyof Obj]: Obj[K] extends Type ? K : never}[keyof Obj] } ObjectKeysOfType
@@ -162,11 +170,16 @@ export {}
 
 
 /**
- * @template { {[key: string | number]: any} } Obj
- * @typedef { Obj extends (String | Number | Boolean | Function | Symbol) ? Obj
- * 		: {[k in keyof Obj]?: DeepPartial<Obj[k]>}
+ * @template Obj
+ * @template { number } [D = 9] Maximal deep level
+ * @typedef { [D] extends [never] ? Obj
+ *      : Obj extends {[key: string | number]: any}
+ * 		    ? {[k in keyof Obj]?: DeepPartial<Obj[k], Prev[D]>}
+ *          : Obj
  * } DeepPartial
+ * @example type { DeepPartial<{a: {b: {c: number}, d: string}}> } let a = {a: {d: 'sds'}};
  */
+/** @type { DeepPartial<{a: {b: {c: number}, d: string}}> } */ let a = {a: {d: 'sds'}};
 export {}
 
 
@@ -187,7 +200,7 @@ export {}
 export {}
 
 /** @type { DeepJoinObj< {a: {b: {c: number}, e: {c: number}, arr: {d: string}[]}}, {y: number} > } */
-let g2 = {a: {arr: [{d: 'a', y: 2, fail: 4}], b: {c: 2}, e: {c: 2, y: 2}}, y: 2};
+// let g2 = {a: {arr: [{d: 'a', y: 2, fail: 4}], b: {c: 2}, e: {c: 2, y: 2}}, y: 2};
 // let g2 = {a: {arr: [{d: 'a', y: 'fail'}, {d: 'a', y: 2, fail: 4}], b: {c: 'fail'}, e: {c: 2, y: 2, fail: 4}}, y: 2};
 g2.a.arr[0].y = 3;
 // g2.a.arr[0].d = 3; // fail

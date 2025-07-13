@@ -15,8 +15,9 @@ function error(...err) {
 		"utils": {
 			"_error": {
 				"errorStackStringRemove": [
-					"/.*? \\(.*?\\/utils\\/console\\.base\\.js.+?(\\n|$)/ig",
-					"/.*? \\(.*?\\/utils\\/error\\.base\\.js.+?(\\n|$)/ig",
+					"/.*? \\(.*?\\/utils\\/base\\/console\\.base\\.js.+?(\\n|$)/ig",
+					"/.*? \\(.*?\\/utils\\/base\\/error\\.base\\.js.+?(\\n|$)/ig",
+					"/.*? \\(node:.+?(\\n|$)/ig",
 					"/.*? \\(internal\\/process\\/.+?(\\n|$)/ig",
 					"/.*? \\(internal\\/modules\\/.+?(\\n|$)/ig",
 					"/.*? \\(index 0\\)(\\n|$)/ig",

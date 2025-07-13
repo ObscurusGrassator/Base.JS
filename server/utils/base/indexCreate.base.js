@@ -11,6 +11,7 @@ const console = require('shared/utils/base/console.base.js');
 const config = require('shared/services/base/jsconfig.base.js').update('utils._createIndex', {
 	'utils': {
 		'_createIndex': {
+			'disablePackages': [],
 			'utils': {
 				'client/src/': ['client/src/'],
 				'client/utils/': ['client/utils/', 'client/utils/base/', 'shared/utils/', 'shared/utils/base/'],
@@ -30,6 +31,8 @@ const config = require('shared/services/base/jsconfig.base.js').update('utils._c
 		}
 	}
 }).value;
+
+let disablePackages = [];
 
 /**
  * Create .index.js file
@@ -68,6 +71,7 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 			let proms = [];
 			// Creating all indexs of '.index.js' file
 			for (let type in config.utils._createIndex) {
+				if (type == 'disablePackages') { disablePackages = config.utils._createIndex[type]; continue; }
 				if (type == 'typesMerge') continue;
 				for (let destinationPath in config.utils._createIndex[type]) {
 					// @ts-ignore
@@ -103,12 +107,16 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 				util: require('util'),
 				zlib: require('zlib'),
 			\n`;
-			for (let i in package.dependencies) {
-				js += `\t\t\t\t'${i}': require('${i}'),\n`;
+			for (let i in package.dependencies || []) {
+				if (!disablePackages.includes(i)) js += `\t\t\t\t'${i}': require('${i}'),\n`;
+			}
+			// @ts-ignore
+			for (let i in package.peerDependencies || []) {
+				if (!disablePackages.includes(i)) js += `\t\t\t\t'${i}': require('${i}'),\n`;
 			}
 			js += `};`;
 
-			await promisify(fs.writeFile, 'index.js', js);
+			await promisify(fs.writeFile, 'modules.js', js);
 
 			return;
 		}
@@ -120,21 +128,21 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 					destinationPath = path.join(destinationPath, 'index.js');
 				}
 			} catch (err) {
-				if (destinationPath.substr(-3) != '.js') {
+				if (destinationPath.substring(-3) != '.js') {
 					destinationPath = path.join(destinationPath, 'index.js');
 				}
 			}
 		}
 
-		let className = (destinationPath ? destinationPath : dirPathsSource[0]).match(/(^|\/)([^\/]+?)(.js)?\/?$/)[2];
-		className = className.substr(0, 1).toUpperCase() + className.substr(1);
+		let className = (destinationPath ? destinationPath : dirPathsSource[0]).match(/(^|\/)([^\/]+?)(.js(on)?)?\/?$/)[2];
+		className = className.substring(0, 1).toUpperCase() + className.substring(1);
 		let group = {array: []};
 		let proms = [];
 
 		for (let i in dirPathsSource) {
 			proms.push(getFilePaths(
 				dirPathsSource[i],
-				new RegExp("(^|\\/)(?!\\.index\\.js)(?!index\\.js)[^\\/]*\\.js$"),
+				new RegExp("(^|\\/)(?!\\.index\\.js)(?!index\\.js)[^\\/]*\\.js(on)?$"),
 				true,
 				['libs', 'services'].indexOf(type) > -1
 			));
@@ -153,15 +161,15 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 						}
 
 						if (!requireReplacer && /\.ignr\./.test(file)) continue;
-						if (file.substr(file.length - 14) == '/src/_index.js') continue;
+						if (file.substring(file.length - 14) == '/src/_index.js') continue;
 
-						let templateName = file.replace(/^\/|\.html$|\.js$/g, '');
-						let functionName = file.match(/(^|\/)([a-zA-Z_\-]+)[^\/]*.js$/i)[2].replace(/[_\-]$/, '');
+						let templateName = file.replace(/^\/|\.html$|\.js(on)?$/g, '');
+						let functionName = file.match(/(^|\/)([a-zA-Z_\-]+)[^\/]*.js(on)?$/i)[2].replace(/[_\-]$/, '');
 						let path = (file + '...').substring(dirPathsSource[i].length).split('/');
 						path.pop();
 
 						// duplication of logic of getFilePaths.base.js
-						let functionMatch = file.match(/(^|\/)([a-zA-Z_\-]+)[\.0-9]*\/(([a-zA-Z_\-]+)[\.0-9]*|index)\.js$/);
+						let functionMatch = file.match(/(^|\/)([a-zA-Z_\-]+)[\.0-9]*\/(([a-zA-Z_\-]+)[\.0-9]*|index)\.js(on)?$/);
 						if (['libs', 'services'].indexOf(type) > -1 && functionMatch && functionMatch[4] && (functionMatch[3] == 'index' ||
 								functionMatch[2].replace(/[_\-]$/, '') == functionMatch[4].replace(/[_\-]$/, ''))) {
 							functionName = functionMatch[2].replace(/[_\-]$/, '');

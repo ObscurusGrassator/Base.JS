@@ -1,9 +1,4 @@
-const fs = require('fs');
-
-var error;
-if (typeof require === 'undefined' || fs.existsSync('jsconfig.json')) {
-	error = require('shared/utils/base/error.base.js');
-} else error = message => (new Error(message)).stack;
+var error = require('shared/utils/base/error.base.js');
 
 /**
  * Prettier JSON.stringify()
@@ -19,23 +14,19 @@ function stringify(object, space) {
 	}
 
 	let pretty = function (key, value) {
-		if (Array.isArray(value)) {
-			let allIsString = true;
-			for (let i in value) {
-				if (typeof value[i] != 'string') allIsString = false;
-			}
-			if (allIsString && JSON.stringify(value).length < 60) {
-				value.unshift('{[start_*>');
-				value.push('>*_end]}');
+		if (typeof value == 'object' && value != null) {
+			if (!Object.values(value).find(v => (typeof v == 'object' || (typeof v == 'string' && (v.indexOf('{') > -1 || v.indexOf('}') > -1 || v.indexOf('[') > -1 || v.indexOf(']') > -1))))
+			 && JSON.stringify(value).length < 80) {
+				if (Array.isArray(value)) value.push('__*#$*');
+				else value['__*#$*'] = '__*#$*';
 			}
 		}
 		return value;
 	};
 
-	return JSON.stringify(obj, pretty, space).replace(
-		/\[\n[ \t]*\"\{\[start_\*\>\",\n?[ \t]*([\s\S]*?),\n[ \t]*\"\>\*_end\]\}\"\n[ \t]*\]/gi,
-		(all, val) => '[' + val.replace(/\n[ \t]+/gi, ' ') + ']'
-	);
+	return JSON.stringify(obj, pretty, space)
+		.replace(/([\[\{])([^\[\{\]\}]*?)(,\s*)?(\"__\*#\$\*\":)?\s*\"__\*#\$\*\"\s*([\]\}])/gms, (all, start, val, a, b, end) => start + val.replace(/\n\s*/g, ' ') +' '+ end)
+		.replace(/(\n[ \t]*[\}\]],)\s*([\[\{])(?=\n)/g, "$1 $2")
 }
 
 module.exports = stringify;

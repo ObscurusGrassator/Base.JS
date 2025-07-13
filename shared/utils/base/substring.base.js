@@ -12,19 +12,21 @@
  * @example "abc".substring(1, -1) // return: "b"
  */
 function substring(start, stop) {
-	let start2 = start;
-	let stop2 = stop || this.length;
+	stop ??= this.length;
 
-	if (start2 < 0) start2 = Math.max(0, this.length + start2);
-	if (stop2 < 0) stop2 = Math.max(0, this.length + stop2);
+	if (start < 0) start = Math.max(0, this.length + start);
+	if (stop < 0) stop = Math.max(0, this.length + stop);
 
-	if (start2 > stop2) return '';
+	if (start > stop) return '';
 
-	return this.substringOld(start2, stop2);
+	return this.substringOld(start, stop);
 }
 
 // @ts-ignore
-String.prototype.substringOld = String.prototype.substring;
-String.prototype.substring = substring;
+if (!String.prototype.substringOld) {
+	// @ts-ignore
+	String.prototype.substringOld = String.prototype.substring;
+	String.prototype.substring = substring;
+}
 
 module.exports = substring;
