@@ -256,6 +256,7 @@ shared/
    jsonStringify.base.js      // prettyer JSON.stringifi
    promisify.base.js          // transform function with callback to promise
    urlParser.base.js          // extended new URL()
+   promiseSemaphore.base.js   // blocks code processing for others until the last execution leaves the area
    objectClone.base.js        // (experimental) deep object cloning
 ```
 

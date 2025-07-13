@@ -3,9 +3,8 @@
  * @property {{
  *      reqID: number,
  *      speak?: string, speakDisable?: boolean,
- *      listen?: boolean,
+ *      listen?: boolean, getAccept?: boolean,
  *      name?: string,
- *      getAccept?: boolean,
  *      resolve: function, reject: function,
  * } | false} sendDataToClient
  * @property { number } requestID

@@ -28,12 +28,16 @@ module.exports = {
 				res.statusCode = 404;
 				return '';
 			}
+<<<<<<< Updated upstream
+			let result = await require(realPath.path)(req, res, {...realPath.variables, ...getData}, postData);
+=======
 			let api = b.util.get(apis, realPath.path.replace(/^\/|\.html$|\.js$/g, '').substring(11).split('/'));
 			if (!api) {
 				res.statusCode = 404;
 				return '';
 			}
 			let result = await api[realPath.path](req, res, {...realPath.variables, ...getData}, postData);
+>>>>>>> Stashed changes
 			return result;
 		}
 

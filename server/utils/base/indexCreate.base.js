@@ -14,6 +14,7 @@ const config = require('shared/services/base/jsconfig.base.js').update('utils._c
 			'disablePackages': [],
 			'utils': {
 				'client/src/': ['client/src/'],
+				'server/api/': ['server/api/'],
 				'client/utils/': ['client/utils/', 'client/utils/base/', 'shared/utils/', 'shared/utils/base/'],
 				'server/utils/': ['server/utils/', 'server/utils/base/', 'shared/utils/', 'shared/utils/base/'],
 				'shared/utils/': ['shared/utils/', 'shared/utils/base/']
@@ -108,6 +109,7 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 				zlib: require('zlib'),
 			\n`;
 			for (let i in package.dependencies || []) {
+				if (['@babel/cli', 'babel-cli', 'babel'].includes(i)) continue;
 				if (!disablePackages.includes(i)) js += `\t\t\t\t'${i}': require('${i}'),\n`;
 			}
 			// @ts-ignore
@@ -164,7 +166,7 @@ async function indexCreate(destinationPath = null, dirPathsSource = [], type = '
 						if (file.substring(file.length - 14) == '/src/_index.js') continue;
 
 						let templateName = file.replace(/^\/|\.html$|\.js(on)?$/g, '');
-						let functionName = file.match(/(^|\/)([a-zA-Z_\-]+)[^\/]*.js(on)?$/i)[2].replace(/[_\-]$/, '');
+						let functionName = file.match(/(^|\/)([a-zA-Z_\-\<\>]+)[^\/]*.js(on)?$/i)[2].replace(/[_\-]$/, '');
 						let path = (file + '...').substring(dirPathsSource[i].length).split('/');
 						path.pop();
 
