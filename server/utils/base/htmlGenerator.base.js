@@ -101,7 +101,9 @@ async function readFile(
 
 	let jsWraperBefore = `window.templateJS['${templateName}${
 		!js || filePath.substring(-5) != '.html' ? '' : '__Parts'}${!isJSExtend ? '' : '__Super'}'] = (function() { `
-		+ (filePath.substring(-5) == '.json' ? `window.requires['${templateName}'] = ` : '');
+		+ (filePath.substring(-5) == '.json'
+			? `window.requires['${templateName}'] = `
+			: `const __dirname = '${pathLib.dirname(filePath)}'; const __filename = '${pathLib.basename(filePath)}'; `);
 	let jsWraperAfter = `
 		\n${js ? '' : 'window.unloadFunctionalityStack.splice(window.unloadFunctionalityStack.indexOf(\'' + templateName + '\'), 1);'}
 		\nreturn ${js ? 'this' : 'window.requires[\'' + templateName + '\']'}; })${js ? '' : ''/*'.apply(this)'*/};
@@ -248,7 +250,7 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 
 			let fromDirs = async path => {
 				if ((await promisify(fs.lstat, path)).isDirectory()) {
-					let paths = await getFilePaths(path, /(^|\/)[^\/]*\.(json|js|css)$/, false);
+					let paths = await getFilePaths(path, /(^|\/)[^\/]*\.(json|js|css)$/, true);
 					let indexExists = false;
 					for (let path of paths) {
 						if (/\.(js|css)/.test(path) /*&& (!/\.ignr\./.test(path) || /getActualElement\./.test(path))*/) {
@@ -300,7 +302,7 @@ async function htmlGenerator(serverContent = {}, templateFile = 'index', cache =
 					function rWFM(fun) { fun.marker = 'rWFM'; return fun; }
 					function remFunWrap(obj, prop) {
 						if (isFunction(obj[prop])) return obj[prop]();
-						if (obj[prop]) return obj[prop];
+						if (obj[prop]) return new Proxy(obj[prop], window.requireProxiHandler);
 						return undefined;
 					};
 					window.requireProxiHandler = {

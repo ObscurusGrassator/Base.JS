@@ -18,7 +18,10 @@ async function fetchWithTimeout(resource, options = {}) {
 			...options,
 			signal: controller.signal  
 		});
+
 		clearTimeout(id);
+
+		if (response.status != 200) return Promise.reject(response);
 	} catch (err) {
 		if (err.name !== 'AbortError') throw err;
 		else throw `Error: Server request timeout ${timeout/1000} seconds`;
